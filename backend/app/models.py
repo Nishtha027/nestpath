@@ -3,7 +3,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, Enum as SAEnum, ForeignKey, Integer, String, func
+from sqlalchemy import Column, Date, DateTime, Enum as SAEnum, Float, ForeignKey, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -37,6 +37,10 @@ class Child(Base):
 
     family = relationship("Family", back_populates="children")
     schedule_items = relationship("ScheduleItem", back_populates="child", cascade="all, delete-orphan")
+    growth_measurements = relationship(
+        "GrowthMeasurement", back_populates="child", cascade="all, delete-orphan"
+    )
+    care_logs = relationship("CareLog", back_populates="child", cascade="all, delete-orphan")
 
 
 class Caregiver(Base):
@@ -59,7 +63,7 @@ class ScheduleItem(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     child_id = Column(UUID(as_uuid=True), ForeignKey("children.id"), nullable=False)
-    # e.g. "vaccine_dose" -- only value so far; "growth_check" is Phase 3+.
+    # e.g. "vaccine_dose" -- only value so far.
     type = Column(String, nullable=False)
     # vaccine_schedule.py's dict key for this series, e.g. "dtap", "hpv".
     vaccine_id = Column(String, nullable=False)
@@ -76,3 +80,44 @@ class ScheduleItem(Base):
     source_version = Column(String, nullable=True)
 
     child = relationship("Child", back_populates="schedule_items")
+
+
+class GrowthMeasurement(Base):
+    __tablename__ = "growth_measurements"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    child_id = Column(UUID(as_uuid=True), ForeignKey("children.id"), nullable=False)
+    measured_at = Column(Date, nullable=False)
+    # Age in completed months at measured_at (0-24), as growth_percentile.py's
+    # WHO LMS tables require -- computed from child.birth_date, not user input.
+    age_months = Column(Integer, nullable=False)
+    sex = Column(String, nullable=False)
+    weight_kg = Column(Float, nullable=False)
+    percentile = Column(Float, nullable=False)
+    z_score = Column(Float, nullable=False)
+    # Provenance tag for the LMS table used, e.g. growth_percentile's WHO/CDC
+    # source and retrieval date (see app/services/growth.py SOURCE_VERSION).
+    source_version = Column(String, nullable=True)
+
+    child = relationship("Child", back_populates="growth_measurements")
+
+
+class CareLogType(str, enum.Enum):
+    FEED = "feed"
+    DIAPER = "diaper"
+    SLEEP = "sleep"
+    MEDICATION = "medication"
+
+
+class CareLog(Base):
+    __tablename__ = "care_logs"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    child_id = Column(UUID(as_uuid=True), ForeignKey("children.id"), nullable=False)
+    caregiver_id = Column(UUID(as_uuid=True), ForeignKey("caregivers.id"), nullable=False)
+    type = Column(SAEnum(CareLogType, name="care_log_type"), nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    notes = Column(String, nullable=True)
+
+    child = relationship("Child", back_populates="care_logs")
+    caregiver = relationship("Caregiver")
