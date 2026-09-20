@@ -51,3 +51,23 @@ def test_caregiver_cannot_access_another_familys_child(client, auth_headers):
 
     resp = client.get(f"/children/{child_id}/schedule", headers=headers_b)
     assert resp.status_code == 404
+
+
+def test_list_children_scoped_to_family(client, auth_headers):
+    headers_a, _ = auth_headers(email="parent-a@example.com")
+    headers_b, _ = auth_headers(email="parent-b@example.com")
+
+    resp_a1 = client.post(
+        "/children", json={"name": "Alice", "birth_date": "2026-01-01"}, headers=headers_a
+    )
+    assert resp_a1.status_code == 201
+    resp_a2 = client.post(
+        "/children", json={"name": "Bob", "birth_date": "2026-02-01"}, headers=headers_a
+    )
+    assert resp_a2.status_code == 201
+    client.post("/children", json={"name": "Carol", "birth_date": "2026-01-01"}, headers=headers_b)
+
+    list_a = client.get("/children", headers=headers_a)
+    assert list_a.status_code == 200
+    names = {child["name"] for child in list_a.json()}
+    assert names == {"Alice", "Bob"}

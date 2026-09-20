@@ -5,11 +5,13 @@ from .routers import auth, care_logs, children, growth
 
 app = FastAPI(title="NestPath API")
 
-# Allows the Phase 1 Next.js dev server (localhost:3000) to call this API
-# from the browser. Revisit as real origins/environments are added.
+# Allows the Next.js dev server to call this API from the browser. A
+# port regex (rather than a fixed localhost:3000) because this dev
+# machine has a stray process squatting on 3000, so Next's autoPort
+# routinely picks a different one. Revisit as real origins are added.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origin_regex=r"^http://localhost:\d+$",
     allow_methods=["*"],
     allow_headers=["*"],
 )

@@ -19,13 +19,31 @@ def create_child(
     caregiver: Caregiver = Depends(get_current_caregiver),
     db: Session = Depends(get_db),
 ):
-    child = Child(family_id=caregiver.family_id, birth_date=payload.birth_date, region=payload.region)
+    child = Child(
+        family_id=caregiver.family_id,
+        name=payload.name,
+        birth_date=payload.birth_date,
+        region=payload.region,
+    )
     db.add(child)
     db.flush()
     generate_schedule_for_child(db, child)
     db.commit()
     db.refresh(child)
     return child
+
+
+@router.get("", response_model=list[schemas.ChildResponse])
+def list_children(
+    caregiver: Caregiver = Depends(get_current_caregiver),
+    db: Session = Depends(get_db),
+):
+    return (
+        db.query(Child)
+        .filter(Child.family_id == caregiver.family_id)
+        .order_by(Child.birth_date)
+        .all()
+    )
 
 
 @router.get("/{child_id}/schedule", response_model=list[schemas.ScheduleItemResponse])

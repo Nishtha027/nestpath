@@ -32,6 +32,7 @@ class TokenResponse(BaseModel):
 
 
 class ChildCreate(BaseModel):
+    name: Optional[str] = None
     birth_date: date
     region: Optional[str] = None
 
@@ -41,6 +42,7 @@ class ChildResponse(BaseModel):
 
     id: UUID
     family_id: UUID
+    name: Optional[str] = None
     birth_date: date
     region: Optional[str] = None
 

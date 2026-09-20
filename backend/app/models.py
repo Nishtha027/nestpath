@@ -32,6 +32,9 @@ class Child(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     family_id = Column(UUID(as_uuid=True), ForeignKey("families.id"), nullable=False)
+    # Nullable: children created before this field existed (Phase 2/3 tests)
+    # have none, and the API accepts a child without one too.
+    name = Column(String, nullable=True)
     birth_date = Column(Date, nullable=False)
     region = Column(String, nullable=True)
 
