@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .routers import auth, children
+
 app = FastAPI(title="NestPath API")
 
 # Allows the Phase 1 Next.js dev server (localhost:3000) to call this API
@@ -11,6 +13,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(auth.router)
+app.include_router(children.router)
 
 
 @app.get("/health")
