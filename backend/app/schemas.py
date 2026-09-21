@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
-from .models import CaregiverRole, CareLogType
+from .models import AppointmentStatus, CaregiverRole, CareLogType
 
 
 class RegisterRequest(BaseModel):
@@ -101,3 +101,29 @@ class CareLogResponse(BaseModel):
     type: CareLogType
     timestamp: datetime
     notes: Optional[str] = None
+
+
+class AvailabilitySlotResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    provider_id: UUID
+    start_time: datetime
+    end_time: datetime
+    is_booked: bool
+
+
+class AppointmentCreate(BaseModel):
+    child_id: UUID
+    slot_id: UUID
+
+
+class AppointmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    child_id: UUID
+    slot_id: UUID
+    caregiver_id: UUID
+    status: AppointmentStatus
+    checklist: list[str]

@@ -3,7 +3,19 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, Date, DateTime, Enum as SAEnum, Float, ForeignKey, Integer, String, func
+from sqlalchemy import (
+    Boolean,
+    Column,
+    Date,
+    DateTime,
+    Enum as SAEnum,
+    Float,
+    ForeignKey,
+    Integer,
+    JSON,
+    String,
+    func,
+)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -44,6 +56,7 @@ class Child(Base):
         "GrowthMeasurement", back_populates="child", cascade="all, delete-orphan"
     )
     care_logs = relationship("CareLog", back_populates="child", cascade="all, delete-orphan")
+    appointments = relationship("Appointment", back_populates="child", cascade="all, delete-orphan")
 
 
 class Caregiver(Base):
@@ -123,4 +136,58 @@ class CareLog(Base):
     notes = Column(String, nullable=True)
 
     child = relationship("Child", back_populates="care_logs")
+    caregiver = relationship("Caregiver")
+
+
+class Provider(Base):
+    __tablename__ = "providers"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False)
+    specialty = Column(String, nullable=True)
+
+    availability_slots = relationship(
+        "AvailabilitySlot", back_populates="provider", cascade="all, delete-orphan"
+    )
+
+
+class AvailabilitySlot(Base):
+    __tablename__ = "availability_slots"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    provider_id = Column(UUID(as_uuid=True), ForeignKey("providers.id"), nullable=False)
+    start_time = Column(DateTime(timezone=True), nullable=False)
+    end_time = Column(DateTime(timezone=True), nullable=False)
+    is_booked = Column(Boolean, nullable=False, default=False, server_default="false")
+
+    provider = relationship("Provider", back_populates="availability_slots")
+    appointment = relationship("Appointment", back_populates="slot", uselist=False)
+
+
+class AppointmentStatus(str, enum.Enum):
+    BOOKED = "booked"
+    CANCELLED = "cancelled"
+
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    child_id = Column(UUID(as_uuid=True), ForeignKey("children.id"), nullable=False)
+    # unique: a slot can back at most one (non-cancelled-aware) appointment --
+    # belt-and-suspenders alongside book_slot()'s row lock in booking.py.
+    slot_id = Column(
+        UUID(as_uuid=True), ForeignKey("availability_slots.id"), nullable=False, unique=True
+    )
+    caregiver_id = Column(UUID(as_uuid=True), ForeignKey("caregivers.id"), nullable=False)
+    status = Column(
+        SAEnum(AppointmentStatus, name="appointment_status"),
+        nullable=False,
+        default=AppointmentStatus.BOOKED,
+    )
+    # Auto-generated visit-prep questions (see app/services/booking.py).
+    checklist = Column(JSON, nullable=False, default=list)
+
+    child = relationship("Child", back_populates="appointments")
+    slot = relationship("AvailabilitySlot", back_populates="appointment")
     caregiver = relationship("Caregiver")

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.orm import Session
 
 from .. import schemas
-from ..database import get_db
+from ..database import SessionLocal, get_db
 from ..deps import get_child_for_caregiver, get_current_caregiver
 from ..models import Caregiver, CareLog, Child
 from ..security import decode_access_token
@@ -48,17 +48,25 @@ async def create_care_log(
 
 
 @router.websocket("/ws/families/{family_id}")
-async def family_care_log_feed(websocket: WebSocket, family_id: UUID, db: Session = Depends(get_db)):
+async def family_care_log_feed(websocket: WebSocket, family_id: UUID):
     # Browsers can't set custom headers on a WebSocket handshake, so the
     # JWT travels as a query param here instead of an Authorization header.
+    # The DB session is scoped to just this auth check and closed right
+    # after -- unlike Depends(get_db), which would keep it open, idle in
+    # a transaction, for as long as the socket stays connected (this can
+    # block unrelated DDL and, with enough concurrent connections,
+    # exhaust the connection pool).
     token = websocket.query_params.get("token")
     caregiver = None
     if token is not None:
+        db = SessionLocal()
         try:
             payload = decode_access_token(token)
             caregiver = db.get(Caregiver, UUID(payload["sub"]))
         except (jwt.InvalidTokenError, KeyError, ValueError):
             caregiver = None
+        finally:
+            db.close()
 
     if caregiver is None or caregiver.family_id != family_id:
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
