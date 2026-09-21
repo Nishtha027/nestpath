@@ -217,3 +217,33 @@ class ScreeningResponse(Base):
 
     caregiver = relationship("Caregiver")
     family = relationship("Family")
+
+
+class HelpRequestStatus(str, enum.Enum):
+    OPEN = "open"
+    CLAIMED = "claimed"
+    COMPLETED = "completed"
+
+
+class HelpRequest(Base):
+    __tablename__ = "help_requests"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    family_id = Column(UUID(as_uuid=True), ForeignKey("families.id"), nullable=False)
+    created_by = Column(UUID(as_uuid=True), ForeignKey("caregivers.id"), nullable=False)
+    need_type = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    time_window_start = Column(DateTime(timezone=True), nullable=False)
+    time_window_end = Column(DateTime(timezone=True), nullable=False)
+    status = Column(
+        SAEnum(HelpRequestStatus, name="help_request_status"),
+        nullable=False,
+        default=HelpRequestStatus.OPEN,
+    )
+    # Set atomically by claim_request() (see app/services/help_board.py) --
+    # nullable until claimed.
+    claimed_by = Column(UUID(as_uuid=True), ForeignKey("caregivers.id"), nullable=True)
+
+    family = relationship("Family")
+    creator = relationship("Caregiver", foreign_keys=[created_by])
+    claimer = relationship("Caregiver", foreign_keys=[claimed_by])

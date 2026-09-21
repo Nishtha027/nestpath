@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import appointments, auth, care_logs, children, growth, providers, screening
+from .routers import appointments, auth, care_logs, children, growth, help_board, providers, screening
 
 app = FastAPI(title="NestPath API")
 
@@ -24,6 +24,7 @@ app.include_router(care_logs.router)
 app.include_router(providers.router)
 app.include_router(appointments.router)
 app.include_router(screening.router)
+app.include_router(help_board.router)
 
 
 @app.get("/health")

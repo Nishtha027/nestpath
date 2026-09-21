@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from .models import AppointmentStatus, CaregiverRole, CareLogType
+from .models import AppointmentStatus, CaregiverRole, CareLogType, HelpRequestStatus
 
 
 class RegisterRequest(BaseModel):
@@ -162,3 +162,24 @@ class AlertResponse(BaseModel):
     risk_level: str
     item_10_flag: bool
     created_at: datetime
+
+
+class HelpRequestCreate(BaseModel):
+    need_type: str
+    description: Optional[str] = None
+    time_window_start: datetime
+    time_window_end: datetime
+
+
+class HelpRequestResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    family_id: UUID
+    created_by: UUID
+    need_type: str
+    description: Optional[str] = None
+    time_window_start: datetime
+    time_window_end: datetime
+    status: HelpRequestStatus
+    claimed_by: Optional[UUID] = None
