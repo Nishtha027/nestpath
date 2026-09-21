@@ -36,6 +36,17 @@ def get_current_caregiver(
     return caregiver
 
 
+def get_current_provider(caregiver: Caregiver = Depends(get_current_caregiver)) -> Caregiver:
+    """Like get_current_caregiver, but requires the is_provider flag.
+    GET /alerts exposes flagged screenings across all families (not
+    just the caller's own), so it's gated separately from the usual
+    family-scoped access every other endpoint uses.
+    """
+    if not caregiver.is_provider:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Provider access required")
+    return caregiver
+
+
 def get_child_for_caregiver(
     child_id: UUID,
     caregiver: Caregiver = Depends(get_current_caregiver),

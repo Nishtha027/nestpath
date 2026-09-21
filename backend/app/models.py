@@ -70,6 +70,9 @@ class Caregiver(Base):
     role = Column(SAEnum(CaregiverRole, name="caregiver_role"), nullable=False)
     # Free-form for now (e.g. "full", "view_only") -- permission rules are Phase 3+.
     permission_level = Column(String, nullable=False)
+    # Grants access to GET /alerts (flagged screenings across all
+    # families, not just this caregiver's own) -- see deps.get_current_provider.
+    is_provider = Column(Boolean, nullable=False, default=False, server_default="false")
 
     family = relationship("Family", back_populates="caregivers")
 
@@ -191,3 +194,26 @@ class Appointment(Base):
     child = relationship("Child", back_populates="appointments")
     slot = relationship("AvailabilitySlot", back_populates="appointment")
     caregiver = relationship("Caregiver")
+
+
+class ScreeningResponse(Base):
+    __tablename__ = "screening_responses"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    caregiver_id = Column(UUID(as_uuid=True), ForeignKey("caregivers.id"), nullable=False)
+    family_id = Column(UUID(as_uuid=True), ForeignKey("families.id"), nullable=False)
+    # List of 10 raw option indices (0-3, top-to-bottom as printed on the
+    # EPDS form), in item order -- see reference-data/epds_screening.py.
+    answers = Column(JSON, nullable=False)
+    total_score = Column(Integer, nullable=False)
+    # "low" | "moderate" | "high" -- see epds_screening.score_epds().
+    risk_level = Column(String, nullable=False)
+    # True iff item 10 (self-harm ideation) was answered as anything
+    # other than "Never" -- forces risk_level to "high" regardless of
+    # total_score. See app/services/screening.py for the safety rule.
+    item_10_flag = Column(Boolean, nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    source_version = Column(String, nullable=True)
+
+    caregiver = relationship("Caregiver")
+    family = relationship("Family")

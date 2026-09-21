@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from .models import AppointmentStatus, CaregiverRole, CareLogType
 
@@ -127,3 +127,38 @@ class AppointmentResponse(BaseModel):
     caregiver_id: UUID
     status: AppointmentStatus
     checklist: list[str]
+
+
+class ScreeningSubmitRequest(BaseModel):
+    # 10 option indices (0-3, top-to-bottom as printed on the EPDS
+    # form), one per item, in item order -- see
+    # reference-data/epds_screening.py.
+    answers: list[int] = Field(min_length=10, max_length=10)
+
+    @field_validator("answers")
+    @classmethod
+    def _validate_answer_range(cls, value: list[int]) -> list[int]:
+        if any(v not in (0, 1, 2, 3) for v in value):
+            raise ValueError("each answer must be 0, 1, 2, or 3")
+        return value
+
+
+class ScreeningSubmitResponse(BaseModel):
+    id: UUID
+    total_score: int
+    risk_level: str
+    item_10_flag: bool
+    message: str
+    created_at: datetime
+
+
+class AlertResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    caregiver_id: UUID
+    family_id: UUID
+    total_score: int
+    risk_level: str
+    item_10_flag: bool
+    created_at: datetime
