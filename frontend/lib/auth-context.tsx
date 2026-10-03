@@ -24,7 +24,8 @@ type AuthState = {
   token: string | null;
   caregiver: Caregiver | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  /** Pass inviteCode to join an existing family instead of starting a new one. */
+  register: (name: string, email: string, password: string, inviteCode?: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -56,11 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    async (name: string, email: string, password: string) => {
+    async (name: string, email: string, password: string, inviteCode?: string) => {
       await apiFetch("/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, invite_code: inviteCode }),
       });
       await login(email, password);
     },

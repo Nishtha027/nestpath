@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from .. import schemas
 from ..database import get_db
+from ..invite_codes import normalize_invite_code
 from ..models import Caregiver, Family
 from ..security import create_access_token, hash_password, verify_password
 
@@ -15,9 +16,18 @@ def register(payload: schemas.RegisterRequest, db: Session = Depends(get_db)):
     if db.query(Caregiver).filter(Caregiver.email == payload.email).first():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Email already registered")
 
-    family = Family()
-    db.add(family)
-    db.flush()
+    if payload.invite_code is not None:
+        family = (
+            db.query(Family)
+            .filter(Family.invite_code == normalize_invite_code(payload.invite_code))
+            .first()
+        )
+        if family is None:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, "Invalid invite code")
+    else:
+        family = Family()
+        db.add(family)
+        db.flush()
 
     caregiver = Caregiver(
         family_id=family.id,

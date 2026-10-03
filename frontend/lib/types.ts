@@ -5,6 +5,11 @@ export type Child = {
   region: string | null;
 };
 
+export type Family = {
+  id: string;
+  invite_code: string;
+};
+
 export type ScheduleItem = {
   id: string;
   child_id: string;

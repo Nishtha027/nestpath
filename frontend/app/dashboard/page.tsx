@@ -7,6 +7,7 @@ import { useRequireAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Child } from "@/lib/types";
 import { HelpBoard } from "./HelpBoard";
+import { InviteCode } from "./InviteCode";
 
 export default function DashboardPage() {
   const { token, caregiver, logout } = useRequireAuth();
@@ -134,6 +135,11 @@ export default function DashboardPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-medium">Invite a caregiver</h2>
+        <InviteCode token={token} />
       </section>
 
       <section className="flex flex-col gap-3">

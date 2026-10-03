@@ -18,6 +18,7 @@ if str(_REFERENCE_DATA_DIR) not in sys.path:
 
 from growth_percentile import weight_for_age_percentile  # noqa: E402
 
+from ..dates import is_in_future  # noqa: E402
 from ..models import Child, GrowthMeasurement  # noqa: E402
 
 # growth_percentile.py has no exported version constant (unlike
@@ -47,6 +48,9 @@ def record_growth_measurement(
     (via growth_percentile.py) for an out-of-range age, unrecognized
     sex, or non-positive weight.
     """
+    if is_in_future(measured_at):
+        raise ValueError("Measurement date cannot be in the future")
+
     age_months = age_in_completed_months(child.birth_date, measured_at)
     result = weight_for_age_percentile(age_months, sex, weight_kg)
     measurement = GrowthMeasurement(

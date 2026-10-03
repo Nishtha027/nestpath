@@ -14,6 +14,15 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     role: CaregiverRole = CaregiverRole.PARENT
+    # Omit to start a new family; set to join an existing one.
+    invite_code: Optional[str] = None
+
+
+class FamilyResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    invite_code: str
 
 
 class RegisterResponse(BaseModel):

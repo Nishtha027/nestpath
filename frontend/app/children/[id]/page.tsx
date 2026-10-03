@@ -74,7 +74,7 @@ export default function ChildDetailPage() {
 
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-medium">Growth</h2>
-            <GrowthChart childId={childId} token={token} />
+            <GrowthChart childId={childId} token={token} birthDate={child.birth_date} />
           </section>
 
           <section className="flex flex-col gap-3">

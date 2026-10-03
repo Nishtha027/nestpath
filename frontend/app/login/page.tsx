@@ -11,6 +11,8 @@ export default function LoginPage() {
 
   const [mode, setMode] = useState<"login" | "register">("login");
   const [name, setName] = useState("");
+  const [joinFamily, setJoinFamily] = useState(false);
+  const [inviteCode, setInviteCode] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export default function LoginPage() {
       if (mode === "login") {
         await login(email, password);
       } else {
-        await register(name, email, password);
+        await register(name, email, password, joinFamily ? inviteCode : undefined);
       }
       router.replace("/dashboard");
     } catch (err) {
@@ -61,14 +63,50 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-3">
         {mode === "register" && (
-          <input
-            type="text"
-            placeholder="Your name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="rounded border px-3 py-2"
-          />
+          <>
+            <div className="flex gap-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setJoinFamily(false)}
+                className={`rounded px-3 py-1 ${!joinFamily ? "bg-black text-white dark:bg-white dark:text-black" : "bg-black/[.06] dark:bg-white/[.08]"}`}
+              >
+                Start a new family
+              </button>
+              <button
+                type="button"
+                onClick={() => setJoinFamily(true)}
+                className={`rounded px-3 py-1 ${joinFamily ? "bg-black text-white dark:bg-white dark:text-black" : "bg-black/[.06] dark:bg-white/[.08]"}`}
+              >
+                Join an existing family
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="Your name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="rounded border px-3 py-2"
+            />
+            {joinFamily && (
+              <div className="flex flex-col gap-1">
+                <input
+                  type="text"
+                  placeholder="Invite code"
+                  value={inviteCode}
+                  onChange={(e) => setInviteCode(e.target.value)}
+                  required
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="rounded border px-3 py-2 font-mono uppercase"
+                />
+                <p className="text-xs text-zinc-500">
+                  Ask a caregiver already in the family -- the code is on their dashboard.
+                </p>
+              </div>
+            )}
+          </>
         )}
         <input
           type="email"

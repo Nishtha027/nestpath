@@ -122,3 +122,42 @@ def test_mark_given_twice_rejected(client, auth_headers):
         headers=headers,
     )
     assert second.status_code == 400
+
+
+def test_schedule_order_is_stable_when_due_dates_tie(client, auth_headers):
+    headers, _ = auth_headers()
+    # A 90-day-old has several vaccines due on the same day, so ordering by
+    # due_date alone would leave those rows in arbitrary order.
+    birth_date = date.today() - timedelta(days=90)
+    child_id = client.post(
+        "/children", json={"birth_date": birth_date.isoformat()}, headers=headers
+    ).json()["id"]
+
+    schedule = client.get(f"/children/{child_id}/schedule", headers=headers).json()
+
+    keys = [(item["due_date"], item["vaccine_id"], item["dose_number"]) for item in schedule]
+    assert keys == sorted(keys)
+    assert len({key[0] for key in keys}) < len(keys)  # the test really does exercise ties
+
+
+def test_mark_given_rejects_future_date_and_leaves_dose_pending(client, auth_headers):
+    headers, _ = auth_headers()
+    birth_date = date.today() - timedelta(days=90)
+    child_id = client.post(
+        "/children", json={"birth_date": birth_date.isoformat()}, headers=headers
+    ).json()["id"]
+    schedule = client.get(f"/children/{child_id}/schedule", headers=headers).json()
+    dtap_dose1 = next(item for item in schedule if item["vaccine_id"] == "dtap")
+
+    future = date.today() + timedelta(days=5)
+    resp = client.post(
+        f"/children/{child_id}/schedule/{dtap_dose1['id']}/mark-given",
+        json={"administered_date": future.isoformat()},
+        headers=headers,
+    )
+    assert resp.status_code == 400
+    assert "future" in resp.json()["detail"]
+
+    after = client.get(f"/children/{child_id}/schedule", headers=headers).json()
+    assert [item["status"] for item in after] == [item["status"] for item in schedule]
+    assert not any(item["status"] == "given" for item in after)

@@ -20,6 +20,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from .database import Base
+from .invite_codes import generate_invite_code
 
 
 class CaregiverRole(str, enum.Enum):
@@ -34,6 +35,9 @@ class Family(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    # Shared with a second caregiver so they can join this family at
+    # registration -- see app/invite_codes.py.
+    invite_code = Column(String, nullable=False, unique=True, default=generate_invite_code)
 
     children = relationship("Child", back_populates="family", cascade="all, delete-orphan")
     caregivers = relationship("Caregiver", back_populates="family", cascade="all, delete-orphan")

@@ -50,3 +50,37 @@ def test_growth_measurement_requires_auth(client):
         json={"measured_at": date.today().isoformat(), "sex": "male", "weight_kg": 5.0},
     )
     assert resp.status_code == 401
+
+
+def test_growth_measurement_rejects_future_date(client, auth_headers):
+    headers, _ = auth_headers()
+    birth_date = date.today() - timedelta(days=60)
+    child_id = client.post(
+        "/children", json={"birth_date": birth_date.isoformat()}, headers=headers
+    ).json()["id"]
+
+    future = date.today() + timedelta(days=5)
+    resp = client.post(
+        f"/children/{child_id}/growth",
+        json={"measured_at": future.isoformat(), "sex": "female", "weight_kg": 5.0},
+        headers=headers,
+    )
+    assert resp.status_code == 400
+    assert "future" in resp.json()["detail"]
+    assert client.get(f"/children/{child_id}/growth", headers=headers).json() == []
+
+
+def test_growth_measurement_allows_one_day_of_timezone_slack(client, auth_headers):
+    headers, _ = auth_headers()
+    birth_date = date.today() - timedelta(days=60)
+    child_id = client.post(
+        "/children", json={"birth_date": birth_date.isoformat()}, headers=headers
+    ).json()["id"]
+
+    tomorrow = date.today() + timedelta(days=1)
+    resp = client.post(
+        f"/children/{child_id}/growth",
+        json={"measured_at": tomorrow.isoformat(), "sex": "female", "weight_kg": 5.0},
+        headers=headers,
+    )
+    assert resp.status_code == 201
