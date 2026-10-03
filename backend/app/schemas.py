@@ -103,6 +103,14 @@ class CareLogResponse(BaseModel):
     notes: Optional[str] = None
 
 
+class ProviderResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    specialty: Optional[str] = None
+
+
 class AvailabilitySlotResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

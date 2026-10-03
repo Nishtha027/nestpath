@@ -38,3 +38,59 @@ export type CareLog = {
   timestamp: string;
   notes: string | null;
 };
+
+export type Provider = {
+  id: string;
+  name: string;
+  specialty: string | null;
+};
+
+export type AvailabilitySlot = {
+  id: string;
+  provider_id: string;
+  start_time: string;
+  end_time: string;
+  is_booked: boolean;
+};
+
+export type Appointment = {
+  id: string;
+  child_id: string;
+  slot_id: string;
+  caregiver_id: string;
+  status: "booked" | "cancelled";
+  checklist: string[];
+};
+
+export type ScreeningSubmitResponse = {
+  id: string;
+  total_score: number;
+  risk_level: "low" | "moderate" | "high";
+  item_10_flag: boolean;
+  message: string;
+  created_at: string;
+};
+
+export type Alert = {
+  id: string;
+  caregiver_id: string;
+  family_id: string;
+  total_score: number;
+  risk_level: string;
+  item_10_flag: boolean;
+  created_at: string;
+};
+
+export type HelpRequestStatus = "open" | "claimed" | "completed";
+
+export type HelpRequest = {
+  id: string;
+  family_id: string;
+  created_by: string;
+  need_type: string;
+  description: string | null;
+  time_window_start: string;
+  time_window_end: string;
+  status: HelpRequestStatus;
+  claimed_by: string | null;
+};

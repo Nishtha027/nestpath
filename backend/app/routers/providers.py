@@ -11,6 +11,14 @@ from ..models import AvailabilitySlot, Caregiver, Provider
 router = APIRouter(tags=["providers"])
 
 
+@router.get("/providers", response_model=list[schemas.ProviderResponse])
+def list_providers(
+    caregiver: Caregiver = Depends(get_current_caregiver),
+    db: Session = Depends(get_db),
+):
+    return db.query(Provider).order_by(Provider.name).all()
+
+
 @router.get(
     "/providers/{provider_id}/availability",
     response_model=list[schemas.AvailabilitySlotResponse],

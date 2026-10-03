@@ -1,6 +1,7 @@
 export type JwtPayload = {
   sub: string;
   family_id: string;
+  is_provider: boolean;
   iat: number;
   exp: number;
 };

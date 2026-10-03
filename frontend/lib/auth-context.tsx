@@ -17,6 +17,7 @@ type Caregiver = {
   id: string;
   familyId: string;
   email: string;
+  isProvider: boolean;
 };
 
 type AuthState = {
@@ -39,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const payload = decodeJwtPayload(newToken);
     if (!payload) throw new Error("Received an invalid token from the server");
     setToken(newToken);
-    setCaregiver({ id: payload.sub, familyId: payload.family_id, email });
+    setCaregiver({ id: payload.sub, familyId: payload.family_id, email, isProvider: payload.is_provider });
   }, []);
 
   const login = useCallback(

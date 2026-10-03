@@ -42,5 +42,5 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
             "Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = create_access_token(caregiver.id, caregiver.family_id)
+    token = create_access_token(caregiver.id, caregiver.family_id, caregiver.is_provider)
     return schemas.TokenResponse(access_token=token)

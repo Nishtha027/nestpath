@@ -29,11 +29,16 @@ def verify_password(plain_password: str, password_hash: str) -> bool:
     return _pwd_context.verify(plain_password, password_hash)
 
 
-def create_access_token(caregiver_id: UUID, family_id: UUID) -> str:
+def create_access_token(caregiver_id: UUID, family_id: UUID, is_provider: bool = False) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": str(caregiver_id),
         "family_id": str(family_id),
+        # Non-authoritative on the backend -- every provider-only endpoint
+        # still re-checks Caregiver.is_provider via get_current_provider.
+        # This claim only lets the frontend decide whether to show the
+        # Alerts page without an extra round trip.
+        "is_provider": is_provider,
         "iat": now,
         "exp": now + timedelta(minutes=JWT_EXPIRE_MINUTES),
     }

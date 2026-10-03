@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRequireAuth } from "@/lib/auth-context";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Child } from "@/lib/types";
+import { HelpBoard } from "./HelpBoard";
 
 export default function DashboardPage() {
   const { token, caregiver, logout } = useRequireAuth();
@@ -57,6 +58,14 @@ export default function DashboardPage() {
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">NestPath</h1>
         <div className="flex items-center gap-3 text-sm text-zinc-500">
+          <Link href="/screening" className="hover:underline">
+            Screening
+          </Link>
+          {caregiver?.isProvider && (
+            <Link href="/alerts" className="hover:underline">
+              Alerts
+            </Link>
+          )}
           <span>{caregiver?.email}</span>
           <button
             type="button"
@@ -125,6 +134,11 @@ export default function DashboardPage() {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="text-lg font-medium">Help board</h2>
+        {caregiver && <HelpBoard token={token} caregiverId={caregiver.id} />}
       </section>
     </main>
   );

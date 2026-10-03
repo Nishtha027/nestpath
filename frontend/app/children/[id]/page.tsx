@@ -9,6 +9,7 @@ import type { Child } from "@/lib/types";
 import { VaccineTimeline } from "./VaccineTimeline";
 import { GrowthChart } from "./GrowthChart";
 import { LiveCareLog } from "./LiveCareLog";
+import { Appointments } from "./Appointments";
 
 export default function ChildDetailPage() {
   const { token, caregiver, logout } = useRequireAuth();
@@ -79,6 +80,11 @@ export default function ChildDetailPage() {
           <section className="flex flex-col gap-3">
             <h2 className="text-lg font-medium">Care log (live)</h2>
             <LiveCareLog childId={childId} familyId={caregiver.familyId} token={token} />
+          </section>
+
+          <section className="flex flex-col gap-3">
+            <h2 className="text-lg font-medium">Appointments</h2>
+            <Appointments childId={childId} token={token} />
           </section>
         </>
       )}
