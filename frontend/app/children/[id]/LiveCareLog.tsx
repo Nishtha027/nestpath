@@ -2,9 +2,26 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { apiFetch, ApiError, WS_URL } from "@/lib/api";
+import { reconnectDelayMs } from "@/lib/backoff";
 import type { CareLog } from "@/lib/types";
 
 const CARE_LOG_TYPES: CareLog["type"][] = ["feed", "diaper", "sleep", "medication"];
+
+// WebSocket close code the server uses when it rejects our token. Unlike a
+// dropped connection, retrying can't help -- the token stays bad.
+const CLOSE_POLICY_VIOLATION = 1008;
+
+type ConnectionStatus = "connecting" | "connected" | "reconnecting" | "rejected";
+
+/** Union by id, newest first. A catch-up fetch and live pushes can overlap
+ * (and our own POST echoes back over the socket), so entries are deduped. */
+function mergeEntries(incoming: CareLog[], existing: CareLog[]): CareLog[] {
+  const byId = new Map<string, CareLog>();
+  for (const entry of [...existing, ...incoming]) byId.set(entry.id, entry);
+  return [...byId.values()].sort(
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+}
 
 export function LiveCareLog({
   childId,
@@ -16,8 +33,8 @@ export function LiveCareLog({
   token: string;
 }) {
   const [entries, setEntries] = useState<CareLog[]>([]);
-  const [connected, setConnected] = useState(false);
-  const [wsError, setWsError] = useState<string | null>(null);
+  const [status, setStatus] = useState<ConnectionStatus>("connecting");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [type, setType] = useState<CareLog["type"]>("feed");
   const [notes, setNotes] = useState("");
@@ -25,26 +42,70 @@ export function LiveCareLog({
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
-    const ws = new WebSocket(`${WS_URL}/ws/families/${familyId}?token=${encodeURIComponent(token)}`);
+    let socket: WebSocket | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let failures = 0; // consecutive failed attempts since the last successful connect
+    // Set by cleanup. React StrictMode runs effects twice in dev (setup,
+    // cleanup, setup), and cleanup also runs on unmount -- after it, no
+    // handler may touch state or schedule another retry.
+    let disposed = false;
 
-    ws.onopen = () => {
-      setConnected(true);
-      setWsError(null);
-    };
-    ws.onclose = () => setConnected(false);
-    ws.onerror = () => setWsError("Live connection failed");
-    ws.onmessage = (event) => {
-      try {
-        const entry: CareLog = JSON.parse(event.data);
-        if (entry.child_id === childId) {
-          setEntries((prev) => [entry, ...prev]);
+    function loadEntries() {
+      apiFetch<CareLog[]>(`/children/${childId}/care-logs`, { token })
+        .then((loaded) => {
+          if (disposed) return;
+          setEntries((prev) => mergeEntries(loaded, prev));
+          setLoadError(null);
+        })
+        .catch((err) => {
+          if (disposed) return;
+          setLoadError(err instanceof ApiError ? err.message : "Failed to load entries");
+        });
+    }
+
+    function connect() {
+      const ws = new WebSocket(`${WS_URL}/ws/families/${familyId}?token=${encodeURIComponent(token)}`);
+      socket = ws;
+
+      ws.onopen = () => {
+        if (disposed) return;
+        failures = 0; // back to a 1s first retry next time it drops
+        setStatus("connected");
+        // The feed only pushes entries made while we're connected, so fetch
+        // what we missed -- on the first connect and after every reconnect.
+        loadEntries();
+      };
+      ws.onmessage = (event) => {
+        if (disposed) return;
+        try {
+          const entry: CareLog = JSON.parse(event.data);
+          if (entry.child_id === childId) {
+            setEntries((prev) => mergeEntries([entry], prev));
+          }
+        } catch {
+          // ignore malformed messages
         }
-      } catch {
-        // ignore malformed messages
-      }
-    };
+      };
+      // An error is always followed by a close; onclose does the handling.
+      ws.onclose = (event) => {
+        if (disposed) return;
+        if (event.code === CLOSE_POLICY_VIOLATION) {
+          setStatus("rejected");
+          return;
+        }
+        setStatus("reconnecting");
+        retryTimer = setTimeout(connect, reconnectDelayMs(failures));
+        failures += 1;
+      };
+    }
 
-    return () => ws.close();
+    connect();
+
+    return () => {
+      disposed = true;
+      clearTimeout(retryTimer);
+      socket?.close();
+    };
   }, [childId, familyId, token]);
 
   async function handleSubmit(e: FormEvent) {
@@ -52,15 +113,16 @@ export function LiveCareLog({
     setSubmitError(null);
     setSubmitting(true);
     try {
-      await apiFetch(`/children/${childId}/care-logs`, {
+      const created = await apiFetch<CareLog>(`/children/${childId}/care-logs`, {
         token,
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type, notes: notes || null }),
       });
-      // Not added to state here -- the WebSocket broadcast (this tab is
-      // connected to it too) is what updates the list, so a single code
-      // path handles both "my own entry" and "someone else's entry".
+      // Add it here as well as via the socket's broadcast: if the socket is
+      // down right now, the entry would otherwise be missing until the
+      // reconnect catch-up. mergeEntries dedupes the echo by id.
+      setEntries((prev) => mergeEntries([created], prev));
       setNotes("");
     } catch (err) {
       setSubmitError(err instanceof ApiError ? err.message : "Failed to add entry");
@@ -71,10 +133,16 @@ export function LiveCareLog({
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-zinc-500">
-        Live connection: {connected ? "connected" : "disconnected"}
-        {wsError && <span className="text-red-600"> -- {wsError}</span>}
+      <p className="text-xs text-zinc-500" data-testid="connection-status">
+        Live connection:{" "}
+        {status === "connected" && "connected"}
+        {status === "connecting" && "connecting..."}
+        {status === "reconnecting" && "reconnecting..."}
+        {status === "rejected" && (
+          <span className="text-red-600">stopped -- your session was rejected, please log in again</span>
+        )}
       </p>
+      {loadError && <p className="text-sm text-red-600">{loadError}</p>}
 
       <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
@@ -111,7 +179,7 @@ export function LiveCareLog({
       {submitError && <p className="text-sm text-red-600">{submitError}</p>}
 
       {entries.length === 0 ? (
-        <p className="text-sm text-zinc-500">No entries yet in this session.</p>
+        <p className="text-sm text-zinc-500">No entries yet.</p>
       ) : (
         <ul className="flex flex-col gap-2">
           {entries.map((entry) => (

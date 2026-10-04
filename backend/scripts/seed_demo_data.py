@@ -13,6 +13,11 @@ Run from backend/, after `alembic upgrade head`:
 Env vars:
     DEMO_PROVIDER_EMAIL     login for the provider-flagged account
                             (default: demo-provider@example.com)
+    DEMO_SLOT_DAYS          how many days ahead to create slots for (default 7).
+                            Slots only cover that window from the day the script
+                            runs, so for a long-lived public demo use a bigger
+                            number (e.g. 30) or re-run the script now and then --
+                            re-running tops up without duplicating anything.
     DEMO_PROVIDER_PASSWORD  its password. Optional against a local database
                             (falls back to LOCAL_DEFAULT_PASSWORD below), but
                             REQUIRED against any other host -- a provider
@@ -58,7 +63,7 @@ DEMO_PROVIDERS = [
     ("Dr. Priya Nair", "Perinatal mental health", (10, 14, 16)),
 ]
 SLOT_MINUTES = 30
-DAYS_AHEAD = 7  # slots on weekdays within this many days after "today"
+DAYS_AHEAD = 7  # default window: weekday slots within this many days after "today"
 
 
 @dataclass
@@ -85,9 +90,21 @@ def resolve_password(env_password: str | None, database_url: str) -> str:
     )
 
 
-def _slot_starts(today: date, hours: tuple[int, ...]) -> list[datetime]:
+def resolve_days_ahead(raw: str | None) -> int:
+    if not raw:
+        return DAYS_AHEAD
+    try:
+        days = int(raw)
+    except ValueError:
+        days = 0
+    if not 1 <= days <= 365:
+        raise SeedError(f"DEMO_SLOT_DAYS must be a whole number from 1 to 365, got {raw!r}.")
+    return days
+
+
+def _slot_starts(today: date, hours: tuple[int, ...], days_ahead: int) -> list[datetime]:
     starts = []
-    for offset in range(1, DAYS_AHEAD + 1):
+    for offset in range(1, days_ahead + 1):
         day = today + timedelta(days=offset)
         if day.weekday() >= 5:  # Saturday/Sunday
             continue
@@ -96,7 +113,13 @@ def _slot_starts(today: date, hours: tuple[int, ...]) -> list[datetime]:
     return starts
 
 
-def seed(db: Session, email: str, password: str, today: date | None = None) -> SeedResult:
+def seed(
+    db: Session,
+    email: str,
+    password: str,
+    today: date | None = None,
+    days_ahead: int = DAYS_AHEAD,
+) -> SeedResult:
     """Create whatever demo data is missing and commit. `password` is only
     used if the caregiver doesn't exist yet.
     """
@@ -125,7 +148,7 @@ def seed(db: Session, email: str, password: str, today: date | None = None) -> S
             slot.start_time
             for slot in db.query(AvailabilitySlot).filter(AvailabilitySlot.provider_id == provider.id)
         }
-        for start in _slot_starts(today, hours):
+        for start in _slot_starts(today, hours, days_ahead):
             if start in existing_starts:
                 continue
             db.add(
@@ -164,8 +187,9 @@ def main() -> int:
     email = os.environ.get("DEMO_PROVIDER_EMAIL") or DEFAULT_EMAIL
     try:
         password = resolve_password(os.environ.get("DEMO_PROVIDER_PASSWORD"), DATABASE_URL)
+        days_ahead = resolve_days_ahead(os.environ.get("DEMO_SLOT_DAYS"))
         with SessionLocal() as db:
-            result = seed(db, email, password)
+            result = seed(db, email, password, days_ahead=days_ahead)
     except SeedError as exc:
         print(f"Seed failed: {exc}", file=sys.stderr)
         return 1

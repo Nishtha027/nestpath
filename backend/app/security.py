@@ -16,7 +16,10 @@ load_dotenv()
 
 JWT_SECRET = os.environ["JWT_SECRET"]
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRE_MINUTES = 60 * 24 * 7  # 7 days
+# Short-lived on purpose: the frontend keeps the token in sessionStorage,
+# where injected script could read it, so a stolen token should go stale
+# quickly. There are no refresh tokens yet -- after this the user logs in again.
+JWT_EXPIRE_MINUTES = 60
 
 _pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

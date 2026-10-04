@@ -6,7 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
 
 export default function LoginPage() {
-  const { token, login, register } = useAuth();
+  const { token, login, register, sessionExpired } = useAuth();
   const router = useRouter();
 
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -43,6 +43,12 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8 font-sans">
       <h1 className="text-2xl font-semibold">NestPath</h1>
+
+      {sessionExpired && (
+        <p className="max-w-sm text-center text-sm text-amber-700 dark:text-amber-400">
+          Your session expired. Please log in again.
+        </p>
+      )}
 
       <div className="flex gap-2 text-sm">
         <button

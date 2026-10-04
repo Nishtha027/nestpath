@@ -1,6 +1,9 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .cors import cors_settings
 from .routers import (
     appointments,
     auth,
@@ -15,15 +18,14 @@ from .routers import (
 
 app = FastAPI(title="NestPath API")
 
-# Allows the Next.js dev server to call this API from the browser. A
-# port regex (rather than a fixed localhost:3000) because this dev
-# machine has a stray process squatting on 3000, so Next's autoPort
-# routinely picks a different one. Revisit as real origins are added.
+# Which browser origins may call this API: CORS_ORIGINS in production, any
+# localhost port in dev -- see app/cors.py. (Read after the router imports
+# above, since importing app.database is what loads backend/.env.)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"^http://localhost:\d+$",
     allow_methods=["*"],
     allow_headers=["*"],
+    **cors_settings(os.environ.get("CORS_ORIGINS")),
 )
 
 

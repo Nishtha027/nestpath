@@ -12,7 +12,7 @@ from alembic import context
 # in alembic.ini already adds ".", this is just explicit belt-and-suspenders).
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.database import Base  # noqa: E402
+from app.database import DATABASE_URL, Base  # noqa: E402
 from app import models  # noqa: E402,F401  (registers models on Base.metadata)
 
 # this is the Alembic Config object, which provides
@@ -24,11 +24,14 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Load DATABASE_URL from backend/.env and use it instead of the
-# alembic.ini placeholder, so the real connection string never has to be
-# committed to git.
+# Use the app's DATABASE_URL (from the environment or backend/.env, already
+# normalized to the psycopg 3 driver) instead of the alembic.ini
+# placeholder, so the real connection string never has to be committed to
+# git. A real environment variable wins over backend/.env, so
+# `DATABASE_URL=... alembic upgrade head` targets that database. "%" is
+# doubled because Alembic's config treats it as an interpolation marker.
 load_dotenv()
-config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
+config.set_main_option("sqlalchemy.url", DATABASE_URL.replace("%", "%%"))
 
 # add your model's MetaData object here
 # for 'autogenerate' support

@@ -11,9 +11,26 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 load_dotenv()
 
-DATABASE_URL = os.environ["DATABASE_URL"]
 
-engine = create_engine(DATABASE_URL)
+def normalize_database_url(url: str) -> str:
+    """Hosted Postgres providers (Neon, Render, Supabase, Heroku-style)
+    hand out postgres:// or postgresql:// URLs. SQLAlchemy would map those
+    to the psycopg2 driver, which isn't installed -- this app uses
+    psycopg 3, so point them at it explicitly.
+    """
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
+DATABASE_URL = normalize_database_url(os.environ["DATABASE_URL"])
+
+# pool_pre_ping: serverless Postgres (e.g. Neon's free tier) suspends when
+# idle and drops its connections, so a pooled connection can be dead by the
+# next request. Pinging first replaces a dead one instead of surfacing a
+# 500 to whoever hits the app after a quiet spell.
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

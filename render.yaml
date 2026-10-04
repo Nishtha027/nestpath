@@ -1,0 +1,30 @@
+# Render Blueprint for the NestPath API (free web service).
+# Dashboard: New > Blueprint > pick this repo. Render reads this file and asks
+# for the secret values marked `sync: false`. See "Deploying" in README.md.
+services:
+  - type: web
+    name: nestpath-api
+    runtime: python
+    plan: free
+    # Pick the same region as the database (e.g. Neon's AWS us-west-2 ~ oregon)
+    # to keep query latency low.
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      # Render requires a full x.y.z version here.
+      - key: PYTHON_VERSION
+        value: 3.12.4
+      # The Postgres connection string. postgres:// / postgresql:// URLs from
+      # Neon or Supabase are accepted as-is (app/database.py switches the driver).
+      - key: DATABASE_URL
+        sync: false
+      # Signs login tokens. Render generates a random one; it never lives in git.
+      - key: JWT_SECRET
+        generateValue: true
+      # CORS_ORIGINS is deliberately NOT set here: it needs the Vercel URL, which
+      # doesn't exist yet on the first deploy. Add it in the Render dashboard
+      # afterwards (Environment > CORS_ORIGINS = https://<your-app>.vercel.app).
+      # Until then the API refuses all browser origins (fails closed).
