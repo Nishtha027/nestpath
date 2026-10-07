@@ -43,7 +43,10 @@ export async function apiFetch<T>(
     let message = body;
     try {
       const parsed = JSON.parse(body);
-      message = parsed.detail ?? body;
+      // FastAPI validation errors (422) send detail as a list of {msg, ...}.
+      message = Array.isArray(parsed.detail)
+        ? parsed.detail.map((d: { msg?: string }) => d.msg ?? String(d)).join("; ")
+        : (parsed.detail ?? body);
     } catch {
       // body wasn't JSON; use the raw text
     }
