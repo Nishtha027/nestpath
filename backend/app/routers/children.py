@@ -13,8 +13,10 @@ from ..services.timeline import (
     DoseUndoError,
     generate_schedule_for_child,
     record_dose_given,
+    refresh_stale_pending_items,
     undo_dose_given,
 )
+from vaccine_schedule import AGE_WINDOW_CLOSED, age_window  # noqa: E402  (path set up by services.timeline)
 
 router = APIRouter(prefix="/children", tags=["children"])
 
@@ -52,9 +54,24 @@ def list_children(
     )
 
 
+def _item_response(item: ScheduleItem, child: Child) -> schemas.ScheduleItemResponse:
+    """A schedule row plus its hard age limit. A not-yet-given dose whose
+    window has closed since the row was written is reported as
+    "age_window_closed" -- never as due or overdue."""
+    closes_on, window_note = age_window(item.vaccine_id, item.dose_number, child.birth_date)
+    response = schemas.ScheduleItemResponse.model_validate(item)
+    response.window_closes_on = closes_on
+    response.age_window_note = window_note or None
+    if item.status != "given" and closes_on is not None and date.today() >= closes_on:
+        response.status = AGE_WINDOW_CLOSED
+    return response
+
+
 @router.get("/{child_id}/schedule", response_model=list[schemas.ScheduleItemResponse])
 def get_schedule(child: Child = Depends(get_child_for_caregiver), db: Session = Depends(get_db)):
-    return (
+    if refresh_stale_pending_items(db, child):
+        db.commit()
+    items = (
         db.query(ScheduleItem)
         .filter(ScheduleItem.child_id == child.id)
         # vaccine_id/dose_number break due_date ties, so rows keep a stable
@@ -62,6 +79,7 @@ def get_schedule(child: Child = Depends(get_child_for_caregiver), db: Session = 
         .order_by(ScheduleItem.due_date, ScheduleItem.vaccine_id, ScheduleItem.dose_number)
         .all()
     )
+    return [_item_response(item, child) for item in items]
 
 
 @router.post(
@@ -88,7 +106,7 @@ def mark_given(
     db.commit()
     for updated_item in updated:
         db.refresh(updated_item)
-    return updated
+    return [_item_response(updated_item, child) for updated_item in updated]
 
 
 @router.post(
@@ -118,4 +136,4 @@ def mark_not_given(
     db.commit()
     for updated_item in updated:
         db.refresh(updated_item)
-    return updated
+    return [_item_response(updated_item, child) for updated_item in updated]

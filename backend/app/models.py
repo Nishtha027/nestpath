@@ -92,11 +92,13 @@ class ScheduleItem(Base):
     vaccine_id = Column(String, nullable=False)
     dose_number = Column(Integer, nullable=True)
     due_date = Column(Date, nullable=False)
-    # DoseResult.status from vaccine_schedule.py ("due_now" / "upcoming"),
-    # or "given" once mark-given has been called on this item.
+    # DoseResult.status from vaccine_schedule.py ("due_now" / "upcoming" /
+    # "age_window_closed") as of when the row was written, or "given" once
+    # mark-given has been called on this item. GET /schedule re-derives the
+    # closed state from today's date, since a window can close later.
     status = Column(String, nullable=False)
     administered_date = Column(Date, nullable=True)
-    # DoseResult.notes, e.g. CDC max-age-window warnings.
+    # DoseResult.notes: developer/source notes (not shown to parents).
     notes = Column(String, nullable=True)
     # Provenance tag, e.g. vaccine_schedule.source_version ("CDC
     # 2025-07-02, pre-2025-ACIP-changes, per AAP v. Kennedy injunction").

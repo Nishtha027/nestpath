@@ -30,8 +30,31 @@ IMPORTANT VERSION NOTE (as of retrieval date 2026-09-18):
   file for anything beyond Phase 0 review, and re-verify on every future
   refresh of this data, since this is an active, litigated area.
 
+RE-VERIFIED 2026-10-07 (all three pages above re-read in a browser; each
+still dated "Addendum updated July 2, 2025" and still showing the court-
+order notice above). That review found the original encoding scheduled
+every dose at its MINIMUM age (Table 2) rather than its RECOMMENDED age
+(Table 1), and had no hard maximum ages. Revision 2026-10-07:
+  - Due dates are now anchored on the Table 1 recommended age (or the
+    recommended interval after a previous dose), never earlier than the
+    Table 2 minimum age/interval. Minimum ages alone are only for travel/
+    outbreak situations (Notes, Poliovirus: "In the first 6 months of
+    life, use minimum ages and intervals only for travel to a polio-
+    endemic region or during an outbreak.").
+  - Hard age limits ("age window closed") per Notes/Table 1/Table 2:
+    rotavirus (dose 1 not on/after 15 weeks 0 days; no dose after
+    8 months 0 days), DTaP (under 7 years only), Hib and PCV (healthy
+    children: not needed from age 5 years).
+  - MenACWY: infant/child doses are high-risk only (Table 1 purple), so
+    the routine series is anchored at 11-12 years; dose 2 is skipped if
+    dose 1 was given at 16 years or older (Notes: "Age 16-18 years:
+    1 dose").
+
 SCOPE: see reference-data/README.md for exactly which vaccines/doses are
 modeled with full dose-by-dose logic vs. listed for reference only.
+
+NOT MEDICAL ADVICE: this encodes a published schedule for display. A
+child's pediatrician decides what that child actually needs.
 """
 
 from __future__ import annotations
@@ -70,14 +93,48 @@ def years(n: float) -> int:
     return round(n * _DAYS_PER_YEAR)
 
 
+def add_calendar_months(start: date, n: int) -> date:
+    """`start` plus n calendar months, clamped to the last day of a short
+    month (Jan 31 + 1 month -> Feb 28/29). Used for hard age limits, where
+    an off-by-one-day approximation could show a dose as allowed on a day
+    CDC says it is not.
+    """
+    month_index = start.month - 1 + n
+    year = start.year + month_index // 12
+    month = month_index % 12 + 1
+    next_month_first = date(year + month // 12, month % 12 + 1, 1)
+    last_day = (next_month_first - timedelta(days=1)).day
+    return date(year, month, min(start.day, last_day))
+
+
+@dataclass(frozen=True)
+class AgeLimit:
+    """A hard age limit, as the FIRST age at which the dose should no
+    longer be given: date of birth + `months` calendar months + `days`.
+    E.g. "maximum age 14 weeks, 6 days" -> AgeLimit(days=105) (15 weeks,
+    0 days is the first day it's closed); "maximum age 8 months, 0 days"
+    -> AgeLimit(months=8, days=1); "under 7 years" -> AgeLimit(months=84).
+    """
+
+    months: int = 0
+    days: int = 0
+
+    def closes_on(self, date_of_birth: date) -> date:
+        return add_calendar_months(date_of_birth, self.months) + timedelta(days=self.days)
+
+
 @dataclass(frozen=True)
 class Dose:
     """One dose within a VaccineSeries.
 
     All *_days fields are counted from the child's date of birth unless
-    otherwise noted (minimum_interval_from_previous_days and
-    minimum_days_since_dose1 are counted from a previously administered
-    dose of the SAME vaccine).
+    otherwise noted (*_interval_from_previous_days and *_since_dose1 are
+    counted from a previously administered dose of the SAME vaccine).
+
+    The due date is the LATEST of: the recommended age (Table 1), the
+    recommended interval after the previous dose, the minimum age, and the
+    minimum intervals (Table 2) -- so a dose is never scheduled at its
+    bare minimum age when a later recommended age applies.
     """
 
     dose_number: int
@@ -87,8 +144,15 @@ class Dose:
     minimum_age_days: int | None = None
     minimum_interval_from_previous_days: int | None = None
     minimum_days_since_dose1: int | None = None
+    recommended_interval_from_previous_days: int | None = None
+    recommended_days_since_dose1: int | None = None
     skip_if_previous_dose_age_days_gte: int | None = None
-    maximum_age_for_dose_days: int | None = None
+    # Hard limit: from this age on the dose is no longer recommended (for
+    # a healthy child), so it must not be shown as due or overdue.
+    age_window_closes: AgeLimit | None = None
+    # Parent-facing explanation of age_window_closes, shown in the app.
+    age_window_note: str = ""
+    # Developer/source note (not shown to parents).
     note: str = ""
 
 
@@ -134,6 +198,19 @@ HEPB = VaccineSeries(
 # RV5 3-dose series, the more conservative (longer) of the two -- see
 # README.md simplification #2.
 # ---------------------------------------------------------------------------
+#
+# Hard age limits (Notes, Rotavirus, catch-up: "Do not start the series on
+# or after age 15 weeks, 0 days. The maximum age for the final dose is
+# 8 months, 0 days."; Table 2: "Maximum age for first dose is 14 weeks,
+# 6 days" / "Maximum age for final dose is 8 months, 0 days"):
+#   - dose 1 closes at 15 weeks, 0 days (105 days);
+#   - doses 2 and 3 close after 8 months, 0 days. CDC's text names the
+#     FINAL dose; it is applied to dose 2 as well because a dose 2 given
+#     after 8 months could never be followed by a valid final dose, and
+#     Table 1 shades rotavirus gray (not applicable) from 9 months on.
+# ---------------------------------------------------------------------------
+_RV_LATE_DOSE_NOTE = "Rotavirus doses are only given up to 8 months of age."
+
 ROTAVIRUS = VaccineSeries(
     "rotavirus",
     "Rotavirus (RV)",
@@ -141,17 +218,21 @@ ROTAVIRUS = VaccineSeries(
         Dose(
             1, "2 months", months(2), months(2),
             minimum_age_days=weeks(6),
-            maximum_age_for_dose_days=weeks(14) + 6,
+            age_window_closes=AgeLimit(days=weeks(15)),
+            age_window_note="Rotavirus dose 1 is only given before 15 weeks of age (by 14 weeks, 6 days).",
             note="Max age for dose 1: 14 weeks, 6 days.",
         ),
         Dose(
             2, "4 months", months(4), months(4),
             minimum_interval_from_previous_days=weeks(4),
+            age_window_closes=AgeLimit(months=8, days=1),
+            age_window_note=_RV_LATE_DOSE_NOTE,
         ),
         Dose(
             3, "6 months", months(6), months(6),
             minimum_interval_from_previous_days=weeks(4),
-            maximum_age_for_dose_days=months(8),
+            age_window_closes=AgeLimit(months=8, days=1),
+            age_window_note=_RV_LATE_DOSE_NOTE,
             note="Max age for final dose: 8 months, 0 days. (RV5/RotaTeq only; RV1/Rotarix is a 2-dose series.)",
         ),
     ),
@@ -161,21 +242,41 @@ ROTAVIRUS = VaccineSeries(
 # Diphtheria, tetanus, acellular pertussis (DTaP: <7 yrs)
 # Source: Table 1 row "DTaP"; Table 2 row "Diphtheria, tetanus, and
 # acellular pertussis".
+# Age limit: DTaP is "<7 yrs" (Table 1 row label; gray from 7-10 yrs). From
+# age 7, catch-up uses Tdap/Td (Table 2, 7-18 yrs; Notes, Tdap) -- that
+# Td/Tdap catch-up series is NOT modeled, so a closed DTaP dose tells the
+# parent to ask their pediatrician instead.
 # ---------------------------------------------------------------------------
+_DTAP_CLOSES = AgeLimit(months=84)
+_DTAP_NOTE = "DTaP is given before age 7; older children catch up with Tdap/Td instead."
+
 DTAP = VaccineSeries(
     "dtap",
     "Diphtheria, Tetanus, Acellular Pertussis (DTaP)",
     doses=(
-        Dose(1, "2 months", months(2), months(2), minimum_age_days=weeks(6)),
-        Dose(2, "4 months", months(4), months(4), minimum_interval_from_previous_days=weeks(4)),
-        Dose(3, "6 months", months(6), months(6), minimum_interval_from_previous_days=weeks(4)),
+        Dose(
+            1, "2 months", months(2), months(2), minimum_age_days=weeks(6),
+            age_window_closes=_DTAP_CLOSES, age_window_note=_DTAP_NOTE,
+        ),
+        Dose(
+            2, "4 months", months(4), months(4), minimum_interval_from_previous_days=weeks(4),
+            age_window_closes=_DTAP_CLOSES, age_window_note=_DTAP_NOTE,
+        ),
+        Dose(
+            3, "6 months", months(6), months(6), minimum_interval_from_previous_days=weeks(4),
+            age_window_closes=_DTAP_CLOSES, age_window_note=_DTAP_NOTE,
+        ),
         Dose(
             4, "15-18 months", months(15), months(18),
+            minimum_age_days=months(12),
             minimum_interval_from_previous_days=months(6),
+            age_window_closes=_DTAP_CLOSES, age_window_note=_DTAP_NOTE,
+            note="Notes: dose 4 may be given as early as 12 months if >=6 months after dose 3.",
         ),
         Dose(
             5, "4-6 years", years(4), years(6),
             minimum_interval_from_previous_days=months(6),
+            age_window_closes=_DTAP_CLOSES, age_window_note=_DTAP_NOTE,
             note=(
                 "A 5th dose is NOT necessary if dose 4 was given at age "
                 ">=4 years AND >=6 months after dose 3 (CDC Table 2). "
@@ -194,28 +295,42 @@ DTAP = VaccineSeries(
 # primary-series timing (2, 4, 6, 12-15 months) with the age-based "no
 # further doses needed" exceptions generalized; brand-specific branching is
 # NOT modeled -- see README.md simplification #3.
+# Age limit (healthy children): Notes, Hib catch-up: "Previously
+# unvaccinated children age 60 months or older who are not considered high
+# risk: Catch-up vaccination not required"; Table 2: final doses are for
+# "age 12 through 59 months"; Table 1 shades Hib as catch-up (green)
+# through the 4-year column and high-risk only (purple) from 5 years.
 # ---------------------------------------------------------------------------
+_HIB_PCV_CLOSES = AgeLimit(months=60)
+_HIB_NOTE = "Hib is usually not needed for healthy children aged 5 and older."
+
 HIB = VaccineSeries(
     "hib",
     "Haemophilus influenzae type b (Hib)",
     doses=(
-        Dose(1, "2 months", months(2), months(2), minimum_age_days=weeks(6)),
+        Dose(
+            1, "2 months", months(2), months(2), minimum_age_days=weeks(6),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_HIB_NOTE,
+        ),
         Dose(
             2, "4 months", months(4), months(4),
             minimum_interval_from_previous_days=weeks(4),
             skip_if_previous_dose_age_days_gte=months(15),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_HIB_NOTE,
             note="No further doses needed if dose 1 was given at age >=15 months.",
         ),
         Dose(
             3, "6 months", months(6), months(6),
             minimum_interval_from_previous_days=weeks(4),
             skip_if_previous_dose_age_days_gte=months(15),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_HIB_NOTE,
             note="No further doses needed if dose 2 was given at age >=15 months.",
         ),
         Dose(
             4, "12-15 months", months(12), months(15),
             minimum_interval_from_previous_days=weeks(8),
             skip_if_previous_dose_age_days_gte=months(15),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_HIB_NOTE,
             note=(
                 "Booster; final dose. Only necessary for children age "
                 "12-59 months who received 3 primary doses before the 1st birthday."
@@ -229,28 +344,42 @@ HIB = VaccineSeries(
 # Source: Table 1 row "Pneumococcal conjugate"; Table 2 row "Pneumococcal
 # conjugate". Mirrors the Hib pattern but with a 24-month (not 15-month)
 # "no further doses needed for healthy children" threshold.
+# Age limit (healthy children): Notes, PCV catch-up: "Healthy children ages
+# 2-4 years with any incomplete PCV series: 1 dose PCV"; Table 2: dose 4
+# "only necessary for children age 12 through 59 months regardless of
+# risk, or age 60 through 71 months with any risk"; Table 1 shades PCV as
+# catch-up (green) through the 4-year column and high-risk only (purple)
+# from 5 years. Risk conditions are not modeled (README simplification 7).
 # ---------------------------------------------------------------------------
+_PCV_NOTE = "PCV is usually not needed for healthy children aged 5 and older."
+
 PCV = VaccineSeries(
     "pcv",
     "Pneumococcal Conjugate (PCV15/PCV20)",
     doses=(
-        Dose(1, "2 months", months(2), months(2), minimum_age_days=weeks(6)),
+        Dose(
+            1, "2 months", months(2), months(2), minimum_age_days=weeks(6),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_PCV_NOTE,
+        ),
         Dose(
             2, "4 months", months(4), months(4),
             minimum_interval_from_previous_days=weeks(4),
             skip_if_previous_dose_age_days_gte=months(24),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_PCV_NOTE,
             note="No further doses needed for healthy children if dose 1 was given at age >=24 months.",
         ),
         Dose(
             3, "6 months", months(6), months(6),
             minimum_interval_from_previous_days=weeks(4),
             skip_if_previous_dose_age_days_gte=months(24),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_PCV_NOTE,
             note="No further doses needed for healthy children if dose 2 was given at age >=24 months.",
         ),
         Dose(
             4, "12-15 months", months(12), months(15),
             minimum_interval_from_previous_days=weeks(8),
             skip_if_previous_dose_age_days_gte=months(24),
+            age_window_closes=_HIB_PCV_CLOSES, age_window_note=_PCV_NOTE,
             note=(
                 "Booster; final dose. Only necessary for children age "
                 "12-59 months (any risk) or 60-71 months (with a risk "
@@ -338,9 +467,10 @@ HEPA = VaccineSeries(
     doses=(
         Dose(1, "12-23 months", months(12), months(23), minimum_age_days=months(12)),
         Dose(
-            2, "6-18 months after dose 1", months(18), months(30),
+            2, "6-18 months after dose 1", None, None,
             minimum_interval_from_previous_days=months(6),
-            note="Recommended-age window shown is an approximation of 'dose 1 + 6-18 months'.",
+            recommended_interval_from_previous_days=months(6),
+            note="Notes: 2-dose series at 12-23 months, minimum interval 6 months.",
         ),
     ),
 )
@@ -349,7 +479,13 @@ HEPA = VaccineSeries(
 # Meningococcal ACWY (MenACWY) -- routine healthy-adolescent 2-dose series
 # only. Additional infant/toddler and high-risk dosing (Table 3, medical
 # indications) is NOT modeled -- see README.md simplification #4.
-# Source: Table 1 row "Meningococcal"; Table 2 row "Meningococcal ACWY".
+# Source: Table 1 row "Meningococcal"; Table 2 row "Meningococcal ACWY";
+# Notes, MenACWY: "Routine vaccination 2-dose series at age 11-12 years;
+# 16 years"; catch-up "Age 13-15 years: 1 dose now and booster at age
+# 16-18 years (minimum interval: 8 weeks) / Age 16-18 years: 1 dose".
+# Table 1 shades MenACWY purple (high-risk groups only) from 2 months
+# through 7-10 years, so nothing is scheduled before 11 years: the due
+# date is the recommended age, not the 2-month product minimum age.
 # ---------------------------------------------------------------------------
 MENACWY = VaccineSeries(
     "menacwy",
@@ -359,12 +495,17 @@ MENACWY = VaccineSeries(
             1, "11-12 years", years(11), years(12),
             minimum_age_days=months(2),
             note=(
-                "Minimum age 2 months applies to MenACWY-CRM (Menveo); "
-                "MenACWY-TT (MenQuadfi) has minimum age 2 years. This "
-                "entry models the routine adolescent dose."
+                "Minimum age 2 months applies to MenACWY-CRM (Menveo), "
+                "and only for high-risk infants; MenACWY-TT (MenQuadfi) "
+                "has minimum age 2 years. Routine dose 1 is at 11-12 years."
             ),
         ),
-        Dose(2, "16 years", years(16), years(16), minimum_interval_from_previous_days=weeks(8)),
+        Dose(
+            2, "16 years", years(16), years(16),
+            minimum_interval_from_previous_days=weeks(8),
+            skip_if_previous_dose_age_days_gte=years(16),
+            note="Not needed if dose 1 was given at age 16 or older (Notes: 'Age 16-18 years: 1 dose').",
+        ),
     ),
 )
 
@@ -403,8 +544,10 @@ HPV_2DOSE = VaccineSeries(
     doses=(
         Dose(1, "11-12 years", years(11), years(12), minimum_age_days=years(9)),
         Dose(
-            2, "6-12 months after dose 1", years(11) + months(6), years(12) + months(12),
+            2, "6-12 months after dose 1", None, None,
             minimum_interval_from_previous_days=months(5),
+            recommended_interval_from_previous_days=months(6),
+            note="Notes: 2-dose series at 0, 6-12 months (minimum interval: 5 months).",
         ),
     ),
 )
@@ -414,11 +557,16 @@ HPV_3DOSE = VaccineSeries(
     "Human Papillomavirus (HPV), 3-dose series (start age >=15 years, or immunocompromised)",
     doses=(
         Dose(1, "15 years or older at first dose", years(15), None, minimum_age_days=years(9)),
-        Dose(2, "1-2 months after dose 1", None, None, minimum_interval_from_previous_days=weeks(4)),
+        Dose(
+            2, "1-2 months after dose 1", None, None,
+            minimum_interval_from_previous_days=weeks(4),
+            recommended_interval_from_previous_days=months(1),
+        ),
         Dose(
             3, "6 months after dose 1", None, None,
             minimum_interval_from_previous_days=weeks(12),
             minimum_days_since_dose1=months(5),
+            recommended_days_since_dose1=months(6),
             note="Min interval dose2->3: 12 weeks AND >=5 months after dose 1 (whichever is later).",
         ),
     ),
@@ -430,8 +578,16 @@ HPV_3DOSE = VaccineSeries(
 # can be swapped in without guessing what this one represents. Keep these
 # in sync with the module docstring's "IMPORTANT VERSION NOTE" above.
 # ---------------------------------------------------------------------------
+# effective_date is the CDC schedule's own date and is unchanged by the
+# 2026-10-07 revision (same schedule, corrected encoding). source_version
+# changed so rows generated by the old encoding can be detected and
+# regenerated (see app/services/timeline.py).
 effective_date = date(2025, 7, 2)
-source_version = "CDC 2025-07-02, pre-2025-ACIP-changes, per AAP v. Kennedy injunction"
+encoding_revision = date(2026, 10, 7)
+source_version = (
+    "CDC 2025-07-02, pre-2025-ACIP-changes, per AAP v. Kennedy injunction; "
+    "NestPath encoding rev 2026-10-07 (recommended ages, age windows)"
+)
 
 VACCINE_SCHEDULE: dict[str, VaccineSeries] = {
     s.vaccine_id: s
@@ -496,9 +652,36 @@ OTHER_IMMUNIZATIONS = {
 class DoseResult:
     vaccine_id: str
     dose_number: int | None
-    status: str  # "complete" | "not_required" | "due_now" | "upcoming"
+    # "complete" | "not_required" | "due_now" | "upcoming" | "age_window_closed"
+    status: str
+    # The date the dose is due: recommended age/interval, never before the
+    # minimum age/interval. (Name kept for compatibility.)
     earliest_valid_date: date | None
     notes: str
+    # First date the dose should no longer be given, if it has a hard limit.
+    window_closes_on: date | None = None
+    age_window_note: str = ""
+
+
+AGE_WINDOW_CLOSED = "age_window_closed"
+
+
+def _dose_for(vaccine_id: str, dose_number: int | None) -> Dose | None:
+    """The Dose for a stored (vaccine_id, dose_number). "hpv" items have no
+    hard age limits in this schedule, so they resolve to None here."""
+    series = VACCINE_SCHEDULE.get(vaccine_id)
+    if series is None or dose_number is None or not 1 <= dose_number <= len(series.doses):
+        return None
+    return series.doses[dose_number - 1]
+
+
+def age_window(vaccine_id: str, dose_number: int | None, date_of_birth: date) -> tuple[date | None, str]:
+    """(first date the dose should no longer be given, parent-facing note)
+    for a dose, or (None, "") if it has no hard age limit."""
+    dose = _dose_for(vaccine_id, dose_number)
+    if dose is None or dose.age_window_closes is None:
+        return None, ""
+    return dose.age_window_closes.closes_on(date_of_birth), dose.age_window_note
 
 
 def _dose_not_required(
@@ -565,12 +748,18 @@ def next_valid_dose(
     today: date | None = None,
 ) -> DoseResult:
     """Given a vaccine series, a child's date of birth, and the dates of
-    doses already administered for that vaccine, return the next dose that
-    is due and the earliest date it becomes CDC-valid, correctly applying
-    minimum age and minimum interval-since-previous-dose rules (including
-    missed/delayed doses -- a vaccine series never restarts, per CDC:
-    "A vaccine series does not need to be restarted, regardless of the
-    time that has elapsed between doses.").
+    doses already administered for that vaccine, return the next dose and
+    the date it is due: its recommended age (Table 1) or recommended
+    interval after the previous dose, never earlier than the minimum age
+    and minimum intervals (Table 2), including missed/delayed doses -- a
+    vaccine series never restarts, per CDC: "A vaccine series does not
+    need to be restarted, regardless of the time that has elapsed between
+    doses."
+
+    If the dose has a hard age limit and the child has reached it (or the
+    dose couldn't be due until after it), the status is
+    "age_window_closed": the dose is no longer recommended at this age
+    and must not be presented as due or overdue.
     """
     today = today or date.today()
     series = VACCINE_SCHEDULE[vaccine_id]
@@ -587,6 +776,10 @@ def next_valid_dose(
         return DoseResult(vaccine_id, dose.dose_number, "not_required", None, skip_reason)
 
     candidates: list[date] = []
+    # Recommended timing (Table 1 / Notes).
+    if dose.recommended_age_min_days is not None:
+        candidates.append(date_of_birth + timedelta(days=dose.recommended_age_min_days))
+    # Minimum age / intervals (Table 2): the due date never precedes these.
     if dose.minimum_age_days is not None:
         candidates.append(date_of_birth + timedelta(days=dose.minimum_age_days))
     if dose_history:
@@ -595,20 +788,24 @@ def next_valid_dose(
             candidates.append(dose_history[-1] + timedelta(days=interval))
         if dose.minimum_days_since_dose1 is not None:
             candidates.append(dose_history[0] + timedelta(days=dose.minimum_days_since_dose1))
+        if dose.recommended_interval_from_previous_days is not None:
+            candidates.append(dose_history[-1] + timedelta(days=dose.recommended_interval_from_previous_days))
+        if dose.recommended_days_since_dose1 is not None:
+            candidates.append(dose_history[0] + timedelta(days=dose.recommended_days_since_dose1))
     if not candidates:
         candidates.append(date_of_birth)
 
-    earliest = max(candidates)
-    status = "due_now" if earliest <= today else "upcoming"
+    due = max(candidates)
+    status = "due_now" if due <= today else "upcoming"
 
-    notes = dose.note
-    if dose.maximum_age_for_dose_days is not None:
-        window_close = date_of_birth + timedelta(days=dose.maximum_age_for_dose_days)
-        if today > window_close:
-            extra = "Recommended CDC age window for this dose has passed; consult a clinician about next steps."
-            notes = f"{notes} {extra}".strip()
+    window_closes_on, window_note = age_window(vaccine_id, dose.dose_number, date_of_birth)
+    if window_closes_on is not None and (today >= window_closes_on or due >= window_closes_on):
+        status = AGE_WINDOW_CLOSED
 
-    return DoseResult(vaccine_id, dose.dose_number, status, earliest, notes)
+    return DoseResult(
+        vaccine_id, dose.dose_number, status, due, dose.note,
+        window_closes_on=window_closes_on, age_window_note=window_note,
+    )
 
 
 def next_valid_hpv_dose(

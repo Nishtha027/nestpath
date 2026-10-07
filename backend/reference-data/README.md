@@ -44,6 +44,24 @@ right now:
 > immunization schedule posted here is the current CDC Child and
 > Adolescent Immunization Schedule by Age for Healthcare Professionals."
 
+**Re-verified 2026-10-07.** All three pages were re-read in a browser
+(Notes section by section; Table 2 both age groups; Table 1 including
+its colour coding). Each was still dated "Addendum updated July 2, 2025"
+and still showed the notice above. That review changed the encoding (not
+the schedule, so `effective_date` is unchanged and `source_version` now
+carries "NestPath encoding rev 2026-10-07"):
+
+- Doses are scheduled at the Table 1 **recommended** age (or recommended
+  interval after the previous dose), never before the Table 2 minimum. The
+  original encoding used minimum ages, so e.g. MenACWY dose 1 was due at
+  2 months (a high-risk-only product minimum) and DTaP/Hib/PCV/IPV/RV at
+  6 weeks.
+- Hard age limits now produce an `age_window_closed` status instead of a
+  due/overdue dose: rotavirus (dose 1 not on/after 15 weeks 0 days; no
+  dose after 8 months 0 days), DTaP (before age 7), Hib and PCV (healthy
+  children, before age 5).
+- MenACWY dose 2 is not needed if dose 1 was given at 16 or older.
+
 In plain terms: the July 2, 2025 schedule encoded in `vaccine_schedule.py`
 is, as of the retrieval date, the version in legal/clinical effect — but
 this is an actively litigated area and could change. **Do not treat this
@@ -103,7 +121,9 @@ Each is also flagged as a code comment at the relevant spot.
    most cases but is not calendar-exact. Before this feeds a real
    scheduling UI, replace the `weeks()/months()/years()` helpers in
    `vaccine_schedule.py` with real calendar-date arithmetic (e.g.
-   `dateutil.relativedelta`).
+   `dateutil.relativedelta`). Exception: the hard age limits
+   (`AgeLimit`) already use calendar months, since a one-day error there
+   would show a dose as allowed on a day CDC says it is not.
 2. **Rotavirus** is modeled as the 3-dose RV5 (RotaTeq) series only. The
    alternative RV1 (Rotarix) 2-dose series (doses at 2, 4 months) is not
    separately modeled. To add it, create a second `VaccineSeries` the
@@ -118,7 +138,16 @@ Each is also flagged as a code comment at the relevant spot.
 4. **MenACWY** models only the routine healthy-adolescent 2-dose series
    (11–12 years, 16 years). Additional infant/toddler dosing and
    high-risk-condition dosing (CDC "Table 3 — By Medical Indication") are
-   out of scope.
+   out of scope; Table 1 marks all MenACWY doses before 11 years as
+   high-risk only, so none are scheduled.
+8. **Td/Tdap catch-up for ages 7–18 with incomplete DTaP** (Table 2,
+   7–18 years; Notes, Tdap) is not modeled. From age 7 the DTaP series
+   shows as "no longer recommended at this age — ask your pediatrician",
+   and Tdap shows only the routine adolescent dose at 11–12 years.
+9. **Hib and PCV age limits assume a healthy child** (closed from age 5).
+   Children with risk conditions can need doses beyond that (Table 1
+   purple; Notes "Special situations"), which this module does not know
+   about.
 5. **Not modeled at all** (listed only as reference data in
    `OTHER_IMMUNIZATIONS`, with no dose/interval catch-up logic): RSV
    monoclonal antibody (single dose/season, not a fixed series), RSV

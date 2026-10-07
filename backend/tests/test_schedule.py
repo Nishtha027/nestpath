@@ -43,9 +43,9 @@ def test_creating_child_generates_real_schedule_for_newborn(client, auth_headers
 def test_mark_given_late_dose_recalculates_next_due_date(client, auth_headers):
     headers, _ = auth_headers()
 
-    # Birth date far enough in the past that DTaP dose 1 (min age 6 weeks)
-    # is already due.
-    birth_date = date.today() - timedelta(days=90)
+    # Birth date far enough in the past that DTaP dose 1 (recommended at
+    # 2 months) is long overdue.
+    birth_date = date.today() - timedelta(days=200)
 
     resp = client.post("/children", json={"birth_date": birth_date.isoformat()}, headers=headers)
     assert resp.status_code == 201
@@ -56,10 +56,12 @@ def test_mark_given_late_dose_recalculates_next_due_date(client, auth_headers):
     assert dtap_dose1["dose_number"] == 1
     assert dtap_dose1["status"] == "due_now"
 
-    # Simulate a missed/delayed dose: given well after its earliest valid
-    # date, but before today.
+    # Simulate a missed/delayed dose: given long after its due date, late
+    # enough that dose 1 + the 4-week minimum interval falls after dose 2's
+    # 4-month recommended age -- so the delay is what sets dose 2's date.
     original_due_date = date.fromisoformat(dtap_dose1["due_date"])
-    late_administered_date = original_due_date + timedelta(days=20)
+    late_administered_date = birth_date + timedelta(days=110)
+    assert late_administered_date > original_due_date
     assert late_administered_date <= date.today()
 
     mark_resp = client.post(

@@ -21,6 +21,10 @@ export type ScheduleItem = {
   administered_date: string | null;
   notes: string | null;
   source_version: string | null;
+  /** First date this dose is no longer recommended (hard age limit), if any. */
+  window_closes_on: string | null;
+  /** Parent-facing explanation of that age limit. */
+  age_window_note: string | null;
 };
 
 export type GrowthMeasurement = {

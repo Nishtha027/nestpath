@@ -17,12 +17,17 @@ _REFERENCE_DATA_DIR = Path(__file__).resolve().parents[2] / "reference-data"
 if str(_REFERENCE_DATA_DIR) not in sys.path:
     sys.path.insert(0, str(_REFERENCE_DATA_DIR))
 
-from vaccine_schedule import catch_up_plan, source_version  # noqa: E402
+from sqlalchemy import select  # noqa: E402
+
+from vaccine_schedule import AGE_WINDOW_CLOSED, catch_up_plan, source_version  # noqa: E402
 
 from ..models import Child, ScheduleItem  # noqa: E402
 
 _GIVEN = "given"
-_PENDING_STATUSES = ("due_now", "upcoming")
+# Statuses that get a not-yet-given row. A closed-window dose still gets
+# one, shown as "no longer recommended at this age", so a parent can still
+# record it if it was in fact given earlier, within its window.
+_PENDING_STATUSES = ("due_now", "upcoming", AGE_WINDOW_CLOSED)
 
 
 def _administered_history(db: Session, child_id) -> dict[str, list[date]]:
@@ -85,6 +90,48 @@ def generate_schedule_for_child(
     real next-due dose computed by catch_up_plan() (never a placeholder).
     """
     return _create_pending_items(db, child, today or date.today())
+
+
+def refresh_stale_pending_items(db: Session, child: Child, today: date | None = None) -> bool:
+    """Regenerate this child's not-yet-given rows if any were written by an
+    older encoding of the schedule (different source_version) -- e.g.
+    rows from before the 2026-10-07 revision, which scheduled doses at
+    their minimum age (MenACWY at 2 months). Given doses are history and
+    are never touched. Returns True if anything was regenerated (caller
+    commits).
+
+    The child row is locked first and staleness re-checked under the lock,
+    so two concurrent requests can't both regenerate and duplicate rows.
+    """
+
+    def has_stale() -> bool:
+        return (
+            db.query(ScheduleItem)
+            .filter(
+                ScheduleItem.child_id == child.id,
+                ScheduleItem.status != _GIVEN,
+                ScheduleItem.source_version.is_distinct_from(source_version),
+            )
+            .first()
+            is not None
+        )
+
+    if not has_stale():
+        return False
+    db.execute(select(Child).where(Child.id == child.id).with_for_update())
+    if not has_stale():
+        return False
+
+    for item in (
+        db.query(ScheduleItem)
+        .filter(ScheduleItem.child_id == child.id, ScheduleItem.status != _GIVEN)
+        .all()
+    ):
+        db.delete(item)
+    db.flush()
+    _create_pending_items(db, child, today or date.today())
+    db.flush()
+    return True
 
 
 def record_dose_given(

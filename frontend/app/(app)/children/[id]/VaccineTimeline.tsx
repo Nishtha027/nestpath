@@ -4,7 +4,14 @@ import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { todayISO } from "@/lib/dates";
 import type { ScheduleItem } from "@/lib/types";
-import { canUndo, groupSchedule, type VaccineGroup } from "@/lib/vaccine-groups";
+import {
+  canUndo,
+  groupSchedule,
+  isWindowClosed,
+  lastAllowedDay,
+  showWindowNote,
+  type VaccineGroup,
+} from "@/lib/vaccine-groups";
 
 function doseLabel(item: ScheduleItem) {
   return `${item.vaccine_id.toUpperCase()} dose ${item.dose_number ?? "?"}`;
@@ -18,6 +25,11 @@ const GROUPS: { key: VaccineGroup; title: string; hint?: string }[] = [
     hint: "Ask your pediatrician about catching up -- doses can usually still be given on a catch-up schedule.",
   },
   { key: "upcoming", title: "Upcoming" },
+  {
+    key: "closed",
+    title: "No longer recommended at this age",
+    hint: "Ask your pediatrician. If one of these was given earlier, while it was still recommended, you can still record the date.",
+  },
   { key: "done", title: "Done" },
 ];
 
@@ -107,10 +119,12 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
       <p className="text-sm font-medium" data-testid="vaccine-summary">
         {groups.dueNow.length} due now · {groups.overdue.length} overdue · {groups.upcoming.length}{" "}
         upcoming · {groups.done.length} done
+        {groups.closed.length > 0 && ` · ${groups.closed.length} no longer recommended`}
       </p>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Later doses appear after each one is marked done. Based on the US CDC schedule; your
-        pediatrician has the final say.
+        Later doses appear after each one is marked done. Based on the US CDC schedule (July 2,
+        2025) for healthy children; it isn&apos;t medical advice, and your pediatrician has the
+        final say.
       </p>
 
       <div aria-live="polite" className="flex flex-col gap-2">
@@ -140,8 +154,12 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
             ) : (
               <p>
                 Marked {notice.label} as not done
-                {notice.restored ? `; it is due ${notice.restored.due_date}` : ""}. Any later dose
-                that was scheduled from it has been removed.
+                {notice.restored
+                  ? isWindowClosed(notice.restored, today)
+                    ? "; it is no longer recommended at this age"
+                    : `; it is due ${notice.restored.due_date}`
+                  : ""}
+                . Any later dose that was scheduled from it has been removed.
               </p>
             )}
           </div>
@@ -158,8 +176,10 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
             <ul className="flex flex-col gap-2">
               {groups[key].map((item) => {
                 const done = item.status === "given";
+                const closed = key === "closed";
                 const busy = savingId !== null;
                 const dateId = `given-${item.id}`;
+                const lastDay = lastAllowedDay(item);
                 return (
                   <li
                     key={item.id}
@@ -170,8 +190,18 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                     <div className="flex flex-col">
                       <span className="font-medium">{doseLabel(item)}</span>
                       <span className="text-zinc-600 dark:text-zinc-400">
-                        {done ? `given ${item.administered_date}` : `due ${item.due_date}`}
+                        {done
+                          ? `given ${item.administered_date}`
+                          : closed
+                            ? "No longer recommended at this age. Ask your pediatrician."
+                            : `due ${item.due_date}`}
                       </span>
+                      {showWindowNote(item, today) && (
+                        <span className="text-xs text-zinc-700 dark:text-zinc-300">
+                          {item.age_window_note}
+                          {!closed && lastDay && ` Last day for this dose: ${lastDay}.`}
+                        </span>
+                      )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span
@@ -181,7 +211,7 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                             : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
                         }`}
                       >
-                        {done ? "Done" : "Not done"}
+                        {done ? "Done" : closed ? "Not recommended now" : "Not done"}
                       </span>
                       {done ? (
                         canUndo(item, items) ? (
@@ -218,10 +248,14 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                             type="button"
                             onClick={() => handleMarkDone(item)}
                             disabled={busy}
-                            aria-label={`Mark ${doseLabel(item)} as done`}
+                            aria-label={
+                              closed
+                                ? `Record ${doseLabel(item)} as given earlier`
+                                : `Mark ${doseLabel(item)} as done`
+                            }
                             className={`rounded bg-black px-3 py-1 text-white disabled:opacity-50 dark:bg-white dark:text-black ${FOCUS}`}
                           >
-                            {savingId === item.id ? "Saving..." : "Mark done"}
+                            {savingId === item.id ? "Saving..." : closed ? "Record as given" : "Mark done"}
                           </button>
                         </>
                       )}

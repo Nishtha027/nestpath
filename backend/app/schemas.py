@@ -69,6 +69,10 @@ class ScheduleItemResponse(BaseModel):
     administered_date: Optional[date] = None
     notes: Optional[str] = None
     source_version: Optional[str] = None
+    # First date this dose is no longer recommended (hard age limit), if any.
+    window_closes_on: Optional[date] = None
+    # Parent-facing explanation of that limit.
+    age_window_note: Optional[str] = None
 
 
 class MarkGivenRequest(BaseModel):
