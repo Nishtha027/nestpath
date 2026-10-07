@@ -158,6 +158,20 @@ class EPDSResult:
     risk_level: str  # "low" | "moderate" | "high"
 
 
+def score_band(total_score: int) -> str:
+    """The total-score band alone ("low" 0-9, "moderate" 10-12, "high"
+    13+), per RISK BANDS above. This is NOT the risk level: it ignores
+    item 10 on purpose, so callers can describe the total score without
+    the item-10 override hiding it. Anything safety-related must use
+    score_epds()'s item_10_flag / risk_level instead.
+    """
+    if total_score >= 13:
+        return "high"
+    if total_score >= 10:
+        return "moderate"
+    return "low"
+
+
 def score_epds(answers: list[int]) -> EPDSResult:
     """Scores a completed EPDS. `answers` is a list of 10 option indices
     (0-3, top-to-bottom as printed on the form), one per item, in item
@@ -180,14 +194,7 @@ def score_epds(answers: list[int]) -> EPDSResult:
     item_10_score = item_scores[ITEM_10_NUMBER]
     item_10_flag = item_10_score > 0
 
-    if total_score >= 13:
-        band = "high"
-    elif total_score >= 10:
-        band = "moderate"
-    else:
-        band = "low"
-
-    risk_level = "high" if item_10_flag else band
+    risk_level = "high" if item_10_flag else score_band(total_score)
 
     return EPDSResult(
         total_score=total_score,

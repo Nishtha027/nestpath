@@ -163,9 +163,20 @@ class ScreeningSubmitRequest(BaseModel):
 class ScreeningSubmitResponse(BaseModel):
     id: UUID
     total_score: int
+    # Total-score band only (low/moderate/high), without the item-10
+    # override -- risk_level and item_10_flag carry that.
+    score_band: str
     risk_level: str
     item_10_flag: bool
     message: str
+    created_at: datetime
+
+
+class ScreeningHistoryItem(BaseModel):
+    id: UUID
+    total_score: int
+    score_band: str
+    item_10_flag: bool
     created_at: datetime
 
 

@@ -16,7 +16,7 @@ _REFERENCE_DATA_DIR = Path(__file__).resolve().parents[2] / "reference-data"
 if str(_REFERENCE_DATA_DIR) not in sys.path:
     sys.path.insert(0, str(_REFERENCE_DATA_DIR))
 
-from epds_screening import score_epds, source_version  # noqa: E402
+from epds_screening import score_band, score_epds, source_version  # noqa: E402,F401  (score_band re-exported)
 
 from ..models import ScreeningResponse  # noqa: E402
 

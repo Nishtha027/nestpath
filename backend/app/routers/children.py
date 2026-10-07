@@ -9,7 +9,12 @@ from ..database import get_db
 from ..dates import is_in_future
 from ..deps import get_child_for_caregiver, get_current_caregiver
 from ..models import Caregiver, Child, ScheduleItem
-from ..services.timeline import generate_schedule_for_child, record_dose_given
+from ..services.timeline import (
+    DoseUndoError,
+    generate_schedule_for_child,
+    record_dose_given,
+    undo_dose_given,
+)
 
 router = APIRouter(prefix="/children", tags=["children"])
 
@@ -80,6 +85,36 @@ def mark_given(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Administered date cannot be in the future")
 
     updated = record_dose_given(db, child, item, administered_date)
+    db.commit()
+    for updated_item in updated:
+        db.refresh(updated_item)
+    return updated
+
+
+@router.post(
+    "/{child_id}/schedule/{item_id}/mark-not-given",
+    response_model=list[schemas.ScheduleItemResponse],
+)
+def mark_not_given(
+    item_id: UUID,
+    child: Child = Depends(get_child_for_caregiver),
+    db: Session = Depends(get_db),
+):
+    """Undo a mark-given. Takes no date, so there is nothing to
+    future-date-check; correcting a wrong date is undo then mark-given
+    again, which does check it."""
+    item = db.get(ScheduleItem, item_id)
+    if item is None or item.child_id != child.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Schedule item not found")
+    if item.status != "given":
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Dose is not marked as given")
+
+    try:
+        updated = undo_dose_given(db, child, item)
+    except DoseUndoError as exc:
+        db.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(exc))
+
     db.commit()
     for updated_item in updated:
         db.refresh(updated_item)

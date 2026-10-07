@@ -67,12 +67,24 @@ export type Appointment = {
   checklist: string[];
 };
 
+export type ScoreBand = "low" | "moderate" | "high";
+
 export type ScreeningSubmitResponse = {
   id: string;
   total_score: number;
+  /** Total-score band only; item 10 is reported separately in item_10_flag. */
+  score_band: ScoreBand;
   risk_level: "low" | "moderate" | "high";
   item_10_flag: boolean;
   message: string;
+  created_at: string;
+};
+
+export type ScreeningHistoryItem = {
+  id: string;
+  total_score: number;
+  score_band: ScoreBand;
+  item_10_flag: boolean;
   created_at: string;
 };
 

@@ -105,3 +105,70 @@ def record_dose_given(
     db.flush()
     created = _create_pending_items(db, child, today or date.today())
     return [item, *created]
+
+
+class DoseUndoError(ValueError):
+    """The dose can't be marked not given (see undo_dose_given)."""
+
+
+def undo_dose_given(
+    db: Session,
+    child: Child,
+    item: ScheduleItem,
+    today: date | None = None,
+) -> list[ScheduleItem]:
+    """Reverse record_dose_given(): drop the follow-up pending dose it
+    created for this vaccine, and turn `item` back into the pending dose,
+    with its due date recomputed by catch_up_plan() from the remaining
+    real history.
+
+    Only the most recent given dose of a vaccine can be undone -- undoing
+    an earlier one would leave later given doses with no valid
+    predecessor. Returns [item] if it is pending again, or [] if the plan
+    no longer calls for that dose (e.g. the child has aged out of it), in
+    which case the row is removed.
+    """
+    if item.status != _GIVEN:
+        raise DoseUndoError("Dose is not marked as given")
+
+    later_given = (
+        db.query(ScheduleItem)
+        .filter(
+            ScheduleItem.child_id == child.id,
+            ScheduleItem.vaccine_id == item.vaccine_id,
+            ScheduleItem.status == _GIVEN,
+            ScheduleItem.dose_number > item.dose_number,
+        )
+        .count()
+    )
+    if later_given:
+        raise DoseUndoError("Only the most recent dose of a vaccine can be marked not given")
+
+    for pending in (
+        db.query(ScheduleItem)
+        .filter(
+            ScheduleItem.child_id == child.id,
+            ScheduleItem.vaccine_id == item.vaccine_id,
+            ScheduleItem.status != _GIVEN,
+        )
+        .all()
+    ):
+        db.delete(pending)
+
+    item.administered_date = None
+    item.status = "upcoming"  # placeholder, so it drops out of the history below
+    db.flush()
+
+    plan = catch_up_plan(child.birth_date, _administered_history(db, child.id), today or date.today())
+    result = plan.get(item.vaccine_id)
+    if result is None or result.status not in _PENDING_STATUSES or result.dose_number != item.dose_number:
+        db.delete(item)
+        db.flush()
+        return []
+
+    item.due_date = result.earliest_valid_date
+    item.status = result.status
+    item.notes = result.notes or None
+    item.source_version = source_version
+    db.flush()
+    return [item]

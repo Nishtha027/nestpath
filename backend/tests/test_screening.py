@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from epds_screening import score_epds
+from epds_screening import score_band, score_epds
 
 from app.models import Caregiver
 
@@ -115,3 +115,58 @@ def test_alerts_forbidden_for_non_provider_then_visible_once_flagged(client, aut
     assert alerts_resp.status_code == 200
     alert_ids = [a["id"] for a in alerts_resp.json()]
     assert alert_ids == [flagged_id]
+
+
+def test_score_band_ignores_item_10_but_risk_level_does_not(client, auth_headers):
+    headers, _ = auth_headers()
+    body = client.post(
+        "/screenings", json={"answers": LOW_TOTAL_ITEM10_POSITIVE_ANSWERS}, headers=headers
+    ).json()
+    assert body["score_band"] == "low"
+    assert body["risk_level"] == "high"
+    assert body["item_10_flag"] is True
+
+    assert score_band(9) == "low"
+    assert score_band(10) == "moderate"
+    assert score_band(12) == "moderate"
+    assert score_band(13) == "high"
+
+
+def test_screening_history_returns_only_own_results_newest_first(client, auth_headers):
+    headers, register = auth_headers()
+    invite_code = client.get("/family", headers=headers).json()["invite_code"]
+    partner_register = client.post(
+        "/auth/register",
+        json={
+            "name": "Partner",
+            "email": "partner@example.com",
+            "password": "correct horse battery staple",
+            "invite_code": invite_code,
+        },
+    )
+    assert partner_register.status_code == 201
+    partner_token = client.post(
+        "/auth/login",
+        data={"username": "partner@example.com", "password": "correct horse battery staple"},
+    ).json()["access_token"]
+    partner_headers = {"Authorization": f"Bearer {partner_token}"}
+
+    first = client.post("/screenings", json={"answers": LOW_ANSWERS}, headers=headers).json()
+    second = client.post("/screenings", json={"answers": HIGH_TOTAL_ANSWERS}, headers=headers).json()
+    partner = client.post("/screenings", json={"answers": LOW_ANSWERS}, headers=partner_headers).json()
+
+    history = client.get("/screenings/me", headers=headers)
+    assert history.status_code == 200
+    rows = history.json()
+    assert [r["id"] for r in rows] == [second["id"], first["id"]]
+    assert rows[0]["total_score"] == 18
+    assert rows[0]["score_band"] == "high"
+    assert "answers" not in rows[0]
+
+    # Same family, but the partner sees only their own result.
+    partner_rows = client.get("/screenings/me", headers=partner_headers).json()
+    assert [r["id"] for r in partner_rows] == [partner["id"]]
+
+
+def test_screening_history_requires_auth(client):
+    assert client.get("/screenings/me").status_code == 401
