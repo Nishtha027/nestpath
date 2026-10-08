@@ -33,10 +33,31 @@ export type GrowthMeasurement = {
   measured_at: string;
   age_months: number;
   sex: string;
-  weight_kg: number;
-  percentile: number;
-  z_score: number;
+  // A measurement has a weight, a length, or both.
+  weight_kg: number | null;
+  percentile: number | null; // weight-for-age
+  z_score: number | null; // weight-for-age
+  length_cm: number | null;
+  length_percentile: number | null;
+  length_z_score: number | null;
   source_version: string | null;
+};
+
+/** One month of WHO chart percentile curves (GET /growth/reference). */
+export type GrowthReferenceRow = {
+  month: number;
+  p3: number;
+  p15: number;
+  p50: number;
+  p85: number;
+  p97: number;
+};
+
+export type GrowthReference = {
+  sex: "male" | "female";
+  source: string;
+  weight_kg: GrowthReferenceRow[];
+  length_cm: GrowthReferenceRow[];
 };
 
 export type CareLog = {

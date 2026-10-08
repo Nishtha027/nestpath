@@ -117,9 +117,14 @@ class GrowthMeasurement(Base):
     # WHO LMS tables require -- computed from child.birth_date, not user input.
     age_months = Column(Integer, nullable=False)
     sex = Column(String, nullable=False)
-    weight_kg = Column(Float, nullable=False)
-    percentile = Column(Float, nullable=False)
-    z_score = Column(Float, nullable=False)
+    # A visit may record weight, length, or both (at least one -- enforced by
+    # the request schema). percentile/z_score are the weight-for-age values.
+    weight_kg = Column(Float, nullable=True)
+    percentile = Column(Float, nullable=True)
+    z_score = Column(Float, nullable=True)
+    length_cm = Column(Float, nullable=True)
+    length_percentile = Column(Float, nullable=True)
+    length_z_score = Column(Float, nullable=True)
     # Provenance tag for the LMS table used, e.g. growth_percentile's WHO/CDC
     # source and retrieval date (see app/services/growth.py SOURCE_VERSION).
     source_version = Column(String, nullable=True)

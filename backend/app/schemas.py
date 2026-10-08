@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from .models import AppointmentStatus, CaregiverRole, CareLogType, HelpRequestStatus
 
@@ -82,7 +82,14 @@ class MarkGivenRequest(BaseModel):
 class GrowthMeasurementCreate(BaseModel):
     measured_at: date
     sex: str
-    weight_kg: float
+    weight_kg: Optional[float] = None
+    length_cm: Optional[float] = None
+
+    @model_validator(mode="after")
+    def weight_or_length(self):
+        if self.weight_kg is None and self.length_cm is None:
+            raise ValueError("Enter a weight, a length, or both")
+        return self
 
 
 class GrowthMeasurementResponse(BaseModel):
@@ -93,10 +100,29 @@ class GrowthMeasurementResponse(BaseModel):
     measured_at: date
     age_months: int
     sex: str
-    weight_kg: float
-    percentile: float
-    z_score: float
+    weight_kg: Optional[float] = None
+    percentile: Optional[float] = None  # weight-for-age
+    z_score: Optional[float] = None  # weight-for-age
+    length_cm: Optional[float] = None
+    length_percentile: Optional[float] = None
+    length_z_score: Optional[float] = None
     source_version: Optional[str] = None
+
+
+class GrowthReferenceRow(BaseModel):
+    month: int
+    p3: float
+    p15: float
+    p50: float
+    p85: float
+    p97: float
+
+
+class GrowthReferenceResponse(BaseModel):
+    sex: str
+    source: str
+    weight_kg: list[GrowthReferenceRow]
+    length_cm: list[GrowthReferenceRow]
 
 
 class CareLogCreate(BaseModel):
