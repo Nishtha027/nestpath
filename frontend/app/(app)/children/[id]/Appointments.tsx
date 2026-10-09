@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Appointment, AvailabilitySlot, Provider } from "@/lib/types";
+import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, LIST_ITEM, MUTED, SUBSECTION_TITLE } from "@/lib/ui";
+import { Message } from "../../../ui/Message";
 
 export function Appointments({ childId, token }: { childId: string; token: string }) {
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -79,18 +81,19 @@ export function Appointments({ childId, token }: { childId: string; token: strin
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        {providersError && <p className="text-sm text-red-600">{providersError}</p>}
+    <div className="flex flex-col gap-5">
+      <div className={CARD}>
+        {providersError && <Message tone="error">{providersError}</Message>}
         {providers.length === 0 && !providersError ? (
-          <p className="text-sm text-zinc-500">No providers available yet.</p>
+          <p className={MUTED}>No providers available yet.</p>
         ) : (
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-zinc-500">Provider</label>
+          <div className={FIELD}>
+            <label htmlFor="appointment-provider" className={LABEL}>Provider</label>
             <select
+              id="appointment-provider"
               value={selectedProviderId}
               onChange={(e) => setSelectedProviderId(e.target.value)}
-              className="rounded border px-3 py-2"
+              className={INPUT}
             >
               <option value="">Select a provider...</option>
               {providers.map((p) => (
@@ -105,16 +108,16 @@ export function Appointments({ childId, token }: { childId: string; token: strin
 
         {selectedProviderId && (
           <div className="flex flex-col gap-2">
-            {slotsLoading && <p className="text-sm text-zinc-500">Loading availability...</p>}
-            {slotsError && <p className="text-sm text-red-600">{slotsError}</p>}
+            {slotsLoading && <p className={MUTED}>Loading availability...</p>}
+            {slotsError && <Message tone="error">{slotsError}</Message>}
             {!slotsLoading && !slotsError && slots.length === 0 && (
-              <p className="text-sm text-zinc-500">No open slots for this provider.</p>
+              <p className={MUTED}>No open slots for this provider.</p>
             )}
             <ul className="flex flex-col gap-2">
               {slots.map((slot) => (
                 <li
                   key={slot.id}
-                  className="flex items-center justify-between gap-3 rounded border px-3 py-2 text-sm"
+                  className={`flex flex-wrap items-center justify-between gap-3 text-sm ${LIST_ITEM}`}
                 >
                   <span>
                     {new Date(slot.start_time).toLocaleString()} &ndash;{" "}
@@ -124,32 +127,34 @@ export function Appointments({ childId, token }: { childId: string; token: strin
                     type="button"
                     onClick={() => handleBook(slot.id)}
                     disabled={booking === slot.id}
-                    className="rounded bg-black px-3 py-1 text-white disabled:opacity-50 dark:bg-white dark:text-black"
+                    className={BUTTON_PRIMARY}
                   >
                     {booking === slot.id ? "Booking..." : "Book"}
                   </button>
                 </li>
               ))}
             </ul>
-            {bookError && <p className="text-sm text-red-600">{bookError}</p>}
+            {bookError && <Message tone="error">{bookError}</Message>}
           </div>
         )}
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-medium text-zinc-500">Upcoming appointments</h3>
-        {appointmentsError && <p className="text-sm text-red-600">{appointmentsError}</p>}
+      <div className={CARD}>
+        <h3 className={SUBSECTION_TITLE}>Upcoming appointments</h3>
+        {appointmentsError && <Message tone="error">{appointmentsError}</Message>}
         {appointments.length === 0 && !appointmentsError && (
-          <p className="text-sm text-zinc-500">No appointments booked yet.</p>
+          <p className={MUTED}>No appointments booked yet.</p>
         )}
         <ul className="flex flex-col gap-3">
           {appointments.map((appt) => (
-            <li key={appt.id} className="rounded border px-3 py-2 text-sm">
+            <li key={appt.id} className={`text-sm ${LIST_ITEM}`}>
               <div className="flex items-center justify-between">
-                <span className="font-medium capitalize">{appt.status}</span>
+                <span className="rounded-full bg-blue-soft px-2.5 py-0.5 font-bold capitalize text-primary-ink">
+                  {appt.status}
+                </span>
               </div>
               {appt.checklist.length > 0 && (
-                <ul className="mt-2 list-disc pl-5 text-zinc-600 dark:text-zinc-400">
+                <ul className="mt-2 list-disc space-y-0.5 pl-5 text-ink">
                   {appt.checklist.map((item, i) => (
                     <li key={i}>{item}</li>
                   ))}

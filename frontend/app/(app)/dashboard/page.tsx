@@ -6,10 +6,10 @@ import Link from "next/link";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Child } from "@/lib/types";
 import { ageLabel, useAppState } from "@/lib/app-state";
+import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, MUTED, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
+import { Message } from "../../ui/Message";
 import { InviteCode } from "./InviteCode";
 import { LoadError } from "../LoadError";
-
-const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
 
 export default function HomePage() {
   const { token, childList, childrenLoading, childrenError, retryChildren, addChild, selectChild } =
@@ -43,13 +43,13 @@ export default function HomePage() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold">Home</h1>
+      <h1 className={PAGE_TITLE}>Home</h1>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Add a child</h2>
+      <section className={CARD}>
+        <h2 className={SECTION_TITLE}>Add a child</h2>
         <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label htmlFor="child-name" className="text-sm text-zinc-600 dark:text-zinc-400">
+          <div className={`${FIELD} min-w-0 flex-1 basis-48`}>
+            <label htmlFor="child-name" className={LABEL}>
               Name
             </label>
             <input
@@ -58,11 +58,11 @@ export default function HomePage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className={`rounded border border-black/25 px-3 py-2 dark:border-white/30 ${FOCUS}`}
+              className={INPUT}
             />
           </div>
-          <div className="flex flex-col gap-1">
-            <label htmlFor="child-birth-date" className="text-sm text-zinc-600 dark:text-zinc-400">
+          <div className={`${FIELD} min-w-0 flex-1 basis-40`}>
+            <label htmlFor="child-birth-date" className={LABEL}>
               Birth date
             </label>
             <input
@@ -71,50 +71,48 @@ export default function HomePage() {
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
               required
-              className={`rounded border border-black/25 px-3 py-2 dark:border-white/30 ${FOCUS}`}
+              className={INPUT}
             />
           </div>
-          <button
-            type="submit"
-            disabled={creating}
-            className={`rounded bg-black px-3 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black ${FOCUS}`}
-          >
+          <button type="submit" disabled={creating} className={BUTTON_PRIMARY}>
             {creating ? "Adding..." : "Add child"}
           </button>
         </form>
-        {createError && <p className="text-sm text-red-700 dark:text-red-400">{createError}</p>}
+        {createError && <Message tone="error">{createError}</Message>}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Children</h2>
-        {childrenLoading && <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</p>}
+      <section className={CARD}>
+        <h2 className={SECTION_TITLE}>Children</h2>
+        {childrenLoading && <p className={MUTED}>Loading...</p>}
         {childrenError && <LoadError message={childrenError} onRetry={retryChildren} />}
         {!childrenLoading && !childrenError && childList.length === 0 && (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          <p className={MUTED}>
             No children yet -- add one above to see their vaccines, growth, care log and
             appointments.
           </p>
         )}
-        <ul className="flex flex-col gap-2">
-          {childList.map((child) => (
-            <li key={child.id}>
-              <Link
-                href={`/children/${child.id}/vaccines`}
-                onClick={() => selectChild(child.id)}
-                className={`block rounded border border-black/15 px-4 py-3 hover:bg-black/[.03] dark:border-white/20 dark:hover:bg-white/[.05] ${FOCUS}`}
-              >
-                <span className="font-medium">{child.name || "Unnamed child"}</span>
-                <span className="ml-2 text-sm text-zinc-600 dark:text-zinc-400">
-                  {ageLabel(child.birth_date)} · born {child.birth_date}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {childList.length > 0 && (
+          <ul className="flex flex-col gap-2">
+            {childList.map((child) => (
+              <li key={child.id}>
+                <Link
+                  href={`/children/${child.id}/vaccines`}
+                  onClick={() => selectChild(child.id)}
+                  className="flex min-h-11 flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-xl border border-line bg-page px-4 py-3 transition-colors hover:bg-blue-soft"
+                >
+                  <span className="font-bold text-ink">{child.name || "Unnamed child"}</span>
+                  <span className="text-sm text-muted">
+                    {ageLabel(child.birth_date)} · born {child.birth_date}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Invite a caregiver</h2>
+      <section className={CARD}>
+        <h2 className={SECTION_TITLE}>Invite a caregiver</h2>
         <InviteCode token={token} />
       </section>
     </>

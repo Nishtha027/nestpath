@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import { loadErrorMessage, withRetry } from "@/lib/retry";
 import type { Family } from "@/lib/types";
+import { MUTED } from "@/lib/ui";
 import { LoadError } from "../LoadError";
 
 export function InviteCode({ token }: { token: string }) {
@@ -31,20 +32,20 @@ export function InviteCode({ token }: { token: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 text-sm">
+    <div className="flex flex-col gap-3">
       {error && <LoadError message={error} onRetry={retry} />}
       {family && (
         <>
-          <p>
-            Invite code:{" "}
+          <p className="flex flex-wrap items-center gap-3">
+            <span className="font-semibold">Invite code:</span>
             <code
               data-testid="invite-code"
-              className="rounded bg-black/[.06] px-2 py-1 font-mono text-base tracking-widest dark:bg-white/[.08]"
+              className="rounded-xl bg-blue-soft px-3 py-1.5 font-mono text-lg font-semibold tracking-widest text-primary-ink"
             >
               {family.invite_code}
             </code>
           </p>
-          <p className="text-zinc-500">
+          <p className={MUTED}>
             Share this with another caregiver. On the login page they choose Register, then Join an
             existing family, and enter it to see the same children, care log and help board.
           </p>

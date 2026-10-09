@@ -13,9 +13,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <AppStateProvider key={token} token={token}>
-      <div className="flex min-h-screen flex-col font-sans">
+      <div className="flex min-h-screen flex-col">
         <AppNav />
-        <main className="mx-auto flex w-full max-w-2xl flex-col gap-8 px-4 py-6 sm:px-8">
+        <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10">
           {children}
         </main>
       </div>

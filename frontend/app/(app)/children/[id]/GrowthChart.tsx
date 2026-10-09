@@ -6,6 +6,9 @@ import { ageInMonths, comparedToPeers, outsideTypicalRange } from "@/lib/growth"
 import type { GrowthMeasurement, GrowthReference } from "@/lib/types";
 import { GrowthForm } from "./GrowthForm";
 import { ChartLegend, PercentileChart, type ChildPoint } from "./PercentileChart";
+import { CARD, MUTED, SECTION_TITLE } from "@/lib/ui";
+import { Icon } from "../../../ui/Icon";
+import { Message } from "../../../ui/Message";
 
 type Sex = "male" | "female";
 
@@ -73,16 +76,16 @@ export function GrowthChart({
 
   return (
     <div className="flex flex-col gap-6">
-      <fieldset className="flex flex-wrap items-center gap-3 text-sm">
+      <fieldset className="flex flex-wrap items-center gap-2 text-sm">
         <legend className="sr-only">Chart for</legend>
-        <span className="text-zinc-600 dark:text-zinc-400">WHO charts for</span>
+        <span className="mr-1 font-semibold text-muted">WHO charts for</span>
         {(["female", "male"] as const).map((option) => (
           <label
             key={option}
-            className={`cursor-pointer rounded-full border px-3 py-1 ${
+            className={`inline-flex min-h-11 cursor-pointer items-center gap-1.5 rounded-full border px-4 has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus ${
               sex === option
-                ? "border-blue-600 bg-blue-50 text-blue-800 dark:border-blue-400 dark:bg-blue-950 dark:text-blue-200"
-                : "border-black/20 dark:border-white/25"
+                ? "border-primary-ink bg-blue-soft font-bold text-primary-ink"
+                : "border-line-strong bg-surface font-semibold text-ink hover:bg-page"
             }`}
           >
             <input
@@ -93,50 +96,51 @@ export function GrowthChart({
               onChange={() => setSex(option)}
               className="sr-only"
             />
+            {sex === option && <Icon name="check" className="h-4 w-4" />}
             {option === "female" ? "Girls" : "Boys"}
           </label>
         ))}
       </fieldset>
 
       {overTwo && (
-        <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+        <Message tone="warning">
           These charts cover birth to 2 years (WHO&apos;s under-2 standard). Measurements after age 2
           can&apos;t be added here yet.
-        </p>
+        </Message>
       )}
 
       {loading ? (
-        <p className="text-sm text-zinc-500">Loading...</p>
+        <p className={MUTED}>Loading...</p>
       ) : error ? (
-        <p className="text-sm text-red-600">{error}</p>
+        <Message tone="error">{error}</Message>
       ) : latest ? (
         <LatestSummary measurement={latest} />
       ) : (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+        <p className={MUTED}>
           No measurements yet. Add your baby&apos;s weight and length below to see how they compare
           with WHO growth standards.
         </p>
       )}
 
-      <section className="flex flex-col gap-2 rounded border border-black/10 p-4 dark:border-white/15">
-        <h2 className="font-medium">Add a measurement</h2>
+      <section className={CARD}>
+        <h2 className={SECTION_TITLE}>Add a measurement</h2>
         <GrowthForm childId={childId} token={token} birthDate={birthDate} sex={sex} onAdded={loadMeasurements} />
       </section>
 
       {!sex ? (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">Choose Girls or Boys to see the growth charts.</p>
+        <p className={MUTED}>Choose Girls or Boys to see the growth charts.</p>
       ) : referenceError ? (
-        <p className="text-sm text-red-600">{referenceError}</p>
+        <Message tone="error">{referenceError}</Message>
       ) : !reference || !curvesMatch ? (
-        <p className="text-sm text-zinc-500">Loading charts...</p>
+        <p className={MUTED}>Loading charts...</p>
       ) : (
         <section className="flex flex-col gap-4">
           <ChartLegend />
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="flex flex-col gap-5">
             <PercentileChart title="Weight for age" unit="kg" reference={reference.weight_kg} points={weightPoints} />
             <PercentileChart title="Length for age" unit="cm" reference={reference.length_cm} points={lengthPoints} />
           </div>
-          <p className="text-xs text-zinc-500">
+          <p className={MUTED}>
             Babies grow at their own pace. What matters most is following a steady curve over time,
             not being on the average line. Source: WHO Child Growth Standards (0-24 months), via
             CDC&apos;s data files. This is not medical advice.
@@ -154,27 +158,27 @@ function LatestSummary({ measurement: m }: { measurement: GrowthMeasurement }) {
     (m.percentile !== null && outsideTypicalRange(m.percentile)) ||
     (m.length_percentile !== null && outsideTypicalRange(m.length_percentile));
   return (
-    <section className="flex flex-col gap-1 rounded bg-blue-50 px-4 py-3 text-sm dark:bg-blue-950/60">
-      <h2 className="font-medium">
+    <section className="flex flex-col gap-1.5 rounded-2xl bg-blue-soft px-5 py-4 text-ink">
+      <h2 className="font-semibold">
         Latest: {m.measured_at} ({m.age_months} month{m.age_months === 1 ? "" : "s"} old)
       </h2>
       {m.weight_kg !== null && m.percentile !== null && (
         <p>
           <strong>{m.weight_kg} kg</strong>: {comparedToPeers(m.percentile, "weight", m.sex)}{" "}
-          <span className="text-zinc-600 dark:text-zinc-400">({ordinal(m.percentile)} percentile)</span>
+          <span className="text-muted">({ordinal(m.percentile)} percentile)</span>
         </p>
       )}
       {m.length_cm !== null && m.length_percentile !== null && (
         <p>
           <strong>{m.length_cm} cm</strong>: {comparedToPeers(m.length_percentile, "length", m.sex)}{" "}
-          <span className="text-zinc-600 dark:text-zinc-400">({ordinal(m.length_percentile)} percentile)</span>
+          <span className="text-muted">({ordinal(m.length_percentile)} percentile)</span>
         </p>
       )}
       {flagged && (
-        <p className="mt-1 text-amber-900 dark:text-amber-200">
+        <Message tone="warning" className="mt-1">
           This is outside the range most babies fall in (3rd-97th percentile). One measurement
           isn&apos;t a diagnosis, but it&apos;s worth mentioning at your next check-up.
-        </p>
+        </Message>
       )}
     </section>
   );
@@ -182,29 +186,29 @@ function LatestSummary({ measurement: m }: { measurement: GrowthMeasurement }) {
 
 function MeasurementTable({ measurements }: { measurements: GrowthMeasurement[] }) {
   return (
-    <section className="flex flex-col gap-2">
-      <h2 className="font-medium">All measurements</h2>
+    <section className={CARD}>
+      <h2 className={SECTION_TITLE}>All measurements</h2>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[28rem] text-left text-sm">
-          <thead className="text-xs text-zinc-500">
+          <thead className="text-xs text-muted">
             <tr>
-              <th className="py-1 pr-3 font-normal">Date</th>
-              <th className="py-1 pr-3 font-normal">Age</th>
-              <th className="py-1 pr-3 font-normal">Weight</th>
-              <th className="py-1 pr-3 font-normal">Length</th>
+              <th className="py-1.5 pr-3 font-semibold">Date</th>
+              <th className="py-1.5 pr-3 font-semibold">Age</th>
+              <th className="py-1.5 pr-3 font-semibold">Weight</th>
+              <th className="py-1.5 pr-3 font-semibold">Length</th>
             </tr>
           </thead>
           <tbody>
             {[...measurements].reverse().map((m) => (
-              <tr key={m.id} className="border-t border-black/10 dark:border-white/15">
-                <td className="py-1.5 pr-3">{m.measured_at}</td>
-                <td className="py-1.5 pr-3">{m.age_months} mo</td>
-                <td className="py-1.5 pr-3">
+              <tr key={m.id} className="border-t border-line">
+                <td className="py-2 pr-3">{m.measured_at}</td>
+                <td className="py-2 pr-3">{m.age_months} mo</td>
+                <td className="py-2 pr-3">
                   {m.weight_kg !== null && m.percentile !== null
                     ? `${m.weight_kg} kg (${ordinal(m.percentile)})`
                     : "-"}
                 </td>
-                <td className="py-1.5 pr-3">
+                <td className="py-2 pr-3">
                   {m.length_cm !== null && m.length_percentile !== null
                     ? `${m.length_cm} cm (${ordinal(m.length_percentile)})`
                     : "-"}

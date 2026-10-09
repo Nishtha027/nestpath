@@ -1,26 +1,152 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------------
+ * Design tokens -- the only place colors are defined.
+ *
+ * Components never use raw colors: they use the Tailwind names mapped in
+ * @theme below (bg-page, text-ink, border-line, ...), and chart code reads
+ * the variables directly (var(--np-chart-child)). Pastels (page, pink-soft,
+ * blue-soft, *-bg) are for backgrounds and fills only; text, icons and
+ * buttons use the deeper shades.
+ *
+ * Every text/background pair is checked against WCAG AA by
+ * lib/contrast.test.ts (npm test); `npm run contrast` prints the table.
+ *
+ * Light theme only for now. To add a dark theme later, redefine these same
+ * --np-* variables under a selector such as :root[data-theme="dark"] (or a
+ * prefers-color-scheme media query) -- no component needs to change.
+ * ---------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Surfaces */
+  --np-page: #fff8fb; /* warm blush white */
+  --np-surface: #ffffff;
+  --np-pink-soft: #fce4ec;
+  --np-blue-soft: #e3f0fc;
+  --np-blue-mid: #b9d3ef;
+  --np-neutral-bg: #f1eef2;
+
+  /* Lines: hairline for decoration, strong for form-field edges (3:1) */
+  --np-line: #efe3ea;
+  --np-line-strong: #8a7c8c;
+
+  /* Text */
+  --np-ink: #2b2a3a;
+  --np-muted: #5f5e72;
+
+  /* Actions */
+  --np-primary: #3d6fb4;
+  --np-primary-hover: #2f5c9e;
+  --np-on-primary: #ffffff;
+  --np-primary-ink: #2f5c9e; /* blue text and icons on light/pastel */
+  --np-secondary-bg: var(--np-pink-soft);
+  --np-secondary-hover: #f8d3e0;
+  --np-secondary-ink: #983a60;
+  --np-focus: #2f5c9e;
+
+  /* Status: each has a deep ink for text/icons and a pale bg */
+  --np-danger-ink: #a1253a;
+  --np-danger-bg: #fdecef;
+  --np-success-ink: #2d6a45;
+  --np-success-bg: #e8f5ec;
+  --np-warning-ink: #80500a;
+  --np-warning-bg: #fff3e0;
+  --np-info-ink: var(--np-primary-ink);
+  --np-info-bg: var(--np-blue-soft);
+  --np-neutral-ink: #55546a;
+
+  /* Crisis support: its own treatment, never reused for anything else */
+  --np-crisis-bg: #f6cbd3;
+  --np-crisis-ink: #3a0d19;
+  --np-crisis-accent: #9b1c3c;
+  --np-on-crisis: #ffffff;
+
+  /* Growth charts */
+  --np-chart-band-outer: #dceaf8;
+  --np-chart-band-inner: var(--np-blue-mid);
+  --np-chart-median: #2f5c9e;
+  --np-chart-child: #b0386a;
+  --np-chart-grid: #e6dce3;
+  --np-chart-axis: var(--np-muted);
+}
+
+/* No default palette: only the tokens above exist as Tailwind colors, so a
+ * stray text-zinc-600 simply has no effect (and lib/contrast.test.ts fails
+ * the build's tests if one appears in the source). */
+@theme {
+  --color-*: initial;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--np-page);
+  --color-surface: var(--np-surface);
+  --color-pink-soft: var(--np-pink-soft);
+  --color-blue-soft: var(--np-blue-soft);
+  --color-blue-mid: var(--np-blue-mid);
+  --color-neutral-bg: var(--np-neutral-bg);
+  --color-line: var(--np-line);
+  --color-line-strong: var(--np-line-strong);
+  --color-ink: var(--np-ink);
+  --color-muted: var(--np-muted);
+  --color-primary: var(--np-primary);
+  --color-primary-hover: var(--np-primary-hover);
+  --color-on-primary: var(--np-on-primary);
+  --color-primary-ink: var(--np-primary-ink);
+  --color-secondary-bg: var(--np-secondary-bg);
+  --color-secondary-hover: var(--np-secondary-hover);
+  --color-secondary-ink: var(--np-secondary-ink);
+  --color-focus: var(--np-focus);
+  --color-danger-ink: var(--np-danger-ink);
+  --color-danger-bg: var(--np-danger-bg);
+  --color-success-ink: var(--np-success-ink);
+  --color-success-bg: var(--np-success-bg);
+  --color-warning-ink: var(--np-warning-ink);
+  --color-warning-bg: var(--np-warning-bg);
+  --color-info-ink: var(--np-info-ink);
+  --color-info-bg: var(--np-info-bg);
+  --color-neutral-ink: var(--np-neutral-ink);
+  --color-crisis-bg: var(--np-crisis-bg);
+  --color-crisis-ink: var(--np-crisis-ink);
+  --color-crisis-accent: var(--np-crisis-accent);
+  --color-on-crisis: var(--np-on-crisis);
+  --color-chart-band-outer: var(--np-chart-band-outer);
+  --color-chart-band-inner: var(--np-chart-band-inner);
+  --color-chart-median: var(--np-chart-median);
+  --color-chart-child: var(--np-chart-child);
+
+  --font-sans: var(--font-nunito-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--np-page);
+    color: var(--np-ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
+
+  /* One visible focus ring for every interactive element. */
+  :focus-visible {
+    outline: 3px solid var(--np-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--np-blue-mid);
+    color: var(--np-ink);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

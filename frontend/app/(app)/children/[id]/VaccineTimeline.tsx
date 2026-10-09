@@ -12,28 +12,35 @@ import {
   showWindowNote,
   type VaccineGroup,
 } from "@/lib/vaccine-groups";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, INPUT, LIST_ITEM, MUTED } from "@/lib/ui";
+import { Icon, type IconName } from "../../../ui/Icon";
+import { Message } from "../../../ui/Message";
 
 function doseLabel(item: ScheduleItem) {
   return `${item.vaccine_id.toUpperCase()} dose ${item.dose_number ?? "?"}`;
 }
 
-const GROUPS: { key: VaccineGroup; title: string; hint?: string }[] = [
-  { key: "dueNow", title: "Due now" },
+// Each group has its own icon shape as well as a color, so the meaning
+// never depends on color alone.
+const GROUPS: { key: VaccineGroup; title: string; hint?: string; icon: IconName; tone: string }[] = [
+  { key: "dueNow", title: "Due now", icon: "clock", tone: "bg-info-bg text-info-ink" },
   {
     key: "overdue",
     title: "Overdue / catch-up",
     hint: "Ask your pediatrician about catching up -- doses can usually still be given on a catch-up schedule.",
+    icon: "alertTriangle",
+    tone: "bg-warning-bg text-warning-ink",
   },
-  { key: "upcoming", title: "Upcoming" },
+  { key: "upcoming", title: "Upcoming", icon: "calendar", tone: "bg-neutral-bg text-neutral-ink" },
   {
     key: "closed",
     title: "No longer recommended at this age",
     hint: "Ask your pediatrician. If one of these was given earlier, while it was still recommended, you can still record the date.",
+    icon: "minusCircle",
+    tone: "bg-neutral-bg text-neutral-ink",
   },
-  { key: "done", title: "Done" },
+  { key: "done", title: "Done", icon: "checkCircle", tone: "bg-success-bg text-success-ink" },
 ];
-
-const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
 
 type Notice =
   | { kind: "given"; given: ScheduleItem; created: ScheduleItem[] }
@@ -105,35 +112,33 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
     }
   }
 
-  if (loading) return <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</p>;
-  if (error) return <p className="text-sm text-red-700 dark:text-red-400">{error}</p>;
-  if (items.length === 0)
-    return <p className="text-sm text-zinc-600 dark:text-zinc-400">No schedule items yet.</p>;
+  if (loading) return <p className={MUTED}>Loading...</p>;
+  if (error) return <Message tone="error">{error}</Message>;
+  if (items.length === 0) return <p className={MUTED}>No schedule items yet.</p>;
 
   const today = todayISO();
   const groups = groupSchedule(items, today);
   const highlighted = new Set(notice?.kind === "given" ? notice.created.map((c) => c.id) : []);
 
   return (
-    <div className="flex flex-col gap-4">
-      <p className="text-sm font-medium" data-testid="vaccine-summary">
-        {groups.dueNow.length} due now · {groups.overdue.length} overdue · {groups.upcoming.length}{" "}
-        upcoming · {groups.done.length} done
-        {groups.closed.length > 0 && ` · ${groups.closed.length} no longer recommended`}
-      </p>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Later doses appear after each one is marked done. Based on the US CDC schedule (July 2,
-        2025) for healthy children; it isn&apos;t medical advice, and your pediatrician has the
-        final say.
-      </p>
+    <div className="flex flex-col gap-5">
+      <div className={CARD}>
+        <p className="font-semibold" data-testid="vaccine-summary">
+          {groups.dueNow.length} due now · {groups.overdue.length} overdue · {groups.upcoming.length}{" "}
+          upcoming · {groups.done.length} done
+          {groups.closed.length > 0 && ` · ${groups.closed.length} no longer recommended`}
+        </p>
+        <p className={MUTED}>
+          Later doses appear after each one is marked done. Based on the US CDC schedule (July 2,
+          2025) for healthy children; it isn&apos;t medical advice, and your pediatrician has the
+          final say.
+        </p>
+      </div>
 
       <div aria-live="polite" className="flex flex-col gap-2">
-        {actionError && <p className="text-sm text-red-700 dark:text-red-400">{actionError}</p>}
+        {actionError && <Message tone="error">{actionError}</Message>}
         {notice && (
-          <div
-            data-testid="recalc-notice"
-            className="rounded border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-200"
-          >
+          <Message tone="success" data-testid="recalc-notice">
             {notice.kind === "given" ? (
               <>
                 <p>
@@ -162,17 +167,21 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                 . Any later dose that was scheduled from it has been removed.
               </p>
             )}
-          </div>
+          </Message>
         )}
       </div>
 
-      {GROUPS.map(({ key, title, hint }) =>
+      {GROUPS.map(({ key, title, hint, icon, tone }) =>
         groups[key].length === 0 ? null : (
-          <section key={key} aria-labelledby={`group-${key}`} className="flex flex-col gap-2">
-            <h2 id={`group-${key}`} className="text-base font-medium">
-              {title} <span className="text-zinc-600 dark:text-zinc-400">({groups[key].length})</span>
+          <section key={key} aria-labelledby={`group-${key}`} className={CARD}>
+            <h2 id={`group-${key}`} className="flex flex-wrap items-center gap-2 text-base font-semibold">
+              <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 ${tone}`}>
+                <Icon name={icon} className="h-[18px] w-[18px]" />
+                {title}
+              </span>
+              <span className="font-normal text-muted">({groups[key].length})</span>
             </h2>
-            {hint && <p className="text-sm text-zinc-600 dark:text-zinc-400">{hint}</p>}
+            {hint && <p className={MUTED}>{hint}</p>}
             <ul className="flex flex-col gap-2">
               {groups[key].map((item) => {
                 const done = item.status === "given";
@@ -183,13 +192,13 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                 return (
                   <li
                     key={item.id}
-                    className={`flex flex-wrap items-center justify-between gap-3 rounded border border-black/15 px-3 py-2 text-sm dark:border-white/20 ${
-                      highlighted.has(item.id) ? "ring-2 ring-blue-500" : ""
+                    className={`flex flex-wrap items-center justify-between gap-3 text-sm ${LIST_ITEM} ${
+                      highlighted.has(item.id) ? "ring-2 ring-primary" : ""
                     }`}
                   >
                     <div className="flex flex-col">
-                      <span className="font-medium">{doseLabel(item)}</span>
-                      <span className="text-zinc-600 dark:text-zinc-400">
+                      <span className="font-bold">{doseLabel(item)}</span>
+                      <span className="text-muted">
                         {done
                           ? `given ${item.administered_date}`
                           : closed
@@ -197,7 +206,7 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                             : `due ${item.due_date}`}
                       </span>
                       {showWindowNote(item, today) && (
-                        <span className="text-xs text-zinc-700 dark:text-zinc-300">
+                        <span className="text-xs text-ink">
                           {item.age_window_note}
                           {!closed && lastDay && ` Last day for this dose: ${lastDay}.`}
                         </span>
@@ -205,12 +214,9 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`rounded px-2 py-0.5 text-xs ${
-                          done
-                            ? "bg-green-100 text-green-900 dark:bg-green-900 dark:text-green-100"
-                            : "bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100"
-                        }`}
+                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}
                       >
+                        <Icon name={done ? "check" : icon} className="h-3.5 w-3.5" />
                         {done ? "Done" : closed ? "Not recommended now" : "Not done"}
                       </span>
                       {done ? (
@@ -220,18 +226,18 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                             onClick={() => handleMarkNotDone(item)}
                             disabled={busy}
                             aria-label={`Mark ${doseLabel(item)} as not done`}
-                            className={`rounded border border-black/25 px-3 py-1 hover:bg-black/[.05] disabled:opacity-50 dark:border-white/30 dark:hover:bg-white/[.08] ${FOCUS}`}
+                            className={BUTTON_SECONDARY}
                           >
                             {savingId === item.id ? "Saving..." : "Mark not done"}
                           </button>
                         ) : (
-                          <span className="text-xs text-zinc-600 dark:text-zinc-400">
+                          <span className="text-xs text-muted">
                             Undo the later dose first
                           </span>
                         )
                       ) : (
                         <>
-                          <label htmlFor={dateId} className="text-xs text-zinc-600 dark:text-zinc-400">
+                          <label htmlFor={dateId} className="text-xs font-semibold text-muted">
                             Date given
                           </label>
                           <input
@@ -242,7 +248,7 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                             onChange={(e) =>
                               setDates((prev) => ({ ...prev, [item.id]: e.target.value }))
                             }
-                            className={`rounded border border-black/25 px-2 py-1 dark:border-white/30 ${FOCUS}`}
+                            className={`${INPUT} text-sm`}
                           />
                           <button
                             type="button"
@@ -253,7 +259,7 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                                 ? `Record ${doseLabel(item)} as given earlier`
                                 : `Mark ${doseLabel(item)} as done`
                             }
-                            className={`rounded bg-black px-3 py-1 text-white disabled:opacity-50 dark:bg-white dark:text-black ${FOCUS}`}
+                            className={BUTTON_PRIMARY}
                           >
                             {savingId === item.id ? "Saving..." : closed ? "Record as given" : "Mark done"}
                           </button>

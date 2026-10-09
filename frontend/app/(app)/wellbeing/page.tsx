@@ -15,10 +15,11 @@ import {
 } from "@/lib/wellbeing";
 import { CrisisSupport, SupportLines } from "./SupportLines";
 import { Toolkit } from "./Toolkit";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, MUTED, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
+import { Message } from "../../ui/Message";
 
-const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
-const PRIMARY = `rounded bg-black px-4 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black ${FOCUS}`;
-const SECONDARY = `rounded border border-black/25 px-4 py-2 hover:bg-black/[.05] dark:border-white/30 dark:hover:bg-white/[.08] ${FOCUS}`;
+const PRIMARY = BUTTON_PRIMARY;
+const SECONDARY = BUTTON_SECONDARY;
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
@@ -29,7 +30,7 @@ function formatDate(iso: string) {
  * flagged (risk_level "high") result to every provider account. */
 function AboutNote() {
   return (
-    <div className="flex flex-col gap-2 rounded border border-black/15 bg-black/[.02] px-4 py-3 text-sm dark:border-white/20 dark:bg-white/[.04]">
+    <div className="flex flex-col gap-2 rounded-xl bg-pink-soft px-4 py-3.5 text-sm text-ink">
       <p>
         <strong>This is a screening, not a diagnosis.</strong> The 10 questions (the Edinburgh
         Postnatal Depression Scale) can suggest whether talking to someone might help. They
@@ -54,14 +55,14 @@ function NeedHelp({ result, onBack }: { result: ScreeningSubmitResponse; onBack:
   const text = needHelpText(result);
   const bandLabel = BAND_TEXT[result.score_band].label;
   return (
-    <section aria-labelledby="need-help-heading" className="flex flex-col gap-3">
-      <h2 id="need-help-heading" className="text-lg font-medium">
+    <section aria-labelledby="need-help-heading" className={CARD}>
+      <h2 id="need-help-heading" className={SECTION_TITLE}>
         Do you need help?
       </h2>
-      <div className="flex flex-col gap-2 rounded border border-black/15 px-4 py-3 dark:border-white/20">
-        <p className="text-base font-medium">{text.headline}</p>
-        <p className="text-sm">{text.detail}</p>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <div className="flex flex-col gap-2">
+        <p className="text-base font-semibold">{text.headline}</p>
+        <p>{text.detail}</p>
+        <p className={MUTED}>
           Your score: {result.total_score} of 30 ({bandLabel}). This is a screening result, not a
           diagnosis.
         </p>
@@ -73,7 +74,7 @@ function NeedHelp({ result, onBack }: { result: ScreeningSubmitResponse; onBack:
             >
               Go to Appointments
             </Link>
-            <p className="text-xs text-zinc-600 dark:text-zinc-400">
+            <p className={MUTED}>
               Your own doctor, midwife or OB is also a good person to call.
             </p>
           </div>
@@ -168,7 +169,7 @@ export default function WellbeingPage() {
     };
     return (
       <>
-        <h1 ref={resultHeading} tabIndex={-1} className="text-xl font-semibold focus:outline-none">
+        <h1 ref={resultHeading} tabIndex={-1} className={`${PAGE_TITLE} focus:outline-none`}>
           Your check-in result
         </h1>
         {/* Order comes from the server's item_10_flag: crisis support first when set. */}
@@ -180,20 +181,23 @@ export default function WellbeingPage() {
   if (view === "questions") {
     return (
       <>
-        <h1 className="text-xl font-semibold">Postpartum check-in (EPDS)</h1>
+        <h1 className={PAGE_TITLE}>Postpartum check-in (EPDS)</h1>
         <AboutNote />
-        <p className="text-sm">
+        <p>
           Answer based on how you have felt over the <strong>past 7 days</strong>, not just today.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {EPDS_ITEMS.map((item) => (
-            <fieldset key={item.number} className="flex flex-col gap-2">
-              <legend className="text-sm font-medium">
+            <fieldset key={item.number} className={CARD}>
+              <legend className="float-left mb-1 w-full font-semibold">
                 {item.number}. {item.text}
               </legend>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-2">
                 {item.options.map((option, index) => (
-                  <label key={index} className="flex items-center gap-2 text-sm">
+                  <label
+                    key={index}
+                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-line px-3 py-2 text-sm hover:bg-page has-checked:border-primary-ink has-checked:bg-blue-soft has-checked:font-semibold"
+                  >
                     <input
                       type="radio"
                       name={`item-${item.number}`}
@@ -201,7 +205,7 @@ export default function WellbeingPage() {
                       checked={answers[item.number] === index}
                       onChange={() => setAnswers((prev) => ({ ...prev, [item.number]: index }))}
                       required
-                      className={FOCUS}
+                      className="h-5 w-5 shrink-0 accent-primary"
                     />
                     {option}
                   </label>
@@ -210,7 +214,7 @@ export default function WellbeingPage() {
             </fieldset>
           ))}
 
-          {error && <p className="text-sm text-red-700 dark:text-red-400">{error}</p>}
+          {error && <Message tone="error">{error}</Message>}
 
           <div className="flex flex-wrap gap-2">
             <button type="submit" disabled={submitting || !allAnswered} className={PRIMARY}>
@@ -230,28 +234,28 @@ export default function WellbeingPage() {
 
   return (
     <>
-      <h1 className="text-xl font-semibold">Wellbeing</h1>
+      <h1 className={PAGE_TITLE}>Wellbeing</h1>
 
-      <section aria-labelledby="checkin-heading" className="flex flex-col gap-3">
-        <h2 id="checkin-heading" className="text-lg font-medium">
+      <section aria-labelledby="checkin-heading" className={CARD}>
+        <h2 id="checkin-heading" className={SECTION_TITLE}>
           Postpartum check-in
         </h2>
         {historyLoading ? (
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</p>
+          <p className={MUTED}>Loading...</p>
         ) : historyError ? (
-          <p className="text-sm text-red-700 dark:text-red-400">{historyError}</p>
+          <Message tone="error">{historyError}</Message>
         ) : !latest || !checkIn ? (
-          <p className="text-sm">
+          <p>
             A short, private 10-question check-in on how you&apos;ve been feeling over the past
             week. It takes about 5 minutes.
           </p>
         ) : checkIn.isDue ? (
-          <p className="rounded border border-blue-300 bg-blue-50 px-3 py-2 text-sm text-blue-950 dark:border-blue-800 dark:bg-blue-950 dark:text-blue-100">
+          <Message tone="info">
             It&apos;s been two weeks since your last check-in ({formatDate(latest.created_at)}) --
             a good time to check in again.
-          </p>
+          </Message>
         ) : (
-          <p className="text-sm">
+          <p>
             Last check-in: {formatDate(latest.created_at)}. Check in again in 2 weeks, around{" "}
             <strong>{formatDate(checkIn.due.toISOString())}</strong> -- or any time sooner if you
             want to.
@@ -264,22 +268,22 @@ export default function WellbeingPage() {
       </section>
 
       {history.length > 0 && (
-        <section aria-labelledby="history-heading" className="flex flex-col gap-3">
-          <h2 id="history-heading" className="text-lg font-medium">
+        <section aria-labelledby="history-heading" className={CARD}>
+          <h2 id="history-heading" className={SECTION_TITLE}>
             Your past check-ins
           </h2>
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">Only you can see this list.</p>
+          <p className={MUTED}>Only you can see this list.</p>
           <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-black/15 dark:border-white/20">
-                <th scope="col" className="py-2 pr-4 font-medium">Date</th>
-                <th scope="col" className="py-2 pr-4 font-medium">Score</th>
-                <th scope="col" className="py-2 font-medium">Band</th>
+            <thead className="text-xs text-muted">
+              <tr>
+                <th scope="col" className="py-2 pr-4 font-semibold">Date</th>
+                <th scope="col" className="py-2 pr-4 font-semibold">Score</th>
+                <th scope="col" className="py-2 font-semibold">Band</th>
               </tr>
             </thead>
             <tbody>
               {history.map((row) => (
-                <tr key={row.id} className="border-b border-black/10 dark:border-white/10">
+                <tr key={row.id} className="border-t border-line">
                   <td className="py-2 pr-4">{formatDate(row.created_at)}</td>
                   <td className="py-2 pr-4">{row.total_score} / 30</td>
                   <td className="py-2">{BAND_TEXT[row.score_band].label}</td>

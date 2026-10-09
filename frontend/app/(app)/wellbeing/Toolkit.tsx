@@ -4,8 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import type { ScoreBand } from "@/lib/types";
 import { toolkitOrder, type ToolkitTool } from "@/lib/wellbeing";
-
-const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
+import { BUTTON_PRIMARY, CARD, LINK, MUTED, SECTION_TITLE } from "@/lib/ui";
 
 // --- Breathing pacer -------------------------------------------------------
 
@@ -69,7 +68,7 @@ function BreathingPacer() {
       </p>
       <div className="flex h-44 w-44 items-center justify-center" aria-hidden="true">
         <div
-          className="h-40 w-40 rounded-full bg-blue-200 dark:bg-blue-900"
+          className="h-40 w-40 rounded-full bg-blue-mid"
           style={{
             transform: reducedMotion ? undefined : `scale(${scale})`,
             transition: reducedMotion ? "none" : `transform ${current.seconds}s ease-in-out`,
@@ -80,7 +79,7 @@ function BreathingPacer() {
         {running ? current.label : "Ready when you are"}
       </p>
       {running && (
-        <p className="text-sm text-zinc-600 dark:text-zinc-400" aria-hidden="true">
+        <p className={MUTED} aria-hidden="true">
           {secondsLeft} · round {cycles + 1}
         </p>
       )}
@@ -88,7 +87,7 @@ function BreathingPacer() {
         type="button"
         onClick={toggle}
         aria-pressed={running}
-        className={`rounded bg-black px-4 py-2 text-white dark:bg-white dark:text-black ${FOCUS}`}
+        className={BUTTON_PRIMARY}
       >
         {running ? "Stop" : "Start breathing exercise"}
       </button>
@@ -131,12 +130,15 @@ function SleepChecklist() {
         Broken sleep is hard on mood. Pick one or two to try this week -- nothing here is saved.
       </legend>
       {SLEEP_ITEMS.map((text, i) => (
-        <label key={text} className="flex items-start gap-2">
+        <label
+          key={text}
+          className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl px-2 py-2.5 hover:bg-page has-checked:bg-blue-soft"
+        >
           <input
             type="checkbox"
             checked={checked[i]}
             onChange={() => setChecked((prev) => prev.map((v, j) => (j === i ? !v : v)))}
-            className={`mt-0.5 h-4 w-4 ${FOCUS}`}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-primary"
           />
           <span>{text}</span>
         </label>
@@ -149,7 +151,7 @@ function AskForHelp() {
   return (
     <div className="flex flex-col gap-2 text-sm">
       <p>Asking is easier with words ready. Try something like:</p>
-      <blockquote className="rounded border-l-4 border-blue-500 bg-blue-50 px-3 py-2 dark:bg-blue-950">
+      <blockquote className="rounded-xl border-l-4 border-primary bg-blue-soft px-4 py-3 text-ink">
         &ldquo;I&apos;ve been finding things hard lately and I&apos;m worn out. Could you take the
         baby on [day/time] so I can sleep / get out for an hour? It would really help.&rdquo;
       </blockquote>
@@ -160,7 +162,7 @@ function AskForHelp() {
       </ul>
       <p>
         You can also post a specific need for your family to claim on the{" "}
-        <Link href="/help-board" className={`font-medium underline ${FOCUS}`}>
+        <Link href="/help-board" className={LINK}>
           Help board
         </Link>
         .
@@ -201,11 +203,11 @@ const TOOLS: Record<ToolkitTool, { title: string; render: () => React.ReactNode 
 
 export function Toolkit({ band }: { band: ScoreBand }) {
   return (
-    <section aria-labelledby="toolkit-heading" className="flex flex-col gap-3">
-      <h2 id="toolkit-heading" className="text-lg font-medium">
+    <section aria-labelledby="toolkit-heading" className={CARD}>
+      <h2 id="toolkit-heading" className={SECTION_TITLE}>
         Self-help for the next few days
       </h2>
-      <p className="text-sm text-zinc-600 dark:text-zinc-400">
+      <p className={MUTED}>
         Simple things that may help in the short term. They support care from people you trust and
         your provider -- they don&apos;t replace it.
       </p>
@@ -213,10 +215,12 @@ export function Toolkit({ band }: { band: ScoreBand }) {
         <details
           key={tool}
           open={i === 0}
-          className="rounded border border-black/15 px-4 py-3 dark:border-white/20"
+          className="rounded-xl border border-line bg-surface open:bg-page"
         >
-          <summary className={`cursor-pointer font-medium ${FOCUS}`}>{TOOLS[tool].title}</summary>
-          <div className="mt-3">{TOOLS[tool].render()}</div>
+          <summary className="flex min-h-11 cursor-pointer items-center rounded-xl px-4 font-semibold">
+            {TOOLS[tool].title}
+          </summary>
+          <div className="px-4 pb-4 pt-1">{TOOLS[tool].render()}</div>
         </details>
       ))}
     </section>

@@ -1,15 +1,16 @@
 "use client";
 
+import { BUTTON_SECONDARY } from "@/lib/ui";
+import { Icon } from "../ui/Icon";
+import { Message } from "../ui/Message";
+
 /** A failed load, with a button to try it again. */
 export function LoadError({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
-    <div role="alert" className="flex flex-wrap items-center gap-3 text-sm">
-      <p className="text-red-700 dark:text-red-400">{message}</p>
-      <button
-        type="button"
-        onClick={onRetry}
-        className="rounded border border-black/25 px-3 py-1 hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 dark:border-white/30 dark:hover:bg-white/[.06]"
-      >
+    <div role="alert" className="flex flex-col gap-2">
+      <Message tone="error">{message}</Message>
+      <button type="button" onClick={onRetry} className={`self-start ${BUTTON_SECONDARY}`}>
+        <Icon name="retry" className="h-4 w-4" />
         Retry
       </button>
     </div>

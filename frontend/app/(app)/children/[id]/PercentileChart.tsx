@@ -14,8 +14,14 @@ import type { GrowthReferenceRow } from "@/lib/types";
 
 export type ChildPoint = { month: number; value: number; date: string };
 
-const BAND = "#16a34a";
-const CHILD = "#2563eb";
+// Chart colors come from the design tokens in app/globals.css.
+const BAND_OUTER = "var(--np-chart-band-outer)";
+const BAND_INNER = "var(--np-chart-band-inner)";
+const MEDIAN = "var(--np-chart-median)";
+const CHILD = "var(--np-chart-child)";
+const GRID = "var(--np-chart-grid)";
+const AXIS = "var(--np-chart-axis)";
+const SURFACE = "var(--np-surface)";
 
 /** One WHO chart (weight- or length-for-age): the 3rd-97th and 15th-85th
  * percentile bands, the median ("average baby") as a dashed line, and this
@@ -44,35 +50,41 @@ export function PercentileChart({
   const low = Math.floor(min / step) * step;
   const high = Math.ceil(max / step) * step;
   const yTicks = Array.from({ length: (high - low) / step + 1 }, (_, i) => low + i * step);
+  const tick = { fontSize: 12, fill: AXIS };
 
   return (
-    <figure className="flex flex-col gap-2">
-      <figcaption className="text-sm font-medium">{title}</figcaption>
+    <figure className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:p-5">
+      <figcaption className="flex items-baseline justify-between gap-2">
+        <span className="text-base font-semibold">{title}</span>
+        <span className="text-sm text-muted">{unit}</span>
+      </figcaption>
       <div className="h-72 w-full" role="img" aria-label={`${title} chart compared with WHO percentiles`}>
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart margin={{ top: 8, right: 12, bottom: 16, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.4} />
+            <CartesianGrid stroke={GRID} strokeDasharray="3 3" />
             <XAxis
               dataKey="month"
               type="number"
               domain={[0, 24]}
               ticks={[0, 3, 6, 9, 12, 15, 18, 21, 24]}
-              tick={{ fontSize: 12 }}
-              label={{ value: "Age (months)", position: "insideBottom", offset: -10, fontSize: 12 }}
+              tick={tick}
+              stroke={AXIS}
+              label={{ value: "Age (months)", position: "insideBottom", offset: -10, fontSize: 12, fill: AXIS }}
             />
             <YAxis
               domain={[low, high]}
               ticks={yTicks}
-              tick={{ fontSize: 12 }}
+              tick={tick}
+              stroke={AXIS}
               width={44}
-              label={{ value: unit, angle: -90, position: "insideLeft", offset: 10, fontSize: 12 }}
+              label={{ value: unit, angle: -90, position: "insideLeft", offset: 10, fontSize: 12, fill: AXIS }}
             />
-            <Area data={bands} dataKey="outer" stroke="none" fill={BAND} fillOpacity={0.12} isAnimationActive={false} />
-            <Area data={bands} dataKey="inner" stroke="none" fill={BAND} fillOpacity={0.22} isAnimationActive={false} />
+            <Area data={bands} dataKey="outer" stroke="none" fill={BAND_OUTER} fillOpacity={1} isAnimationActive={false} />
+            <Area data={bands} dataKey="inner" stroke="none" fill={BAND_INNER} fillOpacity={1} isAnimationActive={false} />
             <Line
               data={bands}
               dataKey="median"
-              stroke={BAND}
+              stroke={MEDIAN}
               strokeDasharray="6 4"
               strokeWidth={2}
               dot={false}
@@ -82,8 +94,9 @@ export function PercentileChart({
               data={points}
               dataKey="value"
               stroke={CHILD}
-              strokeWidth={2}
-              dot={{ r: 4, fill: CHILD }}
+              strokeWidth={3}
+              dot={{ r: 5, fill: CHILD, stroke: SURFACE, strokeWidth: 2 }}
+              activeDot={{ r: 7, fill: CHILD, stroke: SURFACE, strokeWidth: 2 }}
               isAnimationActive={false}
             />
             <Tooltip
@@ -91,7 +104,7 @@ export function PercentileChart({
                 const point = payload?.find((p) => p.dataKey === "value")?.payload as ChildPoint | undefined;
                 if (!active || !point) return null;
                 return (
-                  <div className="rounded border border-black/15 bg-white px-2 py-1 text-xs shadow dark:border-white/20 dark:bg-zinc-900">
+                  <div className="rounded-lg border border-line bg-surface px-2.5 py-1.5 text-xs text-ink">
                     {point.date}: {point.value} {unit}
                   </div>
                 );
@@ -107,18 +120,24 @@ export function PercentileChart({
 /** The key under the charts, in plain words. */
 export function ChartLegend() {
   return (
-    <ul className="flex flex-wrap gap-x-5 gap-y-1 text-xs text-zinc-600 dark:text-zinc-400">
-      <li className="flex items-center gap-1.5">
-        <span className="inline-block h-0.5 w-5 bg-blue-600" /> Your baby
+    <ul className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-ink">
+      <li className="flex items-center gap-2">
+        <svg viewBox="0 0 24 12" aria-hidden="true" className="h-3 w-6">
+          <line x1="1" y1="6" x2="23" y2="6" stroke={CHILD} strokeWidth="3" />
+          <circle cx="12" cy="6" r="4" fill={CHILD} stroke={SURFACE} strokeWidth="1.5" />
+        </svg>
+        Your baby
       </li>
-      <li className="flex items-center gap-1.5">
-        <span className="inline-block w-5 border-t-2 border-dashed border-green-600" /> Average baby (WHO median)
+      <li className="flex items-center gap-2">
+        <span className="inline-block w-6 border-t-2 border-dashed border-chart-median" /> Average baby (WHO
+        median)
       </li>
-      <li className="flex items-center gap-1.5">
-        <span className="inline-block h-3 w-5 bg-green-600/35" /> Middle 70% of babies (15th-85th)
+      <li className="flex items-center gap-2">
+        <span className="inline-block h-3 w-6 rounded-sm bg-chart-band-inner" /> Middle 70% of babies (15th-85th)
       </li>
-      <li className="flex items-center gap-1.5">
-        <span className="inline-block h-3 w-5 bg-green-600/15" /> 94% of babies (3rd-97th)
+      <li className="flex items-center gap-2">
+        <span className="inline-block h-3 w-6 rounded-sm border border-line bg-chart-band-outer" /> 94% of babies
+        (3rd-97th)
       </li>
     </ul>
   );

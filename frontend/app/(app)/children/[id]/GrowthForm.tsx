@@ -4,6 +4,8 @@ import { useState, type FormEvent } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { todayISO } from "@/lib/dates";
 import type { GrowthMeasurement } from "@/lib/types";
+import { BUTTON_PRIMARY, FIELD, INPUT, LABEL, MUTED } from "@/lib/ui";
+import { Message } from "../../../ui/Message";
 
 export function GrowthForm({
   childId,
@@ -65,10 +67,10 @@ export function GrowthForm({
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="growth-date" className="text-xs text-zinc-500">Measured on</label>
+        <div className={FIELD}>
+          <label htmlFor="growth-date" className={LABEL}>Measured on</label>
           <input
             id="growth-date"
             type="date"
@@ -77,11 +79,11 @@ export function GrowthForm({
             max={todayISO()}
             onChange={(e) => setMeasuredAt(e.target.value)}
             required
-            className="rounded border px-3 py-2"
+            className={INPUT}
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="growth-weight" className="text-xs text-zinc-500">Weight (kg)</label>
+        <div className={FIELD}>
+          <label htmlFor="growth-weight" className={LABEL}>Weight (kg)</label>
           <input
             id="growth-weight"
             type="number"
@@ -92,11 +94,11 @@ export function GrowthForm({
             placeholder="e.g. 7.4"
             value={weightKg}
             onChange={(e) => setWeightKg(e.target.value)}
-            className="w-28 rounded border px-3 py-2"
+            className={`${INPUT} w-28`}
           />
         </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="growth-length" className="text-xs text-zinc-500">Length / height (cm)</label>
+        <div className={FIELD}>
+          <label htmlFor="growth-length" className={LABEL}>Length / height (cm)</label>
           <input
             id="growth-length"
             type="number"
@@ -107,25 +109,25 @@ export function GrowthForm({
             placeholder="e.g. 66.5"
             value={lengthCm}
             onChange={(e) => setLengthCm(e.target.value)}
-            className="w-32 rounded border px-3 py-2"
+            className={`${INPUT} w-32`}
           />
         </div>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black"
+          className={BUTTON_PRIMARY}
         >
           {submitting ? "Adding..." : "Add measurement"}
         </button>
       </form>
-      <p className="text-xs text-zinc-500">
+      <p className={MUTED}>
         Fill in weight, length, or both. Under age 2, length is measured lying down.
       </p>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <Message tone="error">{error}</Message>}
       {recorded && (
-        <p className="text-sm text-green-800 dark:text-green-300">
+        <Message tone="success">
           Saved the measurement from {recorded.measured_at}. The charts below now include it.
-        </p>
+        </Message>
       )}
     </div>
   );
