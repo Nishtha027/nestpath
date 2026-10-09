@@ -4,6 +4,18 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
+import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, MUTED } from "@/lib/ui";
+import { Message } from "../ui/Message";
+import { Chick } from "../ui/illustrations";
+
+/** One option of a two-way switch (Log in / Register, Start / Join). */
+function segmentClass(selected: boolean) {
+  return `min-h-11 flex-1 rounded-full px-4 text-sm transition-colors ${
+    selected
+      ? "border border-line bg-surface font-bold text-ink"
+      : "border border-transparent font-semibold text-secondary-ink hover:bg-secondary-hover"
+  }`;
+}
 
 export default function LoginPage() {
   const { token, login, register, sessionExpired } = useAuth();
@@ -34,111 +46,135 @@ export default function LoginPage() {
       }
       router.replace("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong");
+      setError(err instanceof ApiError ? err.message : "Couldn't reach NestPath. Try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-8 font-sans">
-      <h1 className="text-2xl font-semibold">NestPath</h1>
-
-      {sessionExpired && (
-        <p className="max-w-sm text-center text-sm text-amber-700 dark:text-amber-400">
-          Your session expired. Please log in again.
-        </p>
-      )}
-
-      <div className="flex gap-2 text-sm">
-        <button
-          type="button"
-          onClick={() => setMode("login")}
-          className={`rounded px-3 py-1 ${mode === "login" ? "bg-black text-white dark:bg-white dark:text-black" : "bg-black/[.06] dark:bg-white/[.08]"}`}
-        >
-          Log in
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("register")}
-          className={`rounded px-3 py-1 ${mode === "register" ? "bg-black text-white dark:bg-white dark:text-black" : "bg-black/[.06] dark:bg-white/[.08]"}`}
-        >
-          Register
-        </button>
+    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <Chick animated className="h-28 w-28 sm:h-32 sm:w-32" />
+        <h1 className="font-heading text-4xl font-semibold">NestPath</h1>
+        <p className={MUTED}>A companion app for new parents</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex w-full max-w-sm flex-col gap-3">
-        {mode === "register" && (
-          <>
-            <div className="flex gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setJoinFamily(false)}
-                className={`rounded px-3 py-1 ${!joinFamily ? "bg-black text-white dark:bg-white dark:text-black" : "bg-black/[.06] dark:bg-white/[.08]"}`}
-              >
-                Start a new family
-              </button>
-              <button
-                type="button"
-                onClick={() => setJoinFamily(true)}
-                className={`rounded px-3 py-1 ${joinFamily ? "bg-black text-white dark:bg-white dark:text-black" : "bg-black/[.06] dark:bg-white/[.08]"}`}
-              >
-                Join an existing family
-              </button>
-            </div>
-            <input
-              type="text"
-              placeholder="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="rounded border px-3 py-2"
-            />
-            {joinFamily && (
-              <div className="flex flex-col gap-1">
-                <input
-                  type="text"
-                  placeholder="Invite code"
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value)}
-                  required
-                  autoCapitalize="characters"
-                  autoComplete="off"
-                  spellCheck={false}
-                  className="rounded border px-3 py-2 font-mono uppercase"
-                />
-                <p className="text-xs text-zinc-500">
-                  Ask a caregiver already in the family -- the code is on their dashboard.
-                </p>
+      {sessionExpired && (
+        <Message tone="warning" className="w-full max-w-sm">
+          Your session expired. Log in again.
+        </Message>
+      )}
+
+      <div className={`${CARD} w-full max-w-sm`}>
+        <div className="flex gap-1 rounded-full bg-pink-soft p-1">
+          <button
+            type="button"
+            onClick={() => setMode("login")}
+            aria-pressed={mode === "login"}
+            className={segmentClass(mode === "login")}
+          >
+            Log in
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("register")}
+            aria-pressed={mode === "register"}
+            className={segmentClass(mode === "register")}
+          >
+            Register
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {mode === "register" && (
+            <>
+              <div className="flex gap-1 rounded-full bg-pink-soft p-1">
+                <button
+                  type="button"
+                  onClick={() => setJoinFamily(false)}
+                  aria-pressed={!joinFamily}
+                  className={segmentClass(!joinFamily)}
+                >
+                  New family
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setJoinFamily(true)}
+                  aria-pressed={joinFamily}
+                  className={segmentClass(joinFamily)}
+                >
+                  Join a family
+                </button>
               </div>
-            )}
-          </>
-        )}
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="rounded border px-3 py-2"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          className="rounded border px-3 py-2"
-        />
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black"
-        >
-          {submitting ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
-        </button>
-      </form>
+              <div className={FIELD}>
+                <label htmlFor="login-name" className={LABEL}>
+                  Your name
+                </label>
+                <input
+                  id="login-name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                  className={INPUT}
+                />
+              </div>
+              {joinFamily && (
+                <div className={FIELD}>
+                  <label htmlFor="login-invite" className={LABEL}>
+                    Invite code
+                  </label>
+                  <input
+                    id="login-invite"
+                    type="text"
+                    value={inviteCode}
+                    onChange={(e) => setInviteCode(e.target.value)}
+                    required
+                    autoCapitalize="characters"
+                    autoComplete="off"
+                    spellCheck={false}
+                    className={`${INPUT} font-mono uppercase tracking-widest`}
+                  />
+                  <p className={MUTED}>
+                    It&apos;s on the Home page of anyone in the family.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+          <div className={FIELD}>
+            <label htmlFor="login-email" className={LABEL}>
+              Email
+            </label>
+            <input
+              id="login-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className={INPUT}
+            />
+          </div>
+          <div className={FIELD}>
+            <label htmlFor="login-password" className={LABEL}>
+              Password
+            </label>
+            <input
+              id="login-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className={INPUT}
+            />
+          </div>
+          {error && <Message tone="error">{error}</Message>}
+          <button type="submit" disabled={submitting} className={BUTTON_PRIMARY}>
+            {submitting ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
+          </button>
+        </form>
+      </div>
     </main>
   );
 }

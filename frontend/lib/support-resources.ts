@@ -45,7 +45,7 @@ export const SUPPORT_RESOURCES: Record<string, RegionResources> = {
         tel: "18338526262",
         canText: true,
         description:
-          "Free and confidential, 24/7, in English and Spanish. Call or text to reach a trained counselor, for pregnant and new parents and their families.",
+          "Free and confidential, 24/7, in English and Spanish. Call or text a trained counselor.",
         sourceUrl: "https://mchb.hrsa.gov/programs-impact/national-maternal-mental-health-hotline",
         lastVerified: "2026-10-07",
       },
@@ -55,7 +55,7 @@ export const SUPPORT_RESOURCES: Record<string, RegionResources> = {
         tel: "18009444773",
         canText: true,
         description:
-          "Call or text and leave a confidential message; a trained volunteer gets back to you with support and local resources. Not a crisis line.",
+          "Call or text to leave a confidential message, and a trained volunteer will get back to you. Not a crisis line.",
         sourceUrl: "https://www.postpartum.net/get-help/",
         lastVerified: "2026-10-07",
       },

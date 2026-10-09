@@ -5,6 +5,9 @@ import { useAuth } from "@/lib/auth-context";
 import { useAppState } from "@/lib/app-state";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Alert } from "@/lib/types";
+import { MUTED, PAGE_TITLE } from "@/lib/ui";
+import { Icon } from "../../ui/Icon";
+import { Message } from "../../ui/Message";
 
 export default function AlertsPage() {
   const { caregiver } = useAuth();
@@ -18,42 +21,37 @@ export default function AlertsPage() {
     if (!caregiver?.isProvider) return;
     apiFetch<Alert[]>("/alerts", { token })
       .then(setAlerts)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load alerts"))
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load alerts. Refresh to try again."))
       .finally(() => setLoading(false));
   }, [token, caregiver?.isProvider]);
 
   return (
     <>
-      <h1 className="text-xl font-semibold">Alerts</h1>
+      <h1 className={PAGE_TITLE}>Alerts</h1>
 
+      {/* There's no UI to grant provider access: set is_provider = true on
+          the caregiver's row in the database. */}
       {!caregiver?.isProvider ? (
-        <p className="text-sm text-red-700 dark:text-red-400">
-          This page is only available to provider accounts. There&apos;s no UI to grant provider
-          access yet -- set <code>is_provider = true</code> on your caregiver row directly in the
-          database.
-        </p>
+        <Message tone="error">Alerts are only for provider accounts.</Message>
       ) : (
-        <section className="flex flex-col gap-3">
-          <h2 className="text-lg font-medium">High-risk screening flags</h2>
-          {loading && <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</p>}
-          {error && <p className="text-sm text-red-700 dark:text-red-400">{error}</p>}
-          {!loading && !error && alerts.length === 0 && (
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">No flagged screenings.</p>
-          )}
-          <ul className="flex flex-col gap-2">
+        <section aria-label="Flagged screenings" className="flex flex-col gap-3">
+          <p className={MUTED}>Flagged screenings</p>
+          {loading && <p className={MUTED}>Loading...</p>}
+          {error && <Message tone="error">{error}</Message>}
+          {!loading && !error && alerts.length === 0 && <p className={MUTED}>No flagged screenings.</p>}
+          <ul className="flex flex-col gap-2 tabular-nums">
             {alerts.map((alert) => (
               <li
                 key={alert.id}
-                className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm dark:border-red-800 dark:bg-red-950"
+                className="rounded-xl border border-line border-l-4 border-l-danger-ink bg-danger-bg px-4 py-3 text-sm text-ink"
               >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Score {alert.total_score}</span>
-                  <span className="text-xs text-zinc-600 dark:text-zinc-400">
-                    {new Date(alert.created_at).toLocaleString()}
-                  </span>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-bold">Score {alert.total_score}</span>
+                  <span className="text-xs text-ink">{new Date(alert.created_at).toLocaleString()}</span>
                 </div>
                 {alert.item_10_flag && (
-                  <p className="mt-1 text-red-900 dark:text-red-200">
+                  <p className="mt-1.5 flex items-center gap-1.5 font-semibold text-danger-ink">
+                    <Icon name="alertTriangle" className="h-4 w-4" />
                     Item 10 (self-harm) flagged
                   </p>
                 )}

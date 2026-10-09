@@ -17,24 +17,22 @@ export type BandText = {
 
 export const BAND_TEXT: Record<ScoreBand, BandText> = {
   low: {
-    label: "Lower score (0-9)",
+    label: "lower range (0-9)",
     headline: "Your answers don't suggest you need extra support right now.",
-    detail:
-      "You can still ask for help any time -- you don't need a particular score to talk to someone you trust or a provider.",
+    detail: "You can still talk to someone you trust or a provider, any time.",
     suggestAppointment: false,
   },
   moderate: {
-    label: "Middle score (10-12)",
-    headline: "Worth keeping an eye on, and talking to someone you trust or a provider.",
+    label: "middle range (10-12)",
+    headline: "Worth talking to someone you trust or a provider.",
     detail:
-      "Feelings like these are common after a baby arrives, and they are worth sharing. Checking in again in about two weeks can show whether things are easing.",
+      "Feelings like these are common after a baby arrives. Checking in again in about two weeks can show whether things are easing.",
     suggestAppointment: false,
   },
   high: {
-    label: "Higher score (13+)",
+    label: "higher range (13+)",
     headline: "We suggest speaking with a provider soon.",
-    detail:
-      "A provider can talk through how you've been feeling and what support might help.",
+    detail: "They can talk through how you've been feeling and what might help.",
     suggestAppointment: true,
   },
 };
@@ -46,7 +44,7 @@ export const ITEM_10_TEXT: BandText = {
   label: "",
   headline: "Please talk to someone today.",
   detail:
-    "Because of your answer about thoughts of harming yourself, we suggest reaching out today -- to the crisis line above, a provider, or someone you trust -- whatever your total score.",
+    "Because of your answer about thoughts of harming yourself, reach out today, whatever your total score: the crisis line above, a provider, or someone you trust.",
   suggestAppointment: true,
 };
 

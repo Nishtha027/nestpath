@@ -4,6 +4,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { apiFetch, ApiError, WS_URL } from "@/lib/api";
 import { reconnectDelayMs } from "@/lib/backoff";
 import type { CareLog } from "@/lib/types";
+import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, LIST_ITEM } from "@/lib/ui";
+import { Message } from "../../../ui/Message";
+import { EmptyState } from "../../../ui/EmptyState";
+import { Bunny } from "../../../ui/illustrations";
 
 const CARE_LOG_TYPES: CareLog["type"][] = ["feed", "diaper", "sleep", "medication"];
 
@@ -35,6 +39,9 @@ export function LiveCareLog({
   const [entries, setEntries] = useState<CareLog[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Entries that arrived live (over the socket, or just added here). They
+  // slide in with a short highlight; the catch-up fetch's entries don't.
+  const [arrivedIds, setArrivedIds] = useState<ReadonlySet<string>>(() => new Set());
 
   const [type, setType] = useState<CareLog["type"]>("feed");
   const [notes, setNotes] = useState("");
@@ -59,7 +66,7 @@ export function LiveCareLog({
         })
         .catch((err) => {
           if (disposed) return;
-          setLoadError(err instanceof ApiError ? err.message : "Failed to load entries");
+          setLoadError(err instanceof ApiError ? err.message : "Couldn't load entries. Refresh to try again.");
         });
     }
 
@@ -81,6 +88,7 @@ export function LiveCareLog({
           const entry: CareLog = JSON.parse(event.data);
           if (entry.child_id === childId) {
             setEntries((prev) => mergeEntries([entry], prev));
+            setArrivedIds((prev) => new Set(prev).add(entry.id));
           }
         } catch {
           // ignore malformed messages
@@ -123,34 +131,48 @@ export function LiveCareLog({
       // down right now, the entry would otherwise be missing until the
       // reconnect catch-up. mergeEntries dedupes the echo by id.
       setEntries((prev) => mergeEntries([created], prev));
+      setArrivedIds((prev) => new Set(prev).add(created.id));
       setNotes("");
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : "Failed to add entry");
+      setSubmitError(err instanceof ApiError ? err.message : "Couldn't save. Try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-xs text-zinc-500" data-testid="connection-status">
-        Live connection:{" "}
-        {status === "connected" && "connected"}
-        {status === "connecting" && "connecting..."}
-        {status === "reconnecting" && "reconnecting..."}
+    <div className="flex flex-col gap-5">
+      <p
+        className="inline-flex items-center gap-2 self-start rounded-full bg-surface px-3 py-1 text-sm text-muted ring-1 ring-line"
+        data-testid="connection-status"
+      >
+        <span
+          aria-hidden="true"
+          className={`h-2.5 w-2.5 rounded-full ${
+            status === "connected"
+              ? "bg-success-ink"
+              : status === "rejected"
+                ? "bg-danger-ink"
+                : "border-2 border-muted"
+          }`}
+        />
+        {status === "connected" && "Live"}
+        {status === "connecting" && "Connecting..."}
+        {status === "reconnecting" && "Reconnecting..."}
         {status === "rejected" && (
-          <span className="text-red-600">stopped -- your session was rejected, please log in again</span>
+          <span className="font-semibold text-danger-ink">Disconnected. Log in again.</span>
         )}
       </p>
-      {loadError && <p className="text-sm text-red-600">{loadError}</p>}
+      {loadError && <Message tone="error">{loadError}</Message>}
 
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Type</label>
+      <form onSubmit={handleSubmit} className={`${CARD} sm:flex-row sm:flex-wrap sm:items-end`}>
+        <div className={FIELD}>
+          <label htmlFor="care-log-type" className={LABEL}>Type</label>
           <select
+            id="care-log-type"
             value={type}
             onChange={(e) => setType(e.target.value as CareLog["type"])}
-            className="rounded border px-3 py-2"
+            className={`${INPUT} capitalize`}
           >
             {CARE_LOG_TYPES.map((t) => (
               <option key={t} value={t}>
@@ -159,38 +181,39 @@ export function LiveCareLog({
             ))}
           </select>
         </div>
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-zinc-500">Notes</label>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <label htmlFor="care-log-notes" className={LABEL}>Notes</label>
           <input
+            id="care-log-notes"
             type="text"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            className="rounded border px-3 py-2"
+            className={INPUT}
           />
         </div>
         <button
           type="submit"
           disabled={submitting}
-          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50 dark:bg-white dark:text-black"
+          className={BUTTON_PRIMARY}
         >
-          {submitting ? "Adding..." : "Add entry"}
+          {submitting ? "Adding..." : "Add"}
         </button>
       </form>
-      {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+      {submitError && <Message tone="error">{submitError}</Message>}
 
       {entries.length === 0 ? (
-        <p className="text-sm text-zinc-500">No entries yet.</p>
+        <EmptyState art={<Bunny animated className="h-20 w-20" />} title="No entries yet">
+          Your family sees new entries right away.
+        </EmptyState>
       ) : (
         <ul className="flex flex-col gap-2">
           {entries.map((entry) => (
-            <li key={entry.id} className="rounded border px-3 py-2 text-sm">
-              <span className="font-medium">{entry.type}</span>
-              <span className="ml-2 text-zinc-500">
+            <li key={entry.id} className={`text-sm ${LIST_ITEM} ${arrivedIds.has(entry.id) ? "np-arrive" : ""}`}>
+              <span className="font-bold capitalize">{entry.type}</span>
+              <span className="ml-2 text-muted tabular-nums">
                 {new Date(entry.timestamp).toLocaleTimeString()}
               </span>
-              {entry.notes && (
-                <p className="mt-1 text-zinc-600 dark:text-zinc-400">{entry.notes}</p>
-              )}
+              {entry.notes && <p className="mt-1 text-ink">{entry.notes}</p>}
             </li>
           ))}
         </ul>

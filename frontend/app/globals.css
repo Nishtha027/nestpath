@@ -1,26 +1,375 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------------
+ * Design tokens -- the only place colors are defined.
+ *
+ * Components never use raw colors: they use the Tailwind names mapped in
+ * @theme below (bg-page, text-ink, border-line, ...), and chart code reads
+ * the variables directly (var(--np-chart-child)). Pastels (page, pink-soft,
+ * blue-soft, *-bg) are for backgrounds and fills only; text, icons and
+ * buttons use the deeper shades.
+ *
+ * Every text/background pair is checked against WCAG AA by
+ * lib/contrast.test.ts (npm test); `npm run contrast` prints the table.
+ *
+ * Fonts are tokens too: --font-heading (Fredoka) for titles and the
+ * wordmark, --font-body (Nunito) for everything else. app/layout.tsx loads
+ * the files with next/font; change the family in one place here.
+ *
+ * Light theme only for now. To add a dark theme later, redefine these same
+ * --np-* variables under a selector such as :root[data-theme="dark"] (or a
+ * prefers-color-scheme media query) -- no component needs to change.
+ * ---------------------------------------------------------------------- */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Type */
+  --font-heading: var(--font-fredoka), ui-rounded, system-ui, sans-serif;
+  --font-body: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+
+  /* Surfaces */
+  --np-page: #fff8fb; /* warm blush white */
+  --np-surface: #ffffff;
+  --np-pink-soft: #fce4ec;
+  --np-blue-soft: #e3f0fc;
+  --np-blue-mid: #b9d3ef;
+  --np-neutral-bg: #f1eef2;
+
+  /* Lines: hairline for decoration, strong for form-field edges (3:1) */
+  --np-line: #efe3ea;
+  --np-line-strong: #8a7c8c;
+
+  /* Text */
+  --np-ink: #2b2a3a;
+  --np-muted: #5f5e72;
+
+  /* Actions */
+  --np-primary: #3d6fb4;
+  --np-primary-hover: #2f5c9e;
+  --np-on-primary: #ffffff;
+  --np-primary-ink: #2f5c9e; /* blue text and icons on light/pastel */
+  --np-secondary-bg: var(--np-pink-soft);
+  --np-secondary-hover: #f8d3e0;
+  --np-secondary-ink: #983a60;
+  --np-focus: #2f5c9e;
+
+  /* Status: each has a deep ink for text/icons and a pale bg */
+  --np-danger-ink: #a1253a;
+  --np-danger-bg: #fdecef;
+  --np-success-ink: #2d6a45;
+  --np-success-bg: #e8f5ec;
+  --np-warning-ink: #80500a;
+  --np-warning-bg: #fff3e0;
+  --np-info-ink: var(--np-primary-ink);
+  --np-info-bg: var(--np-blue-soft);
+  --np-neutral-ink: #55546a;
+
+  /* Crisis support: its own treatment, never reused for anything else */
+  --np-crisis-bg: #f6cbd3;
+  --np-crisis-ink: #3a0d19;
+  --np-crisis-accent: #9b1c3c;
+  --np-on-crisis: #ffffff;
+
+  /* Growth charts */
+  --np-chart-band-outer: #dceaf8;
+  --np-chart-band-inner: var(--np-blue-mid);
+  --np-chart-median: #2f5c9e;
+  --np-chart-child: #b0386a;
+  --np-chart-grid: #e6dce3;
+  --np-chart-axis: var(--np-muted);
+
+  /* Illustrations (app/ui/illustrations). Decorative only -- never used for
+   * text or controls, so they sit outside the contrast table. Faces use ink. */
+  --np-art-face: var(--np-ink);
+  --np-art-shine: #ffffff;
+  --np-art-cheek: #f6b3c6;
+  --np-art-nose: #e48aa4;
+  --np-art-shadow: #f2e6ec;
+  --np-art-chick: #fde7a9;
+  --np-art-chick-deep: #f7d27a;
+  --np-art-chick-light: #fff4d6;
+  --np-art-wing: #f8c9d7;
+  --np-art-beak: #f0a35b;
+  --np-art-nest: #d9b48e;
+  --np-art-nest-deep: #bd9068;
+  --np-art-nest-light: #ecd4ba;
+  --np-art-bunny: #f1ebf6;
+  --np-art-bunny-deep: #ddd0e8;
+  --np-art-bear: #ddb592;
+  --np-art-bear-deep: #c99c75;
+  --np-art-bear-light: #f4e2cd;
+  --np-art-duck: #ffe285;
+  --np-art-duck-deep: #f6cc5a;
+  --np-art-sparkle: #f2b33d;
+}
+
+/* No default palette: only the tokens above exist as Tailwind colors, so a
+ * stray text-zinc-600 simply has no effect (and lib/contrast.test.ts fails
+ * the build's tests if one appears in the source). */
+@theme {
+  --color-*: initial;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--np-page);
+  --color-surface: var(--np-surface);
+  --color-pink-soft: var(--np-pink-soft);
+  --color-blue-soft: var(--np-blue-soft);
+  --color-blue-mid: var(--np-blue-mid);
+  --color-neutral-bg: var(--np-neutral-bg);
+  --color-line: var(--np-line);
+  --color-line-strong: var(--np-line-strong);
+  --color-ink: var(--np-ink);
+  --color-muted: var(--np-muted);
+  --color-primary: var(--np-primary);
+  --color-primary-hover: var(--np-primary-hover);
+  --color-on-primary: var(--np-on-primary);
+  --color-primary-ink: var(--np-primary-ink);
+  --color-secondary-bg: var(--np-secondary-bg);
+  --color-secondary-hover: var(--np-secondary-hover);
+  --color-secondary-ink: var(--np-secondary-ink);
+  --color-focus: var(--np-focus);
+  --color-danger-ink: var(--np-danger-ink);
+  --color-danger-bg: var(--np-danger-bg);
+  --color-success-ink: var(--np-success-ink);
+  --color-success-bg: var(--np-success-bg);
+  --color-warning-ink: var(--np-warning-ink);
+  --color-warning-bg: var(--np-warning-bg);
+  --color-info-ink: var(--np-info-ink);
+  --color-info-bg: var(--np-info-bg);
+  --color-neutral-ink: var(--np-neutral-ink);
+  --color-crisis-bg: var(--np-crisis-bg);
+  --color-crisis-ink: var(--np-crisis-ink);
+  --color-crisis-accent: var(--np-crisis-accent);
+  --color-on-crisis: var(--np-on-crisis);
+  --color-chart-band-outer: var(--np-chart-band-outer);
+  --color-chart-band-inner: var(--np-chart-band-inner);
+  --color-chart-median: var(--np-chart-median);
+  --color-chart-child: var(--np-chart-child);
+
+  --font-sans: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Titles, the wordmark and other headings: Fredoka. */
+@utility font-heading {
+  font-family: var(--font-heading);
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  body {
+    background: var(--np-page);
+    color: var(--np-ink);
+    font-family: var(--font-body);
+    line-height: 1.6;
+    /* Only the loaded weights exist; never fake a bold. */
+    font-synthesis-weight: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    line-height: 1.25;
+    /* No lone last word ("... support / now"). */
+    text-wrap: balance;
+  }
+
+  /* Form controls don't inherit fonts by default. */
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+
+  /* Chart text (axes, ticks, labels) is SVG: same body font, and numbers
+   * line up. */
+  svg text {
+    font-family: var(--font-body);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* One visible focus ring for every interactive element. */
+  :focus-visible {
+    outline: 3px solid var(--np-focus);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--np-blue-mid);
+    color: var(--np-ink);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ------------------------------------------------------------------------
+ * Motion. Entrances and feedback are short (200-600ms); the only loops are
+ * slow, subtle idle movements on illustrations. Components use these
+ * classes, never inline animations or Tailwind animate-* utilities (an
+ * inline animation-delay to stagger sparkles is fine), so the reduced-motion
+ * block at the end covers everything. lib/motion.test.ts checks that.
+ * ---------------------------------------------------------------------- */
+@keyframes np-rise {
+  from { opacity: 0; transform: translateY(8px); }
+}
+@keyframes np-fade {
+  from { opacity: 0; }
+}
+@keyframes np-arrive {
+  from { opacity: 0; transform: translateY(-10px); }
+}
+@keyframes np-glow {
+  from { background-color: var(--np-blue-soft); }
+  to { background-color: var(--np-surface); }
+}
+@keyframes np-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes np-pop {
+  0% { opacity: 0; transform: scale(0.3); }
+  45% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.8); }
+}
+@keyframes np-cheer {
+  0%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+  60% { transform: translateY(0); }
+  80% { transform: translateY(-2px); }
+}
+@keyframes np-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes np-hop {
+  0%, 55%, 100% { transform: translateY(0); }
+  65% { transform: translateY(-7px); }
+  75% { transform: translateY(0); }
+  82% { transform: translateY(-2px); }
+  89% { transform: translateY(0); }
+}
+@keyframes np-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+@keyframes np-blink {
+  0%, 94%, 100% { transform: scaleY(1); }
+  97% { transform: scaleY(0.1); }
+}
+
+/* Cards fade and rise in once when they mount. */
+.np-enter {
+  animation: np-rise 400ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+/* Buttons give under the finger. */
+.np-press {
+  transition: background-color 200ms ease, color 200ms ease, transform 200ms ease;
+}
+.np-press:active:not(:disabled) {
+  transform: scale(0.97);
+}
+/* Cards lift a little under a mouse pointer (not on touch screens). */
+@media (hover: hover) and (pointer: fine) {
+  .np-lift {
+    transition: transform 250ms ease, box-shadow 250ms ease;
+  }
+  .np-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--np-ink) 40%, transparent);
+  }
+}
+/* The tab bar's active pill slides to the new tab (positioned by AppNav). */
+.np-tab-indicator {
+  transition: transform 300ms cubic-bezier(0.2, 0.7, 0.3, 1), width 300ms cubic-bezier(0.2, 0.7, 0.3, 1),
+    height 300ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+/* A care-log entry that just arrived: slides in, stays tinted for a moment,
+ * then the tint fades. */
+.np-arrive {
+  animation: np-arrive 450ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards, np-glow 600ms ease 900ms both;
+}
+/* A checkmark that draws itself (on a path with pathLength="1"). */
+.np-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: np-draw 450ms ease-out 100ms forwards;
+}
+/* One-off sparkle / confetti piece. */
+.np-pop {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: np-pop 600ms ease-out both;
+}
+.np-cheer {
+  animation: np-cheer 600ms ease-out 2;
+}
+/* Idle loops: slow and small, illustrations only. */
+.np-loop-bob {
+  animation: np-bob 2.4s ease-in-out infinite;
+}
+.np-loop-hop {
+  animation: np-hop 2.8s ease-in-out infinite;
+}
+.np-loop-breathe {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: np-breathe 4.5s ease-in-out infinite;
+}
+.np-loop-blink {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: np-blink 5s ease-in-out infinite;
+}
+
+/* Calm pages (Wellbeing, Alerts): nothing moves at all. */
+.np-still .np-enter,
+.np-still .np-cheer,
+.np-still [class*="np-loop-"] {
+  animation: none;
+}
+.np-still .np-lift:hover,
+.np-still .np-press:active:not(:disabled) {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Reduced motion: no movement and no loops. Entrances and the new-entry
+ * tint become instant; finished states (the drawn check) show at once. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .np-enter,
+  .np-cheer,
+  .np-loop-bob,
+  .np-loop-hop,
+  .np-loop-breathe,
+  .np-loop-blink {
+    animation: none !important;
+  }
+  .np-arrive {
+    animation: np-glow 0.01ms linear 900ms both !important;
+  }
+  .np-draw {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+  .np-pop {
+    animation: none !important;
+    display: none;
+  }
+  .np-lift:hover,
+  .np-press:active:not(:disabled) {
+    transform: none !important;
+  }
+  .np-tab-indicator {
+    transition: none !important;
+  }
 }

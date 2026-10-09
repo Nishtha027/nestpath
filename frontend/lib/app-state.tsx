@@ -57,7 +57,7 @@ export function AppStateProvider({ token, children }: { token: string; children:
         if (!cancelled) setChildList(list);
       })
       .catch((err) => {
-        if (!cancelled) setChildrenError(loadErrorMessage(err, "Failed to load children"));
+        if (!cancelled) setChildrenError(loadErrorMessage(err, "Couldn't load your children."));
       })
       .finally(() => {
         if (!cancelled) setChildrenLoading(false);
