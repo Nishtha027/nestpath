@@ -151,6 +151,28 @@ Notes for a long-lived demo: seeded slots only cover the window set by
 adds what's missing) to top them up. There's no cancel/reschedule endpoint,
 so booked slots stay booked.
 
+## Deploying the frontend
+
+The live Vercel project (`nishtha15/nestpath`) isn't connected to GitHub, so
+pushing to `main` does **not** redeploy the frontend. Deploy it from the
+`frontend` folder with the Vercel CLI (the project's Root Directory is `.`, so
+the folder you deploy from must be `frontend` itself):
+
+```powershell
+git fetch origin; git status            # be on main, level with origin/main, clean
+cd frontend
+vercel deploy --prod --project nestpath --scope nishtha15 --logs
+```
+
+- The build runs on Vercel, using the project's Production
+  `NEXT_PUBLIC_API_URL`. Your local `frontend/.env.local` is never uploaded
+  (Vercel's CLI skips it by default).
+- `--project` and `--scope` pick the project directly, so there's no need for
+  `vercel link` and no `.vercel/` folder is written.
+- When it finishes, the output says `Aliased https://nestpath-one.vercel.app`
+  and gives the new deployment id. `vercel inspect nestpath-one.vercel.app
+  --scope nishtha15` confirms the domain points at it.
+
 ## Known limitations
 
 This is a demo, not a production system. In particular:
