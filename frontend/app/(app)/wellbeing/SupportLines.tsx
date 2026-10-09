@@ -1,22 +1,25 @@
 import { DEFAULT_REGION, SUPPORT_RESOURCES, type SupportLine } from "@/lib/support-resources";
-import { BUTTON_SECONDARY, CARD, LINK, LIST_ITEM, MUTED, SECTION_TITLE } from "@/lib/ui";
+import { BUTTON_SECONDARY, CARD, LINK, MUTED, SECTION_TITLE } from "@/lib/ui";
 import { Icon } from "../../ui/Icon";
 
 const LINK_BUTTON = BUTTON_SECONDARY;
 
 const resources = SUPPORT_RESOURCES[DEFAULT_REGION];
 
+// The number is printed right above these, so the buttons just say Call and
+// Text; the accessible name carries the line and number.
 function LineActions({ line }: { line: SupportLine }) {
+  const number = line.display.split(" ")[0];
   return (
     <div className="flex flex-wrap gap-2">
-      <a href={`tel:${line.tel}`} className={LINK_BUTTON}>
+      <a href={`tel:${line.tel}`} aria-label={`Call ${line.name}, ${number}`} className={LINK_BUTTON}>
         <Icon name="phone" className="h-4 w-4" />
-        Call {line.display.split(" ")[0]}
+        Call
       </a>
       {line.canText && (
-        <a href={`sms:${line.tel}`} className={LINK_BUTTON}>
+        <a href={`sms:${line.tel}`} aria-label={`Text ${line.name}, ${number}`} className={LINK_BUTTON}>
           <Icon name="message" className="h-4 w-4" />
-          Text {line.display.split(" ")[0]}
+          Text
         </a>
       )}
     </div>
@@ -41,8 +44,8 @@ export function CrisisSupport() {
         Please reach out for support now
       </h2>
       <p>
-        You said the thought of harming yourself has occurred to you. You don&apos;t have to wait,
-        and you don&apos;t have to handle this alone.
+        You said you&apos;ve had thoughts of harming yourself. You don&apos;t have to wait, and you
+        don&apos;t have to handle this alone.
       </p>
       <p>
         {crisis.name}: call or text <span className="text-2xl font-extrabold">{crisis.display}</span>,
@@ -69,8 +72,8 @@ export function CrisisSupport() {
         number) now.
       </p>
       <p className="text-sm font-medium">
-        These are {resources.regionName} numbers. Outside the US, contact your local emergency
-        number or health service.
+        These are US numbers. Outside the US, contact your local emergency number or health
+        service.
       </p>
     </section>
   );
@@ -80,19 +83,17 @@ export function SupportLines() {
   return (
     <section aria-labelledby="support-lines-heading" className={CARD}>
       <h2 id="support-lines-heading" className={SECTION_TITLE}>
-        Postpartum support lines
+        Support lines
       </h2>
       <p className={MUTED}>
-        These are {resources.regionName} resources. Outside the US, contact your local emergency
-        number or health service.
+        US numbers. Outside the US, contact your local emergency number or health service.
       </p>
-      <ul className="flex flex-col gap-3">
+      <ul className="flex flex-col divide-y divide-line">
         {resources.postpartumLines.map((line) => (
-          <li key={line.name} className={`flex flex-col gap-2 ${LIST_ITEM}`}>
+          <li key={line.name} className={`flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0`}>
             <p className="font-bold">{line.name}</p>
-            <p className="text-sm">
-              <span className="font-semibold">{line.display}</span> -- {line.description}
-            </p>
+            <p className="font-semibold">{line.display}</p>
+            <p className="text-sm">{line.description}</p>
             <LineActions line={line} />
             <p className="text-xs text-muted">
               Source:{" "}
@@ -105,8 +106,8 @@ export function SupportLines() {
         ))}
       </ul>
       <p className="text-sm">
-        In a crisis, call or text {resources.crisisLine.display} ({resources.crisisLine.name}), or{" "}
-        {resources.emergencyNumber} if you are in immediate danger.
+        In a crisis, call or text {resources.crisisLine.display} ({resources.crisisLine.name}), or
+        call {resources.emergencyNumber} if you are in immediate danger.
       </p>
     </section>
   );

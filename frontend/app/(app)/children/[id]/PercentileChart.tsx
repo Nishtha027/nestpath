@@ -129,15 +129,13 @@ export function ChartLegend() {
         Your baby
       </li>
       <li className="flex items-center gap-2">
-        <span className="inline-block w-6 border-t-2 border-dashed border-chart-median" /> Average baby (WHO
-        median)
+        <span className="inline-block w-6 border-t-2 border-dashed border-chart-median" /> Average
       </li>
       <li className="flex items-center gap-2">
-        <span className="inline-block h-3 w-6 rounded-sm bg-chart-band-inner" /> Middle 70% of babies (15th-85th)
+        <span className="inline-block h-3 w-6 rounded-sm bg-chart-band-inner" /> 15th to 85th
       </li>
       <li className="flex items-center gap-2">
-        <span className="inline-block h-3 w-6 rounded-sm border border-line bg-chart-band-outer" /> 94% of babies
-        (3rd-97th)
+        <span className="inline-block h-3 w-6 rounded-sm border border-line bg-chart-band-outer" /> 3rd to 97th
       </li>
     </ul>
   );

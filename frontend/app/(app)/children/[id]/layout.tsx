@@ -25,7 +25,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   if (!child) {
     return (
       <Message tone="error">
-        Child not found.{" "}
+        We couldn&apos;t find this child.{" "}
         <Link href="/dashboard" className="font-semibold underline underline-offset-2">
           Go to Home
         </Link>
@@ -39,7 +39,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         <p className="self-start rounded-full bg-pink-soft px-4 py-1.5 text-sm text-ink">
           <span className="font-bold">{child.name || "Unnamed child"}</span>
           {" · "}
-          {ageLabel(child.birth_date)} (born {child.birth_date})
+          {ageLabel(child.birth_date)}
         </p>
         {children}
       </div>

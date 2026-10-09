@@ -36,7 +36,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
     // complete) shouldn't flash "Loading..." over an already-populated list.
     apiFetch<HelpRequest[]>("/help-requests", { token })
       .then(setRequests)
-      .catch((err) => setLoadError(err instanceof ApiError ? err.message : "Failed to load help requests"))
+      .catch((err) => setLoadError(err instanceof ApiError ? err.message : "Couldn't load requests. Refresh to try again."))
       .finally(() => setLoading(false));
   }
 
@@ -67,7 +67,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
       setWindowEnd("");
       loadRequests();
     } catch (err) {
-      setCreateError(err instanceof ApiError ? err.message : "Failed to create help request");
+      setCreateError(err instanceof ApiError ? err.message : "Couldn't post that. Try again.");
     } finally {
       setCreating(false);
     }
@@ -84,7 +84,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
       setClaimedByMe((prev) => [...prev, claimed]);
       loadRequests();
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : "Failed to claim request");
+      setActionError(err instanceof ApiError ? err.message : "Couldn't claim it. Someone may have got there first.");
       loadRequests();
     } finally {
       setActioningId(null);
@@ -98,7 +98,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
       await apiFetch(`/help-requests/${id}/complete`, { token, method: "POST" });
       setClaimedByMe((prev) => prev.filter((r) => r.id !== id));
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : "Failed to complete request");
+      setActionError(err instanceof ApiError ? err.message : "Couldn't save. Try again.");
     } finally {
       setActioningId(null);
     }
@@ -112,7 +112,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
           <input
             id="help-need"
             type="text"
-            placeholder="e.g. meal, errand, childcare"
+            placeholder="Meal, errand, childcare..."
             value={needType}
             onChange={(e) => setNeedType(e.target.value)}
             required
@@ -156,7 +156,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
           disabled={creating}
           className={`${BUTTON_PRIMARY} sm:col-span-2 sm:justify-self-start`}
         >
-          {creating ? "Posting..." : "Post request"}
+          {creating ? "Posting..." : "Ask for help"}
         </button>
       </form>
       {createError && <Message tone="error">{createError}</Message>}
@@ -166,9 +166,8 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
       {actionError && <Message tone="error">{actionError}</Message>}
       {!loading && !loadError && requests.length === 0 && (
         <div className="np-enter rounded-2xl border border-line bg-surface">
-          <EmptyState art={<Duckling className="h-20 w-20" />} title="No open requests right now.">
-            When someone in your family needs a hand with a meal, an errand or childcare, their
-            request shows up here for the others to claim.
+          <EmptyState art={<Duckling className="h-20 w-20" />} title="No open requests">
+            Ask your family for a meal, an errand or a hand with the baby.
           </EmptyState>
         </div>
       )}
@@ -191,7 +190,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
               </div>
               {isOwnRequest ? (
                 <span className="rounded-full bg-pink-soft px-3 py-1 text-xs font-semibold text-secondary-ink">
-                  You posted this -- someone else can claim it
+                  Your request
                 </span>
               ) : (
                 <button
@@ -211,11 +210,11 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
       {claimedByMe.length > 0 && (
         <div className={CARD}>
           <h3 className={SUBSECTION_TITLE}>Claimed by you</h3>
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col divide-y divide-line">
             {claimedByMe.map((req) => (
               <li
                 key={req.id}
-                className={`flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between ${LIST_ITEM}`}
+                className={`flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between py-3 first:pt-0 last:pb-0`}
               >
                 <div>
                   <span className="font-bold">{req.need_type}</span>
@@ -227,7 +226,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
                   disabled={actioningId === req.id}
                   className={BUTTON_PRIMARY}
                 >
-                  {actioningId === req.id ? "Completing..." : "Mark complete"}
+                  {actioningId === req.id ? "Saving..." : "Mark done"}
                 </button>
               </li>
             ))}

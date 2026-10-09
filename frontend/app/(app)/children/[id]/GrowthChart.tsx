@@ -8,6 +8,7 @@ import { GrowthForm } from "./GrowthForm";
 import { ChartLegend, PercentileChart, type ChildPoint } from "./PercentileChart";
 import { CARD, MUTED, SECTION_TITLE } from "@/lib/ui";
 import { Icon } from "../../../ui/Icon";
+import { Disclosure } from "../../../ui/Disclosure";
 import { Message } from "../../../ui/Message";
 import { Loading } from "../../../ui/Loading";
 import { EmptyState } from "../../../ui/EmptyState";
@@ -41,7 +42,7 @@ export function GrowthChart({
         const latest = loaded.at(-1)?.sex;
         if (latest === "male" || latest === "female") setSex((current) => current ?? latest);
       })
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load growth data"))
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load measurements. Refresh to try again."))
       .finally(() => setLoading(false));
   }
 
@@ -60,7 +61,7 @@ export function GrowthChart({
         setReferenceError(null);
       })
       .catch((err) => {
-        if (!cancelled) setReferenceError(err instanceof ApiError ? err.message : "Failed to load WHO curves");
+        if (!cancelled) setReferenceError(err instanceof ApiError ? err.message : "Couldn't load the charts. Refresh to try again.");
       });
     return () => {
       cancelled = true;
@@ -105,12 +106,7 @@ export function GrowthChart({
         ))}
       </fieldset>
 
-      {overTwo && (
-        <Message tone="warning">
-          These charts cover birth to 2 years (WHO&apos;s under-2 standard). Measurements after age 2
-          can&apos;t be added here yet.
-        </Message>
-      )}
+      {overTwo && <Message tone="warning">Charts and new measurements cover 0 to 2 years only.</Message>}
 
       {loading ? (
         <Loading />
@@ -120,9 +116,8 @@ export function GrowthChart({
         <LatestSummary measurement={latest} />
       ) : (
         <section className="np-enter rounded-2xl bg-blue-soft">
-          <EmptyState art={<BearCub className="h-20 w-20" />} title="No measurements yet.">
-            Add your baby&apos;s weight and length below to see how they compare with WHO growth
-            standards.
+          <EmptyState art={<BearCub className="h-20 w-20" />} title="No measurements yet">
+            Add one below to see the charts.
           </EmptyState>
         </section>
       )}
@@ -133,7 +128,7 @@ export function GrowthChart({
       </section>
 
       {!sex ? (
-        <p className={MUTED}>Choose Girls or Boys to see the growth charts.</p>
+        <p className={MUTED}>Choose Girls or Boys to see the charts.</p>
       ) : referenceError ? (
         <Message tone="error">{referenceError}</Message>
       ) : !reference || !curvesMatch ? (
@@ -145,11 +140,15 @@ export function GrowthChart({
             <PercentileChart title="Weight for age" unit="kg" reference={reference.weight_kg} points={weightPoints} />
             <PercentileChart title="Length for age" unit="cm" reference={reference.length_cm} points={lengthPoints} />
           </div>
-          <p className={MUTED}>
-            Babies grow at their own pace. What matters most is following a steady curve over time,
-            not being on the average line. Source: WHO Child Growth Standards (0-24 months), via
-            CDC&apos;s data files. This is not medical advice.
-          </p>
+          <p className="text-sm text-ink">A steady curve matters more than being on the average line.</p>
+          <Disclosure label="About these charts">
+            <p>
+              Each chart compares your baby with others of the same age and sex. The 50th percentile
+              is the average; most babies (94%) fall between the 3rd and 97th.
+            </p>
+            <p>Babies grow at their own pace. Under age 2, length is measured lying down.</p>
+            <p>Source: WHO Child Growth Standards (0 to 24 months), via CDC&apos;s data files.</p>
+          </Disclosure>
         </section>
       )}
 
@@ -165,24 +164,21 @@ function LatestSummary({ measurement: m }: { measurement: GrowthMeasurement }) {
   return (
     <section className="flex flex-col gap-1.5 rounded-2xl bg-blue-soft px-5 py-4 text-ink">
       <h2 className="font-semibold">
-        Latest: {m.measured_at} ({m.age_months} month{m.age_months === 1 ? "" : "s"} old)
+        Latest · {m.measured_at} · {m.age_months} month{m.age_months === 1 ? "" : "s"}
       </h2>
       {m.weight_kg !== null && m.percentile !== null && (
         <p>
-          <strong>{m.weight_kg} kg</strong>: {comparedToPeers(m.percentile, "weight", m.sex)}{" "}
-          <span className="text-muted">({ordinal(m.percentile)} percentile)</span>
+          <strong>{m.weight_kg} kg</strong>, {comparedToPeers(m.percentile, "weight", m.sex)}
         </p>
       )}
       {m.length_cm !== null && m.length_percentile !== null && (
         <p>
-          <strong>{m.length_cm} cm</strong>: {comparedToPeers(m.length_percentile, "length", m.sex)}{" "}
-          <span className="text-muted">({ordinal(m.length_percentile)} percentile)</span>
+          <strong>{m.length_cm} cm</strong>, {comparedToPeers(m.length_percentile, "length", m.sex)}
         </p>
       )}
       {flagged && (
         <Message tone="warning" className="mt-1">
-          This is outside the range most babies fall in (3rd-97th percentile). One measurement
-          isn&apos;t a diagnosis, but it&apos;s worth mentioning at your next check-up.
+          Outside the usual range (3rd to 97th percentile). Mention it at your next check-up.
         </Message>
       )}
     </section>
@@ -192,7 +188,7 @@ function LatestSummary({ measurement: m }: { measurement: GrowthMeasurement }) {
 function MeasurementTable({ measurements }: { measurements: GrowthMeasurement[] }) {
   return (
     <section className={CARD}>
-      <h2 className={SECTION_TITLE}>All measurements</h2>
+      <h2 className={SECTION_TITLE}>History</h2>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[28rem] text-left text-sm">
           <thead className="text-xs text-muted">

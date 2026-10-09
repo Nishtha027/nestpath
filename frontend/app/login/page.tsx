@@ -46,14 +46,14 @@ export default function LoginPage() {
       }
       router.replace("/dashboard");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong");
+      setError(err instanceof ApiError ? err.message : "Couldn't reach NestPath. Try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-10">
+    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10">
       <div className="flex flex-col items-center gap-2 text-center">
         <Chick animated className="h-28 w-28 sm:h-32 sm:w-32" />
         <h1 className="text-3xl font-bold tracking-tight">NestPath</h1>
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
       {sessionExpired && (
         <Message tone="warning" className="w-full max-w-sm">
-          Your session expired. Please log in again.
+          Your session expired. Log in again.
         </Message>
       )}
 
@@ -96,7 +96,7 @@ export default function LoginPage() {
                   aria-pressed={!joinFamily}
                   className={segmentClass(!joinFamily)}
                 >
-                  Start a new family
+                  New family
                 </button>
                 <button
                   type="button"
@@ -104,7 +104,7 @@ export default function LoginPage() {
                   aria-pressed={joinFamily}
                   className={segmentClass(joinFamily)}
                 >
-                  Join an existing family
+                  Join a family
                 </button>
               </div>
               <div className={FIELD}>
@@ -137,7 +137,7 @@ export default function LoginPage() {
                     className={`${INPUT} font-mono uppercase tracking-widest`}
                   />
                   <p className={MUTED}>
-                    Ask a caregiver already in the family -- the code is on their dashboard.
+                    It&apos;s on the Home page of anyone in the family.
                   </p>
                 </div>
               )}

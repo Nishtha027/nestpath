@@ -32,6 +32,7 @@ const PATHS = {
       <path d="M12 11v5.5M12 7.5h.01" />
     </>
   ),
+  chevronDown: <path d="m6 9.5 6 6 6-6" />,
   clock: (
     <>
       <circle cx="12" cy="12" r="9" />

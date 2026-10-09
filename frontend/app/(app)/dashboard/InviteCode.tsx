@@ -19,7 +19,7 @@ export function InviteCode({ token }: { token: string }) {
         if (!cancelled) setFamily(f);
       })
       .catch((err) => {
-        if (!cancelled) setError(loadErrorMessage(err, "Failed to load invite code"));
+        if (!cancelled) setError(loadErrorMessage(err, "Couldn't load the invite code."));
       });
     return () => {
       cancelled = true;
@@ -36,8 +36,7 @@ export function InviteCode({ token }: { token: string }) {
       {error && <LoadError message={error} onRetry={retry} withArt={false} />}
       {family && (
         <>
-          <p className="flex flex-wrap items-center gap-3">
-            <span className="font-semibold">Invite code:</span>
+          <p>
             <code
               data-testid="invite-code"
               className="rounded-xl bg-blue-soft px-3 py-1.5 font-mono text-lg font-semibold tracking-widest text-primary-ink"
@@ -45,10 +44,7 @@ export function InviteCode({ token }: { token: string }) {
               {family.invite_code}
             </code>
           </p>
-          <p className={MUTED}>
-            Share this with another caregiver. On the login page they choose Register, then Join an
-            existing family, and enter it to see the same children, care log and help board.
-          </p>
+          <p className={MUTED}>They enter this code when they register.</p>
         </>
       )}
     </div>

@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <AppStateProvider key={token} token={token}>
-      <div className="flex min-h-screen flex-col">
+      <div className="flex flex-1 flex-col">
         <AppNav />
         <main
           className={`mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10 ${still ? "np-still" : ""}`}

@@ -17,6 +17,7 @@ import { CrisisSupport, SupportLines } from "./SupportLines";
 import { Toolkit } from "./Toolkit";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, MUTED, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
 import { Message } from "../../ui/Message";
+import { Disclosure } from "../../ui/Disclosure";
 import { Chick } from "../../ui/illustrations";
 
 const PRIMARY = BUTTON_PRIMARY;
@@ -26,27 +27,41 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
-/** Shown before the questionnaire. Matches what the backend actually does:
+/** Shown before the questions. Matches what the backend actually does:
  * GET /screenings/me is own-results-only, and GET /alerts shows every
- * flagged (risk_level "high") result to every provider account. */
+ * flagged (risk_level "high") result to every provider account. The
+ * essentials stay visible; the full detail is one click away. */
 function AboutNote() {
   return (
-    <div className="flex flex-col gap-2 rounded-xl bg-pink-soft px-4 py-3.5 text-sm text-ink">
+    <div className="flex flex-col gap-1 rounded-xl bg-pink-soft px-4 pt-3.5 pb-1.5 text-sm text-ink">
       <p>
-        <strong>This is a screening, not a diagnosis.</strong> The 10 questions (the Edinburgh
-        Postnatal Depression Scale) can suggest whether talking to someone might help. They
-        can&apos;t tell you what&apos;s going on -- only a conversation with a provider can.
+        <strong>A screening, not a diagnosis.</strong> Your family can&apos;t see your results.
+        Providers can see flagged scores, without your name; that doesn&apos;t mean anyone will
+        contact you.
       </p>
-      <p>
-        <strong>Who can see your results:</strong> your results are saved to your account, and
-        other caregivers in your family can&apos;t see them. A result is <em>flagged</em> if the
-        total is 13 or more, or if you answer anything other than &ldquo;Never&rdquo; to the
-        question about harming yourself. Flagged results appear in an Alerts list that{" "}
-        <strong>every provider account in NestPath can see, across all families</strong>. That
-        list shows the score, the date, whether that question was flagged, and account and family
-        ID numbers -- not your name, email or individual answers. A flagged result does not mean
-        anyone will contact you, so please reach out yourself if you need support.
-      </p>
+      <Disclosure label="Who can see my results">
+        <p>
+          The 10 questions are the Edinburgh Postnatal Depression Scale (EPDS). They can suggest
+          whether talking to someone might help. Only a conversation with a provider can tell you
+          what&apos;s going on.
+        </p>
+        <p>
+          Your results are saved to your account. Other caregivers in your family can&apos;t see
+          them.
+        </p>
+        <p>
+          A result is <em>flagged</em> if the total is 13 or more, or if you answer anything other
+          than &ldquo;Never&rdquo; to the question about harming yourself. Flagged results appear in
+          an Alerts list that{" "}
+          <strong>every provider account in NestPath can see, across all families</strong>. It
+          shows the score, the date, whether that question was flagged, and account and family ID
+          numbers, not your name, email or answers.
+        </p>
+        <p>
+          A flagged result doesn&apos;t mean anyone will contact you, so please reach out yourself
+          if you need support.
+        </p>
+      </Disclosure>
     </div>
   );
 }
@@ -58,14 +73,12 @@ function NeedHelp({ result, onBack }: { result: ScreeningSubmitResponse; onBack:
   return (
     <section aria-labelledby="need-help-heading" className={CARD}>
       <h2 id="need-help-heading" className={SECTION_TITLE}>
-        Do you need help?
+        {text.headline}
       </h2>
       <div className="flex flex-col gap-2">
-        <p className="text-base font-semibold">{text.headline}</p>
         <p>{text.detail}</p>
         <p className={MUTED}>
-          Your score: {result.total_score} of 30 ({bandLabel}). This is a screening result, not a
-          diagnosis.
+          Score {result.total_score} / 30, {bandLabel}. A screening, not a diagnosis.
         </p>
         {text.suggestAppointment && (
           <div className="flex flex-col gap-1">
@@ -75,9 +88,7 @@ function NeedHelp({ result, onBack }: { result: ScreeningSubmitResponse; onBack:
             >
               Go to Appointments
             </Link>
-            <p className={MUTED}>
-              Your own doctor, midwife or OB is also a good person to call.
-            </p>
+            <p className={MUTED}>Or call your own doctor, midwife or OB.</p>
           </div>
         )}
       </div>
@@ -108,7 +119,7 @@ export default function WellbeingPage() {
     apiFetch<ScreeningHistoryItem[]>("/screenings/me", { token })
       .then(setHistory)
       .catch((err) =>
-        setHistoryError(err instanceof ApiError ? err.message : "Failed to load your check-ins")
+        setHistoryError(err instanceof ApiError ? err.message : "Couldn't load your check-ins. Refresh to try again.")
       )
       .finally(() => setHistoryLoading(false));
   }, [token]);
@@ -155,7 +166,7 @@ export default function WellbeingPage() {
       setView("result");
       window.scrollTo({ top: 0 });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to submit check-in");
+      setError(err instanceof ApiError ? err.message : "Couldn't submit. Your answers are still here; try again.");
     } finally {
       setSubmitting(false);
     }
@@ -171,7 +182,7 @@ export default function WellbeingPage() {
     return (
       <>
         <h1 ref={resultHeading} tabIndex={-1} className={`${PAGE_TITLE} focus:outline-none`}>
-          Your check-in result
+          Your result
         </h1>
         {/* Order comes from the server's item_10_flag: crisis support first when set. */}
         {resultSections(result).map((section) => sections[section])}
@@ -182,10 +193,10 @@ export default function WellbeingPage() {
   if (view === "questions") {
     return (
       <>
-        <h1 className={PAGE_TITLE}>Postpartum check-in (EPDS)</h1>
+        <h1 className={PAGE_TITLE}>Postpartum check-in</h1>
         <AboutNote />
         <p>
-          Answer based on how you have felt over the <strong>past 7 days</strong>, not just today.
+          Answer for the <strong>past 7 days</strong>, not just today.
         </p>
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           {EPDS_ITEMS.map((item) => (
@@ -251,23 +262,17 @@ export default function WellbeingPage() {
         ) : historyError ? (
           <Message tone="error">{historyError}</Message>
         ) : !latest || !checkIn ? (
-          <p>
-            A short, private 10-question check-in on how you&apos;ve been feeling over the past
-            week. It takes about 5 minutes.
-          </p>
+          <p>10 questions about the past week. About 5 minutes.</p>
         ) : checkIn.isDue ? (
           <Message tone="info">
-            It&apos;s been two weeks since your last check-in ({formatDate(latest.created_at)}) --
-            a good time to check in again.
+            Last check-in {formatDate(latest.created_at)}. Time for another.
           </Message>
         ) : (
           <p>
-            Last check-in: {formatDate(latest.created_at)}. Check in again in 2 weeks, around{" "}
-            <strong>{formatDate(checkIn.due.toISOString())}</strong> -- or any time sooner if you
-            want to.
+            Last check-in {formatDate(latest.created_at)}. Next around{" "}
+            <strong>{formatDate(checkIn.due.toISOString())}</strong>, or sooner if you like.
           </p>
         )}
-        <AboutNote />
         <button type="button" onClick={startCheckIn} className={`self-start ${PRIMARY}`}>
           {latest ? "Retake check-in" : "Start check-in"}
         </button>
@@ -276,9 +281,8 @@ export default function WellbeingPage() {
       {history.length > 0 && (
         <section aria-labelledby="history-heading" className={CARD}>
           <h2 id="history-heading" className={SECTION_TITLE}>
-            Your past check-ins
+            Past check-ins
           </h2>
-          <p className={MUTED}>Only you can see this list.</p>
           <table className="w-full text-left text-sm">
             <thead className="text-xs text-muted">
               <tr>

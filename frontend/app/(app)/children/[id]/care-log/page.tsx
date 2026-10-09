@@ -12,7 +12,7 @@ export default function CareLogPage() {
   if (!caregiver) return null;
   return (
     <section className="flex flex-col gap-5">
-      <h1 className={PAGE_TITLE}>Care log (live)</h1>
+      <h1 className={PAGE_TITLE}>Care log</h1>
       <LiveCareLog key={child.id} childId={child.id} familyId={caregiver.familyId} token={token} />
     </section>
   );

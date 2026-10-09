@@ -6,7 +6,7 @@ import Link from "next/link";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Child } from "@/lib/types";
 import { ageLabel, useAppState } from "@/lib/app-state";
-import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, MUTED, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, FIELD, INPUT, LABEL, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
 import { Message } from "../../ui/Message";
 import { Loading } from "../../ui/Loading";
 import { Chick } from "../../ui/illustrations";
@@ -19,22 +19,71 @@ function timeOfDayGreeting(hour: number) {
   return "Good evening";
 }
 
-/** A warm hello at the top of Home, using the selected child's name. */
+/** A warm hello at the top of Home (the page title), using the selected
+ * child's name. */
 function Greeting({ child, ready }: { child: Child | null; ready: boolean }) {
   return (
     <section className="np-enter flex items-center gap-4 rounded-2xl bg-pink-soft px-5 py-4">
       <Chick animated className="h-20 w-20 shrink-0" />
       <div className="flex min-w-0 flex-col gap-0.5">
-        <p className="text-lg font-bold text-ink">{timeOfDayGreeting(new Date().getHours())}</p>
-        <p className="text-sm text-ink">
-          {!ready
-            ? "Welcome back to NestPath."
-            : child
-              ? `Here's everything for ${child.name || "your baby"}, all in one place.`
-              : "Welcome to NestPath. Add your baby below to get started."}
-        </p>
+        <h1 className={PAGE_TITLE}>{timeOfDayGreeting(new Date().getHours())}</h1>
+        {ready && (
+          <p className="text-ink">
+            {child ? `How's ${child.name || "your baby"} today?` : "Add your baby to get started."}
+          </p>
+        )}
       </div>
     </section>
+  );
+}
+
+function AddChildForm({
+  onSubmit,
+  name,
+  setName,
+  birthDate,
+  setBirthDate,
+  creating,
+}: {
+  onSubmit: (e: FormEvent) => void;
+  name: string;
+  setName: (v: string) => void;
+  birthDate: string;
+  setBirthDate: (v: string) => void;
+  creating: boolean;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-3">
+      <div className={`${FIELD} min-w-0 flex-1 basis-48`}>
+        <label htmlFor="child-name" className={LABEL}>
+          Name
+        </label>
+        <input
+          id="child-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          className={INPUT}
+        />
+      </div>
+      <div className={`${FIELD} min-w-0 flex-1 basis-40`}>
+        <label htmlFor="child-birth-date" className={LABEL}>
+          Birth date
+        </label>
+        <input
+          id="child-birth-date"
+          type="date"
+          value={birthDate}
+          onChange={(e) => setBirthDate(e.target.value)}
+          required
+          className={INPUT}
+        />
+      </div>
+      <button type="submit" disabled={creating} className={BUTTON_PRIMARY}>
+        {creating ? "Adding..." : "Add child"}
+      </button>
+    </form>
   );
 }
 
@@ -71,75 +120,42 @@ export default function HomePage() {
       selectChild(child.id);
       router.push(`/children/${child.id}/vaccines`);
     } catch (err) {
-      setCreateError(err instanceof ApiError ? err.message : "Failed to create child");
+      setCreateError(err instanceof ApiError ? err.message : "Couldn't add the child. Try again.");
       setCreating(false);
     }
   }
 
+  const ready = !childrenLoading && !childrenError;
+  const form = (
+    <AddChildForm
+      onSubmit={handleCreate}
+      name={name}
+      setName={setName}
+      birthDate={birthDate}
+      setBirthDate={setBirthDate}
+      creating={creating}
+    />
+  );
+
   return (
     <>
-      <h1 className={PAGE_TITLE}>Home</h1>
-      <Greeting
-        child={selectedChild}
-        ready={!childrenLoading && !childrenError}
-      />
+      <Greeting child={selectedChild} ready={ready} />
 
-      <section className={CARD}>
-        <h2 className={SECTION_TITLE}>Add a child</h2>
-        <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3">
-          <div className={`${FIELD} min-w-0 flex-1 basis-48`}>
-            <label htmlFor="child-name" className={LABEL}>
-              Name
-            </label>
-            <input
-              id="child-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className={INPUT}
-            />
-          </div>
-          <div className={`${FIELD} min-w-0 flex-1 basis-40`}>
-            <label htmlFor="child-birth-date" className={LABEL}>
-              Birth date
-            </label>
-            <input
-              id="child-birth-date"
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              required
-              className={INPUT}
-            />
-          </div>
-          <button type="submit" disabled={creating} className={BUTTON_PRIMARY}>
-            {creating ? "Adding..." : "Add child"}
-          </button>
-        </form>
-        {createError && <Message tone="error">{createError}</Message>}
-      </section>
+      {childrenLoading && <Loading />}
+      {childrenError && <LoadError message={childrenError} onRetry={retryChildren} />}
 
-      <section className={CARD}>
-        <h2 className={SECTION_TITLE}>Children</h2>
-        {childrenLoading && <Loading />}
-        {childrenError && <LoadError message={childrenError} onRetry={retryChildren} />}
-        {!childrenLoading && !childrenError && childList.length === 0 && (
-          <p className={MUTED}>
-            No children yet -- add one above to see their vaccines, growth, care log and
-            appointments.
-          </p>
-        )}
-        {childList.length > 0 && (
+      {childList.length > 0 && (
+        <section aria-label="Children" className="flex flex-col gap-2">
+          {childList.length > 1 && <h2 className={SECTION_TITLE}>Children</h2>}
           <ul className="flex flex-col gap-2">
             {childList.map((child) => (
               <li key={child.id}>
                 <Link
                   href={`/children/${child.id}/vaccines`}
                   onClick={() => selectChild(child.id)}
-                  className="flex min-h-11 flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-xl border border-line bg-page px-4 py-3 transition-colors hover:bg-blue-soft"
+                  className="np-lift flex min-h-11 flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-2xl border border-line bg-surface px-5 py-4 transition-colors hover:bg-blue-soft"
                 >
-                  <span className="font-bold text-ink">{child.name || "Unnamed child"}</span>
+                  <span className="text-lg font-bold text-ink">{child.name || "Unnamed child"}</span>
                   <span className="text-sm text-muted">
                     {ageLabel(child.birth_date)} · born {child.birth_date}
                   </span>
@@ -147,8 +163,27 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
+
+      {ready && childList.length === 0 && (
+        <section className={CARD}>
+          <h2 className={SECTION_TITLE}>Add your baby</h2>
+          {form}
+          {createError && <Message tone="error">{createError}</Message>}
+        </section>
+      )}
+      {childList.length > 0 && (
+        <details className="group">
+          <summary className={`${BUTTON_SECONDARY} cursor-pointer list-none [&::-webkit-details-marker]:hidden`}>
+            Add another child
+          </summary>
+          <div className={`${CARD} mt-3`}>
+            {form}
+            {createError && <Message tone="error">{createError}</Message>}
+          </div>
+        </details>
+      )}
 
       <section className={CARD}>
         <h2 className={SECTION_TITLE}>Invite a caregiver</h2>

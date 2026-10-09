@@ -62,10 +62,7 @@ function BreathingPacer() {
 
   return (
     <div className="flex flex-col items-center gap-4">
-      <p className="text-sm">
-        Breathe in for 4, hold for 4, breathe out for 6. A few rounds can help your body settle.
-        Stop any time if you feel light-headed.
-      </p>
+      <p className="text-sm">In for 4, hold for 4, out for 6. Stop if you feel light-headed.</p>
       <div className="flex h-44 w-44 items-center justify-center" aria-hidden="true">
         <div
           className="h-40 w-40 rounded-full bg-blue-mid"
@@ -75,8 +72,8 @@ function BreathingPacer() {
           }}
         />
       </div>
-      <p className="text-lg font-medium" aria-live="polite">
-        {running ? current.label : "Ready when you are"}
+      <p className="min-h-7 text-lg font-medium" aria-live="polite">
+        {running ? current.label : ""}
       </p>
       {running && (
         <p className={MUTED} aria-hidden="true">
@@ -89,7 +86,7 @@ function BreathingPacer() {
         aria-pressed={running}
         className={BUTTON_PRIMARY}
       >
-        {running ? "Stop" : "Start breathing exercise"}
+        {running ? "Stop" : "Start"}
       </button>
     </div>
   );
@@ -100,7 +97,7 @@ function BreathingPacer() {
 function Grounding() {
   return (
     <div className="flex flex-col gap-2 text-sm">
-      <p>When your thoughts are racing, slowly notice, out loud or in your head:</p>
+      <p>When your thoughts race, slowly notice:</p>
       <ol className="list-decimal space-y-1 pl-5">
         <li><strong>5</strong> things you can see</li>
         <li><strong>4</strong> things you can touch or feel</li>
@@ -108,14 +105,14 @@ function Grounding() {
         <li><strong>2</strong> things you can smell</li>
         <li><strong>1</strong> thing you can taste</li>
       </ol>
-      <p>Take your time with each one. It&apos;s fine to do this while holding or feeding the baby.</p>
+      <p>It&apos;s fine to do this while holding or feeding the baby.</p>
     </div>
   );
 }
 
 const SLEEP_ITEMS = [
   "Take one longer stretch of sleep while someone else covers a feed or a settle.",
-  "Nap when you can, even 20 minutes -- chores can wait.",
+  "Nap when you can, even for 20 minutes.",
   "Keep night feeds dim and quiet, and skip screens where you can.",
   "Say no to visitors when you need rest.",
   "Go easy on caffeine later in the day.",
@@ -127,7 +124,7 @@ function SleepChecklist() {
   return (
     <fieldset className="flex flex-col gap-2 text-sm">
       <legend className="mb-2">
-        Broken sleep is hard on mood. Pick one or two to try this week -- nothing here is saved.
+        Pick one or two to try this week. Nothing here is saved.
       </legend>
       {SLEEP_ITEMS.map((text, i) => (
         <label
@@ -150,18 +147,17 @@ function SleepChecklist() {
 function AskForHelp() {
   return (
     <div className="flex flex-col gap-2 text-sm">
-      <p>Asking is easier with words ready. Try something like:</p>
+      <p>Try something like:</p>
       <blockquote className="rounded-xl border-l-4 border-primary bg-blue-soft px-4 py-3 text-ink">
         &ldquo;I&apos;ve been finding things hard lately and I&apos;m worn out. Could you take the
         baby on [day/time] so I can sleep / get out for an hour? It would really help.&rdquo;
       </blockquote>
       <ul className="list-disc space-y-1 pl-5">
         <li>Be specific: one task, one time. &ldquo;Can you do Tuesday&apos;s 2am feed?&rdquo;</li>
-        <li>You can also say how you&apos;re feeling, not just what you need done.</li>
         <li>Asking for help is part of looking after the baby, not a failure.</li>
       </ul>
       <p>
-        You can also post a specific need for your family to claim on the{" "}
+        Or post a need on the{" "}
         <Link href="/help-board" className={LINK}>
           Help board
         </Link>
@@ -175,9 +171,8 @@ function WhenToCall() {
   return (
     <div className="flex flex-col gap-2 text-sm">
       <p>
-        Many new parents have &ldquo;baby blues&rdquo; -- tearful, up-and-down days -- in the first
-        couple of weeks, and these often ease on their own. It&apos;s worth talking to a provider
-        if:
+        &ldquo;Baby blues&rdquo; (tearful, up-and-down days) are common in the first couple of weeks
+        and often ease on their own. Talk to a provider if:
       </p>
       <ul className="list-disc space-y-1 pl-5">
         <li>low mood, worry or numbness lasts more than about two weeks, or keeps getting worse</li>
@@ -186,31 +181,28 @@ function WhenToCall() {
         <li>you feel panicky, hopeless, or not like yourself</li>
       </ul>
       <p className="font-medium">
-        Get help right away -- call or text 988, or call 911 in an emergency -- if you have thoughts
-        of harming yourself or your baby.
+        If you have thoughts of harming yourself or your baby, get help right away: call or text
+        988, or call 911 in an emergency.
       </p>
     </div>
   );
 }
 
 const TOOLS: Record<ToolkitTool, { title: string; render: () => React.ReactNode }> = {
-  breathing: { title: "Guided breathing (4-4-6)", render: () => <BreathingPacer /> },
-  grounding: { title: "5-4-3-2-1 grounding", render: () => <Grounding /> },
+  breathing: { title: "Breathing (4-4-6)", render: () => <BreathingPacer /> },
+  grounding: { title: "Grounding (5-4-3-2-1)", render: () => <Grounding /> },
   sleep: { title: "Protect your sleep", render: () => <SleepChecklist /> },
-  askForHelp: { title: "How to ask your partner or family for help", render: () => <AskForHelp /> },
-  whenToCall: { title: "What to expect, and when to call someone", render: () => <WhenToCall /> },
+  askForHelp: { title: "Asking for help", render: () => <AskForHelp /> },
+  whenToCall: { title: "When to call someone", render: () => <WhenToCall /> },
 };
 
 export function Toolkit({ band }: { band: ScoreBand }) {
   return (
     <section aria-labelledby="toolkit-heading" className={CARD}>
       <h2 id="toolkit-heading" className={SECTION_TITLE}>
-        Self-help for the next few days
+        Things that may help
       </h2>
-      <p className={MUTED}>
-        Simple things that may help in the short term. They support care from people you trust and
-        your provider -- they don&apos;t replace it.
-      </p>
+      <p className={MUTED}>For the next few days. They don&apos;t replace care from your provider.</p>
       {toolkitOrder(band).map((tool, i) => (
         <details
           key={tool}

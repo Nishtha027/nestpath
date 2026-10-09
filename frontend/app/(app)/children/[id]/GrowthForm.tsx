@@ -4,7 +4,7 @@ import { useState, type FormEvent } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import { todayISO } from "@/lib/dates";
 import type { GrowthMeasurement } from "@/lib/types";
-import { BUTTON_PRIMARY, FIELD, INPUT, LABEL, MUTED } from "@/lib/ui";
+import { BUTTON_PRIMARY, FIELD, INPUT, LABEL } from "@/lib/ui";
 import { Message } from "../../../ui/Message";
 
 export function GrowthForm({
@@ -33,7 +33,7 @@ export function GrowthForm({
     setError(null);
     setRecorded(null);
     if (!sex) {
-      setError("Choose Girls or Boys above first: WHO's charts differ by sex.");
+      setError("Choose Girls or Boys first.");
       return;
     }
     if (!weightKg && !lengthCm) {
@@ -60,7 +60,7 @@ export function GrowthForm({
       setLengthCm("");
       onAdded();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to add measurement");
+      setError(err instanceof ApiError ? err.message : "Couldn't save. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -70,7 +70,7 @@ export function GrowthForm({
     <div className="flex flex-col gap-3">
       <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
         <div className={FIELD}>
-          <label htmlFor="growth-date" className={LABEL}>Measured on</label>
+          <label htmlFor="growth-date" className={LABEL}>Date</label>
           <input
             id="growth-date"
             type="date"
@@ -98,7 +98,7 @@ export function GrowthForm({
           />
         </div>
         <div className={FIELD}>
-          <label htmlFor="growth-length" className={LABEL}>Length / height (cm)</label>
+          <label htmlFor="growth-length" className={LABEL}>Length (cm)</label>
           <input
             id="growth-length"
             type="number"
@@ -117,17 +117,12 @@ export function GrowthForm({
           disabled={submitting}
           className={BUTTON_PRIMARY}
         >
-          {submitting ? "Adding..." : "Add measurement"}
+          {submitting ? "Adding..." : "Add"}
         </button>
       </form>
-      <p className={MUTED}>
-        Fill in weight, length, or both. Under age 2, length is measured lying down.
-      </p>
       {error && <Message tone="error">{error}</Message>}
       {recorded && (
-        <Message tone="success">
-          Saved the measurement from {recorded.measured_at}. The charts below now include it.
-        </Message>
+        <Message tone="success">Saved {recorded.measured_at}.</Message>
       )}
     </div>
   );

@@ -5,7 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useAppState } from "@/lib/app-state";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Alert } from "@/lib/types";
-import { CARD, MUTED, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
+import { MUTED, PAGE_TITLE } from "@/lib/ui";
 import { Icon } from "../../ui/Icon";
 import { Message } from "../../ui/Message";
 
@@ -21,7 +21,7 @@ export default function AlertsPage() {
     if (!caregiver?.isProvider) return;
     apiFetch<Alert[]>("/alerts", { token })
       .then(setAlerts)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load alerts"))
+      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load alerts. Refresh to try again."))
       .finally(() => setLoading(false));
   }, [token, caregiver?.isProvider]);
 
@@ -29,15 +29,13 @@ export default function AlertsPage() {
     <>
       <h1 className={PAGE_TITLE}>Alerts</h1>
 
+      {/* There's no UI to grant provider access: set is_provider = true on
+          the caregiver's row in the database. */}
       {!caregiver?.isProvider ? (
-        <Message tone="error">
-          This page is only available to provider accounts. There&apos;s no UI to grant provider
-          access yet -- set <code>is_provider = true</code> on your caregiver row directly in the
-          database.
-        </Message>
+        <Message tone="error">Alerts are only for provider accounts.</Message>
       ) : (
-        <section className={CARD}>
-          <h2 className={SECTION_TITLE}>High-risk screening flags</h2>
+        <section aria-label="Flagged screenings" className="flex flex-col gap-3">
+          <p className={MUTED}>Flagged screenings</p>
           {loading && <p className={MUTED}>Loading...</p>}
           {error && <Message tone="error">{error}</Message>}
           {!loading && !error && alerts.length === 0 && <p className={MUTED}>No flagged screenings.</p>}

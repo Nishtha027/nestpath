@@ -66,7 +66,7 @@ export function LiveCareLog({
         })
         .catch((err) => {
           if (disposed) return;
-          setLoadError(err instanceof ApiError ? err.message : "Failed to load entries");
+          setLoadError(err instanceof ApiError ? err.message : "Couldn't load entries. Refresh to try again.");
         });
     }
 
@@ -134,7 +134,7 @@ export function LiveCareLog({
       setArrivedIds((prev) => new Set(prev).add(created.id));
       setNotes("");
     } catch (err) {
-      setSubmitError(err instanceof ApiError ? err.message : "Failed to add entry");
+      setSubmitError(err instanceof ApiError ? err.message : "Couldn't save. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -156,12 +156,11 @@ export function LiveCareLog({
                 : "border-2 border-muted"
           }`}
         />
-        Live connection:{" "}
-        {status === "connected" && "connected"}
-        {status === "connecting" && "connecting..."}
-        {status === "reconnecting" && "reconnecting..."}
+        {status === "connected" && "Live"}
+        {status === "connecting" && "Connecting..."}
+        {status === "reconnecting" && "Reconnecting..."}
         {status === "rejected" && (
-          <span className="font-semibold text-danger-ink">stopped -- your session was rejected, please log in again</span>
+          <span className="font-semibold text-danger-ink">Disconnected. Log in again.</span>
         )}
       </p>
       {loadError && <Message tone="error">{loadError}</Message>}
@@ -197,15 +196,14 @@ export function LiveCareLog({
           disabled={submitting}
           className={BUTTON_PRIMARY}
         >
-          {submitting ? "Adding..." : "Add entry"}
+          {submitting ? "Adding..." : "Add"}
         </button>
       </form>
       {submitError && <Message tone="error">{submitError}</Message>}
 
       {entries.length === 0 ? (
-        <EmptyState art={<Bunny animated className="h-20 w-20" />} title="No entries yet.">
-          Feeds, diapers, sleep and medication added here show up straight away for everyone in
-          your family.
+        <EmptyState art={<Bunny animated className="h-20 w-20" />} title="No entries yet">
+          Your family sees new entries right away.
         </EmptyState>
       ) : (
         <ul className="flex flex-col gap-2">
