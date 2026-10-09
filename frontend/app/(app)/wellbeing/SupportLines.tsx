@@ -37,7 +37,7 @@ export function CrisisSupport() {
       aria-labelledby="crisis-heading"
       className="flex flex-col gap-4 rounded-2xl border-l-8 border-crisis-accent bg-crisis-bg p-5 font-semibold text-crisis-ink sm:p-6"
     >
-      <h2 id="crisis-heading" className="flex items-center gap-3 text-xl font-bold">
+      <h2 id="crisis-heading" className="flex items-center gap-3 text-xl font-semibold">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-crisis-accent text-on-crisis">
           <Icon name="heart" className="h-6 w-6" />
         </span>
@@ -48,7 +48,7 @@ export function CrisisSupport() {
         don&apos;t have to handle this alone.
       </p>
       <p>
-        {crisis.name}: call or text <span className="text-2xl font-extrabold">{crisis.display}</span>,
+        {crisis.name}: call or text <span className="text-2xl font-bold tabular-nums">{crisis.display}</span>,
         any time, 24/7.
       </p>
       <div className="flex flex-wrap gap-2">
@@ -71,7 +71,7 @@ export function CrisisSupport() {
         If you are in immediate danger, call {resources.emergencyNumber} (or your local emergency
         number) now.
       </p>
-      <p className="text-sm font-medium">
+      <p className="text-sm">
         These are US numbers. Outside the US, contact your local emergency number or health
         service.
       </p>
@@ -91,8 +91,16 @@ export function SupportLines() {
       <ul className="flex flex-col divide-y divide-line">
         {resources.postpartumLines.map((line) => (
           <li key={line.name} className={`flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0`}>
-            <p className="font-bold">{line.name}</p>
-            <p className="font-semibold">{line.display}</p>
+            <p className="font-semibold">{line.name}</p>
+            <p className="text-lg font-bold tracking-wide tabular-nums">
+              {/* Each part stays whole: never "1-833-TLC-" / "MAMA)". */}
+              {line.display.split(" ").map((part, i) => (
+                <span key={i} className="whitespace-nowrap">
+                  {i > 0 && " "}
+                  {part}
+                </span>
+              ))}
+            </p>
             <p className="text-sm">{line.description}</p>
             <LineActions line={line} />
             <p className="text-xs text-muted">

@@ -156,7 +156,7 @@ export default function HomePage() {
                   className="np-lift flex min-h-11 flex-wrap items-baseline gap-x-3 gap-y-0.5 rounded-2xl border border-line bg-surface px-5 py-4 transition-colors hover:bg-blue-soft"
                 >
                   <span className="text-lg font-bold text-ink">{child.name || "Unnamed child"}</span>
-                  <span className="text-sm text-muted">
+                  <span className="text-sm text-muted tabular-nums">
                     {ageLabel(child.birth_date)} · born {child.birth_date}
                   </span>
                 </Link>

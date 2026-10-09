@@ -141,7 +141,7 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-1">
-        <ul className="flex flex-wrap gap-2" data-testid="vaccine-summary" aria-label="Summary">
+        <ul className="flex flex-wrap gap-2 tabular-nums" data-testid="vaccine-summary" aria-label="Summary">
           {GROUPS.filter(({ key }) => key === "dueNow" || groups[key].length > 0).map(({ key, title, icon, tone }) => (
             <li
               key={key}
@@ -167,7 +167,7 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
         </Disclosure>
       </div>
 
-      <div aria-live="polite" className="flex flex-col gap-2">
+      <div aria-live="polite" className="flex flex-col gap-2 tabular-nums">
         {actionError && <Message tone="error">{actionError}</Message>}
         {notice && (
           <Message tone="success" data-testid="recalc-notice">
@@ -216,7 +216,7 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
               </span>
             </h2>
             {hint && <p className={MUTED}>{hint}</p>}
-            <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">
+            <ul className="divide-y divide-line tabular-nums rounded-2xl border border-line bg-surface">
               {groups[key].map((item) => {
                 const done = item.status === "given";
                 const closed = key === "closed";

@@ -72,11 +72,11 @@ function BreathingPacer() {
           }}
         />
       </div>
-      <p className="min-h-7 text-lg font-medium" aria-live="polite">
+      <p className="min-h-7 text-lg font-semibold" aria-live="polite">
         {running ? current.label : ""}
       </p>
       {running && (
-        <p className={MUTED} aria-hidden="true">
+        <p className={`${MUTED} tabular-nums`} aria-hidden="true">
           {secondsLeft} · round {cycles + 1}
         </p>
       )}
@@ -180,7 +180,7 @@ function WhenToCall() {
         <li>it&apos;s hard to look after yourself or the baby</li>
         <li>you feel panicky, hopeless, or not like yourself</li>
       </ul>
-      <p className="font-medium">
+      <p className="font-semibold">
         If you have thoughts of harming yourself or your baby, get help right away: call or text
         988, or call 911 in an emergency.
       </p>

@@ -15,7 +15,7 @@ export const BUTTON_SECONDARY = `${BUTTON_BASE} bg-secondary-bg text-secondary-i
 
 /** Form fields: a strong enough edge (3:1) to see where to type. */
 export const INPUT =
-  "min-h-11 rounded-xl border border-line-strong bg-surface px-3 text-base text-ink placeholder:text-muted";
+  "min-h-11 rounded-xl border border-line-strong bg-surface px-3 text-base text-ink tabular-nums placeholder:text-muted";
 
 export const LABEL = "text-sm font-semibold text-ink";
 export const FIELD = "flex flex-col gap-1.5";
@@ -26,8 +26,8 @@ export const CARD = "np-enter np-lift flex flex-col gap-4 rounded-2xl border bor
 /** One row in a list inside a page or card. */
 export const LIST_ITEM = "rounded-xl border border-line bg-surface px-4 py-3";
 
-export const PAGE_TITLE = "text-2xl font-bold tracking-tight text-ink";
-export const SECTION_TITLE = "text-lg font-bold text-ink";
-export const SUBSECTION_TITLE = "text-base font-bold text-ink";
+export const PAGE_TITLE = "font-heading text-2xl font-semibold text-ink";
+export const SECTION_TITLE = "font-heading text-lg font-semibold text-ink";
+export const SUBSECTION_TITLE = "font-heading text-base font-medium text-ink";
 export const MUTED = "text-sm text-muted";
 export const LINK = "font-semibold text-primary-ink underline underline-offset-2";

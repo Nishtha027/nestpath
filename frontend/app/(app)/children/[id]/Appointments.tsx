@@ -134,7 +134,7 @@ export function Appointments({ childId, token }: { childId: string; token: strin
               <p className={MUTED}>No open times.</p>
             )}
             {/* Open times grouped by day, as chips: one tap books, as before. */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 tabular-nums">
               {slotDays(slots).map(([day, daySlots]) => (
                 <div key={day} className="flex flex-col gap-1.5">
                   <h3 className="text-sm font-semibold text-ink">{day}</h3>

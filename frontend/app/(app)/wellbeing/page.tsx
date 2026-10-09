@@ -77,7 +77,7 @@ function NeedHelp({ result, onBack }: { result: ScreeningSubmitResponse; onBack:
       </h2>
       <div className="flex flex-col gap-2">
         <p>{text.detail}</p>
-        <p className={MUTED}>
+        <p className={`${MUTED} tabular-nums`}>
           Score {result.total_score} / 30, {bandLabel}. A screening, not a diagnosis.
         </p>
         {text.suggestAppointment && (
@@ -253,7 +253,7 @@ export default function WellbeingPage() {
         <Chick resting className="h-14 w-14 shrink-0" />
       </div>
 
-      <section aria-labelledby="checkin-heading" className={CARD}>
+      <section aria-labelledby="checkin-heading" className={`${CARD} tabular-nums`}>
         <h2 id="checkin-heading" className={SECTION_TITLE}>
           Postpartum check-in
         </h2>
@@ -283,7 +283,7 @@ export default function WellbeingPage() {
           <h2 id="history-heading" className={SECTION_TITLE}>
             Past check-ins
           </h2>
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm tabular-nums">
             <thead className="text-xs text-muted">
               <tr>
                 <th scope="col" className="py-2 pr-4 font-semibold">Date</th>

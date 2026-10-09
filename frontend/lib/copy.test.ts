@@ -31,7 +31,8 @@ test("support lines keep their numbers, notes and verification dates", () => {
 
   const lines = read("app", "(app)", "wellbeing", "SupportLines.tsx");
   assert.match(lines, /last checked \{line\.lastVerified\}/);
-  assert.match(lines, /\{line\.display\}/);
+  // Every part of each number is printed (kept whole, never split mid-part).
+  assert.match(lines, /\{line\.display\.split\(" "\)\.map\(/);
   assert.match(lines, /immediate danger/);
 });
 

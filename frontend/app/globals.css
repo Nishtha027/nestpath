@@ -12,11 +12,19 @@
  * Every text/background pair is checked against WCAG AA by
  * lib/contrast.test.ts (npm test); `npm run contrast` prints the table.
  *
+ * Fonts are tokens too: --font-heading (Fredoka) for titles and the
+ * wordmark, --font-body (Nunito) for everything else. app/layout.tsx loads
+ * the files with next/font; change the family in one place here.
+ *
  * Light theme only for now. To add a dark theme later, redefine these same
  * --np-* variables under a selector such as :root[data-theme="dark"] (or a
  * prefers-color-scheme media query) -- no component needs to change.
  * ---------------------------------------------------------------------- */
 :root {
+  /* Type */
+  --font-heading: var(--font-fredoka), ui-rounded, system-ui, sans-serif;
+  --font-body: var(--font-nunito), ui-rounded, system-ui, sans-serif;
+
   /* Surfaces */
   --np-page: #fff8fb; /* warm blush white */
   --np-surface: #ffffff;
@@ -137,7 +145,12 @@
   --color-chart-median: var(--np-chart-median);
   --color-chart-child: var(--np-chart-child);
 
-  --font-sans: var(--font-nunito-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-body);
+}
+
+/* Titles, the wordmark and other headings: Fredoka. */
+@utility font-heading {
+  font-family: var(--font-heading);
 }
 
 @layer base {
@@ -148,8 +161,35 @@
   body {
     background: var(--np-page);
     color: var(--np-ink);
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     line-height: 1.6;
+    /* Only the loaded weights exist; never fake a bold. */
+    font-synthesis-weight: none;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    line-height: 1.25;
+    /* No lone last word ("... support / now"). */
+    text-wrap: balance;
+  }
+
+  /* Form controls don't inherit fonts by default. */
+  input,
+  select,
+  textarea,
+  button {
+    font-family: inherit;
+  }
+
+  /* Chart text (axes, ticks, labels) is SVG: same body font, and numbers
+   * line up. */
+  svg text {
+    font-family: var(--font-body);
+    font-variant-numeric: tabular-nums;
   }
 
   /* One visible focus ring for every interactive element. */

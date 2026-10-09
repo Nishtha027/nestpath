@@ -36,7 +36,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   return (
     <CurrentChildProvider value={child}>
       <div className="flex flex-col gap-6">
-        <p className="self-start rounded-full bg-pink-soft px-4 py-1.5 text-sm text-ink">
+        <p className="self-start rounded-full bg-pink-soft px-4 py-1.5 text-sm text-ink tabular-nums">
           <span className="font-bold">{child.name || "Unnamed child"}</span>
           {" · "}
           {ageLabel(child.birth_date)}

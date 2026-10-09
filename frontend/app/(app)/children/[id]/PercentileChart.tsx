@@ -55,7 +55,7 @@ export function PercentileChart({
   return (
     <figure className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 sm:p-5">
       <figcaption className="flex items-baseline justify-between gap-2">
-        <span className="text-base font-semibold">{title}</span>
+        <span className="font-heading text-base font-medium">{title}</span>
         <span className="text-sm text-muted">{unit}</span>
       </figcaption>
       <div className="h-72 w-full" role="img" aria-label={`${title} chart compared with WHO percentiles`}>

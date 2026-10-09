@@ -162,7 +162,7 @@ function LatestSummary({ measurement: m }: { measurement: GrowthMeasurement }) {
     (m.percentile !== null && outsideTypicalRange(m.percentile)) ||
     (m.length_percentile !== null && outsideTypicalRange(m.length_percentile));
   return (
-    <section className="flex flex-col gap-1.5 rounded-2xl bg-blue-soft px-5 py-4 text-ink">
+    <section className="flex flex-col gap-1.5 rounded-2xl bg-blue-soft px-5 py-4 text-ink tabular-nums">
       <h2 className="font-semibold">
         Latest · {m.measured_at} · {m.age_months} month{m.age_months === 1 ? "" : "s"}
       </h2>
@@ -190,7 +190,7 @@ function MeasurementTable({ measurements }: { measurements: GrowthMeasurement[] 
     <section className={CARD}>
       <h2 className={SECTION_TITLE}>History</h2>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[28rem] text-left text-sm">
+        <table className="w-full text-left text-sm tabular-nums">
           <thead className="text-xs text-muted">
             <tr>
               <th className="py-1.5 pr-3 font-semibold">Date</th>
@@ -202,17 +202,21 @@ function MeasurementTable({ measurements }: { measurements: GrowthMeasurement[] 
           <tbody>
             {[...measurements].reverse().map((m) => (
               <tr key={m.id} className="border-t border-line">
-                <td className="py-2 pr-3">{m.measured_at}</td>
-                <td className="py-2 pr-3">{m.age_months} mo</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{m.measured_at}</td>
+                <td className="py-2 pr-3 whitespace-nowrap">{m.age_months} mo</td>
                 <td className="py-2 pr-3">
-                  {m.weight_kg !== null && m.percentile !== null
-                    ? `${m.weight_kg} kg (${ordinal(m.percentile)})`
-                    : "-"}
+                  {m.weight_kg !== null && m.percentile !== null ? (
+                    <Measure value={`${m.weight_kg} kg`} percentile={m.percentile} />
+                  ) : (
+                    "-"
+                  )}
                 </td>
                 <td className="py-2 pr-3">
-                  {m.length_cm !== null && m.length_percentile !== null
-                    ? `${m.length_cm} cm (${ordinal(m.length_percentile)})`
-                    : "-"}
+                  {m.length_cm !== null && m.length_percentile !== null ? (
+                    <Measure value={`${m.length_cm} cm`} percentile={m.length_percentile} />
+                  ) : (
+                    "-"
+                  )}
                 </td>
               </tr>
             ))}
@@ -220,6 +224,17 @@ function MeasurementTable({ measurements }: { measurements: GrowthMeasurement[] 
         </table>
       </div>
     </section>
+  );
+}
+
+/** "10.2 kg (49th)"; on a narrow screen the percentile drops under the
+ * value instead of the table scrolling sideways. */
+function Measure({ value, percentile }: { value: string; percentile: number }) {
+  return (
+    <>
+      <span className="whitespace-nowrap">{value}</span>{" "}
+      <span className="whitespace-nowrap text-muted">({ordinal(percentile)})</span>
+    </>
   );
 }
 

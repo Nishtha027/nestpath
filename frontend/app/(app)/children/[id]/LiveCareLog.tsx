@@ -210,7 +210,7 @@ export function LiveCareLog({
           {entries.map((entry) => (
             <li key={entry.id} className={`text-sm ${LIST_ITEM} ${arrivedIds.has(entry.id) ? "np-arrive" : ""}`}>
               <span className="font-bold capitalize">{entry.type}</span>
-              <span className="ml-2 text-muted">
+              <span className="ml-2 text-muted tabular-nums">
                 {new Date(entry.timestamp).toLocaleTimeString()}
               </span>
               {entry.notes && <p className="mt-1 text-ink">{entry.notes}</p>}

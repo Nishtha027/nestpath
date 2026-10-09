@@ -84,7 +84,7 @@ export function AppNav() {
   return (
     <header className="border-b border-line bg-surface">
       <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 pt-3 sm:px-8">
-        <Link href="/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-lg text-lg font-bold text-ink">
+        <Link href="/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-lg font-heading text-xl font-semibold text-ink">
           <Chick className="h-9 w-9" />
           NestPath
         </Link>
@@ -134,7 +134,7 @@ export function AppNav() {
                 href={tab.href}
                 aria-current={tab.active ? "page" : undefined}
                 className={`relative inline-flex min-h-11 items-center rounded-full px-3 text-sm sm:px-4 transition-colors ${
-                  tab.active ? "font-bold text-primary-ink" : "font-medium text-muted hover:bg-page hover:text-ink"
+                  tab.active ? "font-bold text-primary-ink" : "font-semibold text-muted hover:bg-page hover:text-ink"
                 }`}
               >
                 {tab.label}

@@ -39,7 +39,7 @@ export default function AlertsPage() {
           {loading && <p className={MUTED}>Loading...</p>}
           {error && <Message tone="error">{error}</Message>}
           {!loading && !error && alerts.length === 0 && <p className={MUTED}>No flagged screenings.</p>}
-          <ul className="flex flex-col gap-2">
+          <ul className="flex flex-col gap-2 tabular-nums">
             {alerts.map((alert) => (
               <li
                 key={alert.id}

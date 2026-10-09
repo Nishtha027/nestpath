@@ -183,7 +183,7 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
               <div>
                 <span className="font-bold">{req.need_type}</span>
                 {req.description && <span className="ml-2 text-ink">{req.description}</span>}
-                <div className="text-xs text-muted">
+                <div className="text-xs text-muted tabular-nums">
                   {new Date(req.time_window_start).toLocaleString()} &ndash;{" "}
                   {new Date(req.time_window_end).toLocaleTimeString()}
                 </div>

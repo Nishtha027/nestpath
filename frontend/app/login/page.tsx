@@ -56,7 +56,7 @@ export default function LoginPage() {
     <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-10">
       <div className="flex flex-col items-center gap-2 text-center">
         <Chick animated className="h-28 w-28 sm:h-32 sm:w-32" />
-        <h1 className="text-3xl font-bold tracking-tight">NestPath</h1>
+        <h1 className="font-heading text-4xl font-semibold">NestPath</h1>
         <p className={MUTED}>A companion app for new parents</p>
       </div>
 
