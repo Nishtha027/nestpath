@@ -8,12 +8,47 @@ import type { Child } from "@/lib/types";
 import { ageLabel, useAppState } from "@/lib/app-state";
 import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, MUTED, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
 import { Message } from "../../ui/Message";
+import { Loading } from "../../ui/Loading";
+import { Chick } from "../../ui/illustrations";
 import { InviteCode } from "./InviteCode";
 import { LoadError } from "../LoadError";
 
+function timeOfDayGreeting(hour: number) {
+  if (hour >= 5 && hour < 12) return "Good morning";
+  if (hour >= 12 && hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+/** A warm hello at the top of Home, using the selected child's name. */
+function Greeting({ child, ready }: { child: Child | null; ready: boolean }) {
+  return (
+    <section className="np-enter flex items-center gap-4 rounded-2xl bg-pink-soft px-5 py-4">
+      <Chick animated className="h-20 w-20 shrink-0" />
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <p className="text-lg font-bold text-ink">{timeOfDayGreeting(new Date().getHours())}</p>
+        <p className="text-sm text-ink">
+          {!ready
+            ? "Welcome back to NestPath."
+            : child
+              ? `Here's everything for ${child.name || "your baby"}, all in one place.`
+              : "Welcome to NestPath. Add your baby below to get started."}
+        </p>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
-  const { token, childList, childrenLoading, childrenError, retryChildren, addChild, selectChild } =
-    useAppState();
+  const {
+    token,
+    childList,
+    childrenLoading,
+    childrenError,
+    retryChildren,
+    addChild,
+    selectChild,
+    selectedChild,
+  } = useAppState();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -44,6 +79,10 @@ export default function HomePage() {
   return (
     <>
       <h1 className={PAGE_TITLE}>Home</h1>
+      <Greeting
+        child={selectedChild}
+        ready={!childrenLoading && !childrenError}
+      />
 
       <section className={CARD}>
         <h2 className={SECTION_TITLE}>Add a child</h2>
@@ -83,7 +122,7 @@ export default function HomePage() {
 
       <section className={CARD}>
         <h2 className={SECTION_TITLE}>Children</h2>
-        {childrenLoading && <p className={MUTED}>Loading...</p>}
+        {childrenLoading && <Loading />}
         {childrenError && <LoadError message={childrenError} onRetry={retryChildren} />}
         {!childrenLoading && !childrenError && childList.length === 0 && (
           <p className={MUTED}>

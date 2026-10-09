@@ -17,6 +17,7 @@ import { CrisisSupport, SupportLines } from "./SupportLines";
 import { Toolkit } from "./Toolkit";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, MUTED, PAGE_TITLE, SECTION_TITLE } from "@/lib/ui";
 import { Message } from "../../ui/Message";
+import { Chick } from "../../ui/illustrations";
 
 const PRIMARY = BUTTON_PRIMARY;
 const SECONDARY = BUTTON_SECONDARY;
@@ -234,7 +235,12 @@ export default function WellbeingPage() {
 
   return (
     <>
-      <h1 className={PAGE_TITLE}>Wellbeing</h1>
+      {/* The only illustration on this page: small, still, and only here,
+          never near the questions, results or crisis support. */}
+      <div className="flex items-center justify-between gap-4">
+        <h1 className={PAGE_TITLE}>Wellbeing</h1>
+        <Chick resting className="h-14 w-14 shrink-0" />
+      </div>
 
       <section aria-labelledby="checkin-heading" className={CARD}>
         <h2 id="checkin-heading" className={SECTION_TITLE}>

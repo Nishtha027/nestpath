@@ -4,9 +4,9 @@ import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ageLabel, CurrentChildProvider, useAppState } from "@/lib/app-state";
-import { MUTED } from "@/lib/ui";
 import { LoadError } from "../../LoadError";
 import { Message } from "../../../ui/Message";
+import { Loading } from "../../../ui/Loading";
 
 // Resolves /children/[id] against the family's child list (there is no
 // GET /children/{id}; the list already has everything needed) and makes
@@ -20,7 +20,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
     if (child) selectChild(child.id);
   }, [child, selectChild]);
 
-  if (childrenLoading) return <p className={MUTED}>Loading...</p>;
+  if (childrenLoading) return <Loading />;
   if (childrenError) return <LoadError message={childrenError} onRetry={retryChildren} />;
   if (!child) {
     return (

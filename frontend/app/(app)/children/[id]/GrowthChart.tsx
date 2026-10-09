@@ -9,6 +9,9 @@ import { ChartLegend, PercentileChart, type ChildPoint } from "./PercentileChart
 import { CARD, MUTED, SECTION_TITLE } from "@/lib/ui";
 import { Icon } from "../../../ui/Icon";
 import { Message } from "../../../ui/Message";
+import { Loading } from "../../../ui/Loading";
+import { EmptyState } from "../../../ui/EmptyState";
+import { BearCub } from "../../../ui/illustrations";
 
 type Sex = "male" | "female";
 
@@ -110,16 +113,18 @@ export function GrowthChart({
       )}
 
       {loading ? (
-        <p className={MUTED}>Loading...</p>
+        <Loading />
       ) : error ? (
         <Message tone="error">{error}</Message>
       ) : latest ? (
         <LatestSummary measurement={latest} />
       ) : (
-        <p className={MUTED}>
-          No measurements yet. Add your baby&apos;s weight and length below to see how they compare
-          with WHO growth standards.
-        </p>
+        <section className="np-enter rounded-2xl bg-blue-soft">
+          <EmptyState art={<BearCub className="h-20 w-20" />} title="No measurements yet.">
+            Add your baby&apos;s weight and length below to see how they compare with WHO growth
+            standards.
+          </EmptyState>
+        </section>
       )}
 
       <section className={CARD}>
@@ -132,7 +137,7 @@ export function GrowthChart({
       ) : referenceError ? (
         <Message tone="error">{referenceError}</Message>
       ) : !reference || !curvesMatch ? (
-        <p className={MUTED}>Loading charts...</p>
+        <Loading label="Loading charts..." />
       ) : (
         <section className="flex flex-col gap-4">
           <ChartLegend />

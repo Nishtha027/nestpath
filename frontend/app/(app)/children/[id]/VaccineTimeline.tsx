@@ -15,6 +15,8 @@ import {
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, INPUT, LIST_ITEM, MUTED } from "@/lib/ui";
 import { Icon, type IconName } from "../../../ui/Icon";
 import { Message } from "../../../ui/Message";
+import { Loading } from "../../../ui/Loading";
+import { BearCub, Sparkle } from "../../../ui/illustrations";
 
 function doseLabel(item: ScheduleItem) {
   return `${item.vaccine_id.toUpperCase()} dose ${item.dose_number ?? "?"}`;
@@ -42,8 +44,11 @@ const GROUPS: { key: VaccineGroup; title: string; hint?: string; icon: IconName;
   { key: "done", title: "Done", icon: "checkCircle", tone: "bg-success-bg text-success-ink" },
 ];
 
+// Groups whose last dose being marked done earns a small celebration.
+const CELEBRATED: VaccineGroup[] = ["dueNow", "overdue", "upcoming"];
+
 type Notice =
-  | { kind: "given"; given: ScheduleItem; created: ScheduleItem[] }
+  | { kind: "given"; given: ScheduleItem; created: ScheduleItem[]; clearedGroup: string | null }
   | { kind: "undone"; label: string; restored: ScheduleItem | null };
 
 export function VaccineTimeline({ childId, token }: { childId: string; token: string }) {
@@ -65,13 +70,17 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
   }, [childId, token]);
 
   async function refetch() {
-    setItems(await apiFetch<ScheduleItem[]>(`/children/${childId}/schedule`, { token }));
+    const list = await apiFetch<ScheduleItem[]>(`/children/${childId}/schedule`, { token });
+    setItems(list);
+    return list;
   }
 
   async function handleMarkDone(item: ScheduleItem) {
     setActionError(null);
     setNotice(null);
     setSavingId(item.id);
+    const before = groupSchedule(items, todayISO());
+    const fromGroup = CELEBRATED.find((key) => before[key].some((i) => i.id === item.id)) ?? null;
     try {
       const updated = await apiFetch<ScheduleItem[]>(
         `/children/${childId}/schedule/${item.id}/mark-given`,
@@ -85,8 +94,14 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
       // First element is the dose just marked given; the rest are
       // follow-up doses the catch-up recalculation just created.
       const [given, ...created] = updated;
-      await refetch();
-      setNotice({ kind: "given", given, created });
+      const list = await refetch();
+      const cleared = fromGroup !== null && groupSchedule(list, todayISO())[fromGroup].length === 0;
+      setNotice({
+        kind: "given",
+        given,
+        created,
+        clearedGroup: cleared ? GROUPS.find((g) => g.key === fromGroup)!.title : null,
+      });
     } catch (err) {
       setActionError(err instanceof ApiError ? err.message : "Failed to mark dose as done");
     } finally {
@@ -112,13 +127,14 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
     }
   }
 
-  if (loading) return <p className={MUTED}>Loading...</p>;
+  if (loading) return <Loading />;
   if (error) return <Message tone="error">{error}</Message>;
   if (items.length === 0) return <p className={MUTED}>No schedule items yet.</p>;
 
   const today = todayISO();
   const groups = groupSchedule(items, today);
   const highlighted = new Set(notice?.kind === "given" ? notice.created.map((c) => c.id) : []);
+  const justDoneId = notice?.kind === "given" ? notice.given.id : null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -169,6 +185,9 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
             )}
           </Message>
         )}
+        {notice?.kind === "given" && notice.clearedGroup && (
+          <GroupCleared key={notice.given.id} title={notice.clearedGroup} />
+        )}
       </div>
 
       {GROUPS.map(({ key, title, hint, icon, tone }) =>
@@ -214,9 +233,13 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}
+                        className={`relative inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${tone}`}
                       >
-                        <Icon name={done ? "check" : icon} className="h-3.5 w-3.5" />
+                        {done && item.id === justDoneId ? (
+                          <JustDoneCheck />
+                        ) : (
+                          <Icon name={done ? "check" : icon} className="h-3.5 w-3.5" />
+                        )}
                         {done ? "Done" : closed ? "Not recommended now" : "Not done"}
                       </span>
                       {done ? (
@@ -273,6 +296,63 @@ export function VaccineTimeline({ childId, token }: { childId: string; token: st
           </section>
         )
       )}
+    </div>
+  );
+}
+
+/** The check on a dose that was just marked done: it draws itself, with a
+ * brief sparkle. Decorative; the "Done" label beside it carries the meaning. */
+function JustDoneCheck() {
+  return (
+    <>
+      <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false" className="h-3.5 w-3.5">
+        <path
+          className="np-draw"
+          pathLength={1}
+          d="M3 8.5 6.5 12 13 4.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <svg
+        viewBox="0 0 40 24"
+        aria-hidden="true"
+        focusable="false"
+        className="pointer-events-none absolute -top-3 -right-4 h-6 w-10"
+      >
+        <Sparkle x={10} y={14} size={4} className="np-pop" style={{ animationDelay: "250ms" }} />
+        <Sparkle x={24} y={7} size={5.5} className="np-pop" style={{ animationDelay: "350ms" }} fill="var(--np-art-cheek)" />
+        <Sparkle x={33} y={17} size={3.5} className="np-pop" style={{ animationDelay: "450ms" }} />
+      </svg>
+    </>
+  );
+}
+
+/** A small celebration when the last dose in a group is marked done. */
+function GroupCleared({ title }: { title: string }) {
+  return (
+    <div className="np-enter flex items-center gap-4 rounded-2xl bg-success-bg px-5 py-3 text-success-ink">
+      <div className="relative h-16 w-16 shrink-0">
+        <div className="np-cheer h-16 w-16">
+          <BearCub happy className="h-16 w-16" />
+        </div>
+        <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false" className="pointer-events-none absolute inset-0 h-16 w-16 overflow-visible">
+          <Sparkle x={4} y={14} size={5} className="np-pop" style={{ animationDelay: "150ms" }} />
+          <Sparkle x={60} y={10} size={6} className="np-pop" style={{ animationDelay: "300ms" }} fill="var(--np-art-cheek)" />
+          <Sparkle x={58} y={44} size={4} className="np-pop" style={{ animationDelay: "450ms" }} />
+          <Sparkle x={6} y={46} size={4} className="np-pop" style={{ animationDelay: "550ms" }} fill="var(--np-art-cheek)" />
+        </svg>
+      </div>
+      <div className="flex min-w-0 flex-col">
+        <p className="flex items-center gap-1.5 font-bold">
+          <Icon name="checkCircle" className="h-[18px] w-[18px]" />
+          Every dose in &ldquo;{title}&rdquo; is marked done
+        </p>
+        <p className="text-sm">Later doses will appear here as they come due.</p>
+      </div>
     </div>
   );
 }

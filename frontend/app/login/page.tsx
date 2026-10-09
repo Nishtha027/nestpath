@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
 import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, MUTED } from "@/lib/ui";
-import { BrandMark } from "../ui/BrandMark";
 import { Message } from "../ui/Message";
+import { Chick } from "../ui/illustrations";
 
 /** One option of a two-way switch (Log in / Register, Start / Join). */
 function segmentClass(selected: boolean) {
@@ -55,10 +55,8 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4 py-10">
       <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="inline-flex items-center gap-2 text-3xl font-bold tracking-tight">
-          <BrandMark />
-          NestPath
-        </h1>
+        <Chick animated className="h-28 w-28 sm:h-32 sm:w-32" />
+        <h1 className="text-3xl font-bold tracking-tight">NestPath</h1>
         <p className={MUTED}>A companion app for new parents</p>
       </div>
 

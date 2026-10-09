@@ -3,8 +3,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { HelpRequest } from "@/lib/types";
-import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, FIELD, INPUT, LABEL, LIST_ITEM, MUTED, SUBSECTION_TITLE } from "@/lib/ui";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, FIELD, INPUT, LABEL, LIST_ITEM, SUBSECTION_TITLE } from "@/lib/ui";
 import { Message } from "../../ui/Message";
+import { Loading } from "../../ui/Loading";
+import { EmptyState } from "../../ui/EmptyState";
+import { Duckling } from "../../ui/illustrations";
 
 export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: string }) {
   const [requests, setRequests] = useState<HelpRequest[]>([]);
@@ -158,11 +161,16 @@ export function HelpBoard({ token, caregiverId }: { token: string; caregiverId: 
       </form>
       {createError && <Message tone="error">{createError}</Message>}
 
-      {loading && <p className={MUTED}>Loading...</p>}
+      {loading && <Loading />}
       {loadError && <Message tone="error">{loadError}</Message>}
       {actionError && <Message tone="error">{actionError}</Message>}
       {!loading && !loadError && requests.length === 0 && (
-        <p className={MUTED}>No open requests right now.</p>
+        <div className="np-enter rounded-2xl border border-line bg-surface">
+          <EmptyState art={<Duckling className="h-20 w-20" />} title="No open requests right now.">
+            When someone in your family needs a hand with a meal, an errand or childcare, their
+            request shows up here for the others to claim.
+          </EmptyState>
+        </div>
       )}
 
       <ul className="flex flex-col gap-2">

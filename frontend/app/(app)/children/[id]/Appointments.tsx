@@ -5,6 +5,8 @@ import { apiFetch, ApiError } from "@/lib/api";
 import type { Appointment, AvailabilitySlot, Provider } from "@/lib/types";
 import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, LIST_ITEM, MUTED, SUBSECTION_TITLE } from "@/lib/ui";
 import { Message } from "../../../ui/Message";
+import { EmptyState } from "../../../ui/EmptyState";
+import { Chick } from "../../../ui/illustrations";
 
 export function Appointments({ childId, token }: { childId: string; token: string }) {
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -143,7 +145,9 @@ export function Appointments({ childId, token }: { childId: string; token: strin
         <h3 className={SUBSECTION_TITLE}>Upcoming appointments</h3>
         {appointmentsError && <Message tone="error">{appointmentsError}</Message>}
         {appointments.length === 0 && !appointmentsError && (
-          <p className={MUTED}>No appointments booked yet.</p>
+          <EmptyState art={<Chick className="h-20 w-20" />} title="No appointments booked yet.">
+            Choose a provider above to see their open times.
+          </EmptyState>
         )}
         <ul className="flex flex-col gap-3">
           {appointments.map((appt) => (

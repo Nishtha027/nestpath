@@ -4,8 +4,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { apiFetch, ApiError, WS_URL } from "@/lib/api";
 import { reconnectDelayMs } from "@/lib/backoff";
 import type { CareLog } from "@/lib/types";
-import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, LIST_ITEM, MUTED } from "@/lib/ui";
+import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, LIST_ITEM } from "@/lib/ui";
 import { Message } from "../../../ui/Message";
+import { EmptyState } from "../../../ui/EmptyState";
+import { Bunny } from "../../../ui/illustrations";
 
 const CARE_LOG_TYPES: CareLog["type"][] = ["feed", "diaper", "sleep", "medication"];
 
@@ -37,6 +39,9 @@ export function LiveCareLog({
   const [entries, setEntries] = useState<CareLog[]>([]);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
   const [loadError, setLoadError] = useState<string | null>(null);
+  // Entries that arrived live (over the socket, or just added here). They
+  // slide in with a short highlight; the catch-up fetch's entries don't.
+  const [arrivedIds, setArrivedIds] = useState<ReadonlySet<string>>(() => new Set());
 
   const [type, setType] = useState<CareLog["type"]>("feed");
   const [notes, setNotes] = useState("");
@@ -83,6 +88,7 @@ export function LiveCareLog({
           const entry: CareLog = JSON.parse(event.data);
           if (entry.child_id === childId) {
             setEntries((prev) => mergeEntries([entry], prev));
+            setArrivedIds((prev) => new Set(prev).add(entry.id));
           }
         } catch {
           // ignore malformed messages
@@ -125,6 +131,7 @@ export function LiveCareLog({
       // down right now, the entry would otherwise be missing until the
       // reconnect catch-up. mergeEntries dedupes the echo by id.
       setEntries((prev) => mergeEntries([created], prev));
+      setArrivedIds((prev) => new Set(prev).add(created.id));
       setNotes("");
     } catch (err) {
       setSubmitError(err instanceof ApiError ? err.message : "Failed to add entry");
@@ -196,11 +203,14 @@ export function LiveCareLog({
       {submitError && <Message tone="error">{submitError}</Message>}
 
       {entries.length === 0 ? (
-        <p className={MUTED}>No entries yet.</p>
+        <EmptyState art={<Bunny animated className="h-20 w-20" />} title="No entries yet.">
+          Feeds, diapers, sleep and medication added here show up straight away for everyone in
+          your family.
+        </EmptyState>
       ) : (
         <ul className="flex flex-col gap-2">
           {entries.map((entry) => (
-            <li key={entry.id} className={`text-sm ${LIST_ITEM}`}>
+            <li key={entry.id} className={`text-sm ${LIST_ITEM} ${arrivedIds.has(entry.id) ? "np-arrive" : ""}`}>
               <span className="font-bold capitalize">{entry.type}</span>
               <span className="ml-2 text-muted">
                 {new Date(entry.timestamp).toLocaleTimeString()}

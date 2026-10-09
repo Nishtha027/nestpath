@@ -33,7 +33,7 @@ export function InviteCode({ token }: { token: string }) {
 
   return (
     <div className="flex flex-col gap-3">
-      {error && <LoadError message={error} onRetry={retry} />}
+      {error && <LoadError message={error} onRetry={retry} withArt={false} />}
       {family && (
         <>
           <p className="flex flex-wrap items-center gap-3">
