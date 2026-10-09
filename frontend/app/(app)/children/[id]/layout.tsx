@@ -4,13 +4,14 @@ import { useEffect } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ageLabel, CurrentChildProvider, useAppState } from "@/lib/app-state";
+import { LoadError } from "../../LoadError";
 
 // Resolves /children/[id] against the family's child list (there is no
 // GET /children/{id}; the list already has everything needed) and makes
 // this child the selected one, so the tabs and selector follow the URL.
 export default function ChildLayout({ children }: { children: React.ReactNode }) {
   const { id } = useParams<{ id: string }>();
-  const { childList, childrenLoading, childrenError, selectChild } = useAppState();
+  const { childList, childrenLoading, childrenError, retryChildren, selectChild } = useAppState();
   const child = childList.find((c) => c.id === id) ?? null;
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   }, [child, selectChild]);
 
   if (childrenLoading) return <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</p>;
-  if (childrenError) return <p className="text-sm text-red-700 dark:text-red-400">{childrenError}</p>;
+  if (childrenError) return <LoadError message={childrenError} onRetry={retryChildren} />;
   if (!child) {
     return (
       <p className="text-sm text-red-700 dark:text-red-400">

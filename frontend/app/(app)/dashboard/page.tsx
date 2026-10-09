@@ -7,11 +7,13 @@ import { apiFetch, ApiError } from "@/lib/api";
 import type { Child } from "@/lib/types";
 import { ageLabel, useAppState } from "@/lib/app-state";
 import { InviteCode } from "./InviteCode";
+import { LoadError } from "../LoadError";
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600";
 
 export default function HomePage() {
-  const { token, childList, childrenLoading, childrenError, addChild, selectChild } = useAppState();
+  const { token, childList, childrenLoading, childrenError, retryChildren, addChild, selectChild } =
+    useAppState();
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -86,7 +88,7 @@ export default function HomePage() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium">Children</h2>
         {childrenLoading && <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading...</p>}
-        {childrenError && <p className="text-sm text-red-700 dark:text-red-400">{childrenError}</p>}
+        {childrenError && <LoadError message={childrenError} onRetry={retryChildren} />}
         {!childrenLoading && !childrenError && childList.length === 0 && (
           <p className="text-sm text-zinc-600 dark:text-zinc-400">
             No children yet -- add one above to see their vaccines, growth, care log and

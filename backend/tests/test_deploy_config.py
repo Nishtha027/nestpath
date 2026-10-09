@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.testclient import TestClient
 
 from app.cors import cors_settings
-from app.database import normalize_database_url
+from app.database import POOL_RECYCLE_SECONDS, engine, normalize_database_url
 from app.models import AvailabilitySlot
 from scripts.seed_demo_data import DAYS_AHEAD, DEFAULT_EMAIL, SeedError, resolve_days_ahead, seed
 
@@ -28,6 +28,13 @@ MONDAY = date(2026, 10, 5)
 )
 def test_normalize_database_url(given, expected):
     assert normalize_database_url(given) == expected
+
+
+def test_engine_survives_idle_database_suspend():
+    # Neon's free tier suspends after a few idle minutes and drops pooled
+    # connections; pre-ping swaps out a dead one, recycle retires old ones.
+    assert engine.pool._pre_ping is True
+    assert engine.pool._recycle == POOL_RECYCLE_SECONDS == 300
 
 
 def test_cors_unset_falls_back_to_localhost_dev_regex_only():

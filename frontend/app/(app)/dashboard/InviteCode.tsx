@@ -1,22 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiFetch, ApiError } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
+import { loadErrorMessage, withRetry } from "@/lib/retry";
 import type { Family } from "@/lib/types";
+import { LoadError } from "../LoadError";
 
 export function InviteCode({ token }: { token: string }) {
   const [family, setFamily] = useState<Family | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
-    apiFetch<Family>("/family", { token })
-      .then(setFamily)
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Failed to load invite code"));
-  }, [token]);
+    let cancelled = false;
+    withRetry(() => apiFetch<Family>("/family", { token }))
+      .then((f) => {
+        if (!cancelled) setFamily(f);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(loadErrorMessage(err, "Failed to load invite code"));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, attempt]);
+
+  function retry() {
+    setError(null);
+    setAttempt((n) => n + 1);
+  }
 
   return (
     <div className="flex flex-col gap-2 text-sm">
-      {error && <p className="text-red-600">{error}</p>}
+      {error && <LoadError message={error} onRetry={retry} />}
       {family && (
         <>
           <p>

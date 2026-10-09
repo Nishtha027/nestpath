@@ -29,8 +29,11 @@ DATABASE_URL = normalize_database_url(os.environ["DATABASE_URL"])
 # pool_pre_ping: serverless Postgres (e.g. Neon's free tier) suspends when
 # idle and drops its connections, so a pooled connection can be dead by the
 # next request. Pinging first replaces a dead one instead of surfacing a
-# 500 to whoever hits the app after a quiet spell.
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+# 500 to whoever hits the app after a quiet spell. pool_recycle also retires
+# any connection older than 5 minutes (Neon suspends after ~5 idle minutes),
+# so stale ones are replaced before they're even pinged.
+POOL_RECYCLE_SECONDS = 300
+engine = create_engine(DATABASE_URL, pool_pre_ping=True, pool_recycle=POOL_RECYCLE_SECONDS)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 

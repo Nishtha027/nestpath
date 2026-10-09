@@ -9,7 +9,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { apiFetch, ApiError } from "./api";
+import { apiFetch } from "./api";
+import { loadErrorMessage, withRetry } from "./retry";
 import type { Child } from "./types";
 
 // Family-wide state for the logged-in app shell: the child list (fetched
@@ -24,6 +25,8 @@ type AppState = {
   childList: Child[];
   childrenLoading: boolean;
   childrenError: string | null;
+  /** Try loading the child list again after it failed. */
+  retryChildren: () => void;
   addChild: (child: Child) => void;
   /** The selected child if it still exists, else the first child, else null. */
   selectedChild: Child | null;
@@ -45,15 +48,30 @@ export function AppStateProvider({ token, children }: { token: string; children:
   const [childrenLoading, setChildrenLoading] = useState(true);
   const [childrenError, setChildrenError] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(readSelected);
+  const [childrenAttempt, setChildrenAttempt] = useState(0);
 
   useEffect(() => {
-    apiFetch<Child[]>("/children", { token })
-      .then(setChildList)
-      .catch((err) =>
-        setChildrenError(err instanceof ApiError ? err.message : "Failed to load children")
-      )
-      .finally(() => setChildrenLoading(false));
-  }, [token]);
+    let cancelled = false;
+    withRetry(() => apiFetch<Child[]>("/children", { token }))
+      .then((list) => {
+        if (!cancelled) setChildList(list);
+      })
+      .catch((err) => {
+        if (!cancelled) setChildrenError(loadErrorMessage(err, "Failed to load children"));
+      })
+      .finally(() => {
+        if (!cancelled) setChildrenLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token, childrenAttempt]);
+
+  const retryChildren = useCallback(() => {
+    setChildrenError(null);
+    setChildrenLoading(true);
+    setChildrenAttempt((n) => n + 1);
+  }, []);
 
   const selectChild = useCallback((childId: string) => {
     setSelectedId(childId);
@@ -79,11 +97,12 @@ export function AppStateProvider({ token, children }: { token: string; children:
       childList,
       childrenLoading,
       childrenError,
+      retryChildren,
       addChild,
       selectedChild,
       selectChild,
     }),
-    [token, childList, childrenLoading, childrenError, addChild, selectedChild, selectChild]
+    [token, childList, childrenLoading, childrenError, retryChildren, addChild, selectedChild, selectChild]
   );
 
   return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>;

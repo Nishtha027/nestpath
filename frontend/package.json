@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types lib/wellbeing.test.ts lib/vaccine-groups.test.ts lib/growth.test.ts"
+    "test": "node --test --experimental-strip-types lib/wellbeing.test.ts lib/vaccine-groups.test.ts lib/growth.test.ts lib/retry.test.ts"
   },
   "dependencies": {
     "next": "16.3.5",
