@@ -41,35 +41,21 @@ export function Leaf({
 
 /** A sprig growing up from (x, y): a curved stem with leaves along it.
  * `flip` mirrors it so the two sides of a scene match. */
-export function Sprig({
-  x,
-  y,
-  flip = false,
-  className,
-}: {
-  x: number;
-  y: number;
-  flip?: boolean;
-  className?: string;
-}) {
+export function Sprig({ x, y, flip = false }: { x: number; y: number; flip?: boolean }) {
   return (
-    // The mirror goes on an outer group: a CSS animation on the same element
-    // would replace the transform attribute.
     <g transform={flip ? `translate(${2 * x} 0) scale(-1 1)` : undefined}>
-      <g className={className}>
-        <path
-          d={`M${x} ${y} C${x - 4} ${y - 40} ${x - 14} ${y - 76} ${x - 30} ${y - 104}`}
-          fill="none"
-          stroke="var(--np-art-stem)"
-          strokeWidth="4"
-          strokeLinecap="round"
-        />
-        <Leaf x={x - 2} y={y - 24} len={34} angle={-58} fill="var(--np-art-leaf-deep)" />
-        <Leaf x={x - 4} y={y - 34} len={30} angle={38} />
-        <Leaf x={x - 11} y={y - 62} len={30} angle={-62} />
-        <Leaf x={x - 14} y={y - 70} len={26} angle={28} fill="var(--np-art-leaf-deep)" />
-        <Leaf x={x - 30} y={y - 103} len={26} angle={-24} />
-      </g>
+      <path
+        d={`M${x} ${y} C${x - 4} ${y - 40} ${x - 14} ${y - 76} ${x - 30} ${y - 104}`}
+        fill="none"
+        stroke="var(--np-art-stem)"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
+      <Leaf x={x - 2} y={y - 24} len={34} angle={-58} fill="var(--np-art-leaf-deep)" />
+      <Leaf x={x - 4} y={y - 34} len={30} angle={38} />
+      <Leaf x={x - 11} y={y - 62} len={30} angle={-62} />
+      <Leaf x={x - 14} y={y - 70} len={26} angle={28} fill="var(--np-art-leaf-deep)" />
+      <Leaf x={x - 30} y={y - 103} len={26} angle={-24} />
     </g>
   );
 }

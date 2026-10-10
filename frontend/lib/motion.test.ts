@@ -119,6 +119,23 @@ test("components animate only through the np-* classes", () => {
   assert.deepEqual(offenders, []);
 });
 
+test("idle loops move HTML boxes, never SVG elements", () => {
+  // Chrome can't run a transform on any SVG element (even an outer <svg>)
+  // on the compositor: it restyles and repaints every frame instead. Loops
+  // belong on an HTML element wrapping the SVG (see AnimatedArt in
+  // illustrations/parts.tsx).
+  const offenders: string[] = [];
+  for (const path of sourceFiles(join(FRONTEND, "app"))) {
+    const source = readFileSync(path, "utf8");
+    for (const m of source.matchAll(/<(svg|g|path|circle|ellipse|rect|polygon)\b[^>]*?np-loop-/g))
+      offenders.push(`${path}: <${m[1]}> with an np-loop class`);
+  }
+  assert.deepEqual(offenders, []);
+  // Every loop gets its own layer, and gives it back when it stops.
+  assert.match(rest, /\[class\*="np-loop-"\] \{\s*will-change: transform;/);
+  assert.match(reduce, /\[class\*="np-loop-"\] \{\s*will-change: auto;/);
+});
+
 test("Wellbeing and Alerts stay calm", () => {
   const layout = readFileSync(join(FRONTEND, "app", "(app)", "layout.tsx"), "utf8");
   assert.match(layout, /STILL_PAGES = \[[^\]]*"\/wellbeing"[^\]]*"\/alerts"/);

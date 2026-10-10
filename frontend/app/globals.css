@@ -219,7 +219,7 @@
  * block at the end covers everything. lib/motion.test.ts checks that.
  * ---------------------------------------------------------------------- */
 @keyframes np-rise {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
 }
 @keyframes np-fade {
   from { opacity: 0; }
@@ -246,15 +246,15 @@
   80% { transform: translateY(-2px); }
 }
 @keyframes np-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -4px, 0); }
 }
 @keyframes np-hop {
-  0%, 55%, 100% { transform: translateY(0); }
-  65% { transform: translateY(-7px); }
-  75% { transform: translateY(0); }
-  82% { transform: translateY(-2px); }
-  89% { transform: translateY(0); }
+  0%, 55%, 100% { transform: translate3d(0, 0, 0); }
+  65% { transform: translate3d(0, -7px, 0); }
+  75% { transform: translate3d(0, 0, 0); }
+  82% { transform: translate3d(0, -2px, 0); }
+  89% { transform: translate3d(0, 0, 0); }
 }
 @keyframes np-breathe {
   0%, 100% { transform: scale(1); }
@@ -266,22 +266,22 @@
 }
 
 @keyframes np-reveal {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translate3d(0, 14px, 0); }
 }
 @keyframes np-reveal-art {
-  from { opacity: 0; transform: translateY(24px); }
+  from { opacity: 0; transform: translate3d(0, 24px, 0); }
 }
 @keyframes np-sway {
   0%, 100% { transform: rotate(-2deg); }
   50% { transform: rotate(2.5deg); }
 }
 @keyframes np-float {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-6px) scale(1.015); }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(0, -6px, 0) scale(1.015); }
 }
 @keyframes np-drift {
-  0%, 100% { opacity: 0.55; transform: translate(0, 0); }
-  50% { opacity: 1; transform: translate(3px, -9px); }
+  0%, 100% { opacity: 0.55; transform: translate3d(0, 0, 0); }
+  50% { opacity: 1; transform: translate3d(3px, -9px, 0); }
 }
 
 /* Cards fade and rise in once when they mount. */
@@ -298,11 +298,26 @@
 /* Cards lift a little under a mouse pointer (not on touch screens). */
 @media (hover: hover) and (pointer: fine) {
   .np-lift {
-    transition: transform 250ms ease, box-shadow 250ms ease;
+    position: relative;
+    transition: transform 250ms ease;
+  }
+  /* The shadow is drawn once and only fades in: animating box-shadow
+   * itself would repaint the card on every frame. */
+  .np-lift::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--np-ink) 40%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 250ms ease;
   }
   .np-lift:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 24px -14px color-mix(in srgb, var(--np-ink) 40%, transparent);
+  }
+  .np-lift:hover::after {
+    opacity: 1;
   }
 }
 /* The tab bar's active pill slides to the new tab (positioned by AppNav). */
@@ -331,7 +346,12 @@
 .np-cheer {
   animation: np-cheer 600ms ease-out 2;
 }
-/* Idle loops: slow and small, illustrations only. */
+/* Idle loops: slow and small, illustrations only. Each one moves a whole
+ * HTML box (never a shape inside an SVG) by transform/opacity, so it runs on
+ * the compositor; will-change gives just these boxes their own layer. */
+[class*="np-loop-"] {
+  will-change: transform;
+}
 .np-loop-bob {
   animation: np-bob 2.4s ease-in-out infinite;
 }
@@ -339,13 +359,10 @@
   animation: np-hop 2.8s ease-in-out infinite;
 }
 .np-loop-breathe {
-  transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: np-breathe 4.5s ease-in-out infinite;
 }
 .np-loop-blink {
-  transform-box: fill-box;
-  transform-origin: center;
   animation: np-blink 5s ease-in-out infinite;
 }
 
@@ -365,14 +382,16 @@
 .np-cta:focus-visible .np-nudge {
   transform: translateX(4px);
 }
-/* Welcome scene idle loops: slow (6-10s) and very small. */
+/* The welcome picture rises in only once it is decoded (WelcomeHero). */
+.np-reveal-art[data-waiting] {
+  animation-play-state: paused;
+}
+/* Welcome scene idle loops: slow (6-11s) and very small. */
 .np-loop-sway {
-  transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: np-sway 8s ease-in-out infinite;
 }
 .np-loop-sway-back {
-  transform-box: fill-box;
   transform-origin: 50% 100%;
   animation: np-sway 9s ease-in-out -4s infinite reverse;
 }
@@ -382,9 +401,25 @@
   animation: np-float 8s ease-in-out infinite;
 }
 .np-loop-drift {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: np-drift 9s ease-in-out infinite;
+  will-change: transform, opacity;
+  animation: np-drift 11s ease-in-out infinite;
+}
+/* Phones run fewer loops: the least visible ones hold still. */
+@media (max-width: 639px) {
+  .np-loop-minor {
+    animation: none;
+    will-change: auto;
+  }
+}
+
+/* Set on <html> by MotionGuard: a hidden tab pauses every loop, and a
+ * device that can't keep up keeps the entrances but drops the loops. */
+.np-paused [class*="np-loop-"] {
+  animation-play-state: paused;
+}
+.np-lite [class*="np-loop-"] {
+  animation: none;
+  will-change: auto;
 }
 
 /* Calm pages (Wellbeing, Alerts): nothing moves at all. */
@@ -393,10 +428,15 @@
 .np-still [class*="np-loop-"] {
   animation: none;
 }
+.np-still [class*="np-loop-"] {
+  will-change: auto;
+}
 .np-still .np-lift:hover,
 .np-still .np-press:active:not(:disabled) {
   transform: none;
-  box-shadow: none;
+}
+.np-still .np-lift:hover::after {
+  opacity: 0;
 }
 
 /* Reduced motion: no movement and no loops. Entrances and the new-entry
@@ -423,6 +463,9 @@
   .np-loop-float,
   .np-loop-drift {
     animation: none !important;
+  }
+  [class*="np-loop-"] {
+    will-change: auto;
   }
   .np-cta:hover .np-nudge,
   .np-cta:focus-visible .np-nudge {

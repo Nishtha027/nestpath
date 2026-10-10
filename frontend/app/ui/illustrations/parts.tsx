@@ -18,15 +18,65 @@ export function ArtFrame({ className = "", children }: { className?: string; chi
   );
 }
 
+const LAYER = "[grid-area:1/1] h-full w-full";
+/** A point in the 120x120 art box, as a CSS transform-origin. */
+const origin = (x: number, y: number) => `${(x / 120) * 100}% ${(y / 120) * 100}%`;
+
+/** A character with an idle loop, drawn in stacked layers so that only
+ * whole HTML boxes move: the browser then animates them on the compositor
+ * instead of repainting the SVG every frame. `back` and `front` stay still,
+ * the body runs `loop` around `pivot`, and `eyes` (optional, on top of the
+ * body and moving with it) blink around their own line `eyeY`. The moving
+ * layers are <span>s: Chrome never composites a transform on an <svg>. */
+export function AnimatedArt({
+  className = "",
+  loop,
+  pivot = [60, 120],
+  back,
+  front,
+  eyes,
+  eyeY = 60,
+  children,
+}: {
+  className?: string;
+  loop: string;
+  pivot?: [number, number];
+  back?: ReactNode;
+  front?: ReactNode;
+  eyes?: ReactNode;
+  eyeY?: number;
+  children: ReactNode;
+}) {
+  const layer = (content: ReactNode) => (
+    <svg viewBox="0 0 120 120" aria-hidden="true" focusable="false" className={LAYER}>
+      {content}
+    </svg>
+  );
+  return (
+    <span aria-hidden="true" className={`inline-grid ${className}`}>
+      {back && layer(back)}
+      <span className={`grid ${LAYER} ${loop}`} style={{ transformOrigin: origin(...pivot) }}>
+        {layer(children)}
+        {eyes && (
+          <span className={`grid ${LAYER} np-loop-blink`} style={{ transformOrigin: origin(60, eyeY) }}>
+            {layer(eyes)}
+          </span>
+        )}
+      </span>
+      {front && layer(front)}
+    </span>
+  );
+}
+
 /** Soft ground shadow under a character. */
 export function Shadow({ cy = 108, rx = 36 }: { cy?: number; rx?: number }) {
   return <ellipse cx="60" cy={cy} rx={rx} ry="5" fill="var(--np-art-shadow)" />;
 }
 
 /** An open eye: a dark oval with a small shine. */
-export function Eye({ x, y, blink = false }: { x: number; y: number; blink?: boolean }) {
+export function Eye({ x, y }: { x: number; y: number }) {
   return (
-    <g className={blink ? "np-loop-blink" : undefined}>
+    <g>
       <ellipse cx={x} cy={y} rx="3.4" ry="4.2" fill="var(--np-art-face)" />
       <circle cx={x + 1.1} cy={y - 1.5} r="1.2" fill="var(--np-art-shine)" />
     </g>

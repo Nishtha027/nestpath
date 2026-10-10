@@ -66,7 +66,11 @@ test("the welcome artwork is the supplied image, sized up front and loaded early
   assert.match(hero, /HERO_ALT = "A parent holding their child"/);
   // Explicit width and height reserve the space, so nothing shifts on load.
   assert.match(hero, /<Image\b[\s\S]*?alt=\{HERO_ALT\}[\s\S]*?width=\{HERO_SIZE\}[\s\S]*?height=\{HERO_SIZE\}[\s\S]*?preload\b/);
-  assert.match(read("app", "Welcome.tsx"), /<WelcomeHero animated \/>/);
+  assert.match(read("app", "Welcome.tsx"), /<WelcomeHero animated revealDelayMs=\{AFTER_HEADLINE_MS \+ 200\} \/>/);
+  // It rises in only once decoded (paused until then, with a time limit).
+  assert.match(hero, /data-waiting=\{decoded \? undefined : ""\}/);
+  assert.match(hero, /img\.current\?\.decode\(\)\.then\(reveal, reveal\)/);
+  assert.match(hero, /setTimeout\(reveal, DECODE_WAIT_MS\)/);
   // The drifting sparkles and hearts around it are decorative and silent.
   assert.match(hero, /aria-hidden="true"/);
   assert.doesNotMatch(hero, /<text\b/);

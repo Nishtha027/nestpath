@@ -3,6 +3,7 @@ import { Fredoka, Nunito } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import { Footer } from "./ui/Footer";
+import { MotionGuard } from "./MotionGuard";
 
 // Both are downloaded at build time and served from this app (no request
 // to Google at runtime). Only the weights the UI uses are loaded; the
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col bg-page text-ink">
         <AuthProvider>{children}</AuthProvider>
         <Footer />
+        <MotionGuard />
       </body>
     </html>
   );

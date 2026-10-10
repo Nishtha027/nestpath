@@ -17,17 +17,19 @@ const AFTER_HEADLINE_MS = HEADLINE.length * STAGGER_MS;
 
 const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
 
-/** A sprig swaying in a corner of the page, behind everything else. */
-function CornerSprig({ flip = false, className }: { flip?: boolean; className: string }) {
+/** A sprig in a corner of the page, behind everything else. With `loop`, it
+ * sways: the wrapping <span> moves (a compositor-only animation; Chrome
+ * won't do that for an <svg>), and phones keep it still. */
+function CornerSprig({ flip = false, loop, className }: { flip?: boolean; loop?: string; className: string }) {
   return (
-    <svg
-      viewBox="0 0 80 112"
+    <span
       aria-hidden="true"
-      focusable="false"
-      className={`pointer-events-none absolute -z-10 h-20 w-14 sm:h-32 sm:w-24 ${className}`}
+      className={`pointer-events-none absolute -z-10 h-20 w-14 sm:h-32 sm:w-24 ${loop ? `${loop} np-loop-minor` : ""} ${className}`}
     >
-      <Sprig x={flip ? 38 : 42} y={110} flip={flip} className={flip ? "np-loop-sway-back" : "np-loop-sway"} />
-    </svg>
+      <svg viewBox="0 0 80 112" focusable="false" className="block h-full w-full">
+        <Sprig x={flip ? 38 : 42} y={110} flip={flip} />
+      </svg>
+    </span>
   );
 }
 
@@ -51,8 +53,8 @@ export function Welcome() {
 
   return (
     <main className="relative isolate flex flex-1 items-center overflow-x-clip">
-      <CornerSprig className="bottom-0 left-1" />
-      <CornerSprig flip className="right-1 bottom-0" />
+      <CornerSprig loop="np-loop-sway" className="bottom-0 left-1" />
+      <CornerSprig flip loop="np-loop-sway-back" className="right-1 bottom-0" />
       {/* Only on wider screens: on a phone it would touch the headline. */}
       <CornerSprig flip className="top-1 left-1 hidden rotate-180 sm:block" />
       <div className="mx-auto grid w-full max-w-5xl items-center gap-4 px-4 pt-8 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-16">
@@ -89,9 +91,7 @@ export function Welcome() {
             </Link>
           </div>
         </div>
-        <div className="np-reveal-art py-4" style={delay(AFTER_HEADLINE_MS + 200)}>
-          <WelcomeHero animated />
-        </div>
+        <WelcomeHero animated revealDelayMs={AFTER_HEADLINE_MS + 200} />
       </div>
     </main>
   );
