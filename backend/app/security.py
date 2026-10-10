@@ -21,7 +21,33 @@ JWT_ALGORITHM = "HS256"
 # quickly. There are no refresh tokens yet -- after this the user logs in again.
 JWT_EXPIRE_MINUTES = 60
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def bcrypt_rounds_from_env(value: str | None) -> int:
+    """BCRYPT_ROUNDS: bcrypt's cost factor (each step doubles the work).
+    10 by default -- every login pays it, and the free-tier server has very
+    little CPU. The test suite sets it to bcrypt's minimum, 4, for speed."""
+    if value is None or not value.strip():
+        return 10
+    rounds = int(value)
+    if not 4 <= rounds <= 31:
+        raise ValueError("BCRYPT_ROUNDS must be between 4 and 31")
+    return rounds
+
+
+BCRYPT_ROUNDS = bcrypt_rounds_from_env(os.environ.get("BCRYPT_ROUNDS"))
+
+# min and max are pinned to the same value so a stored hash made with any
+# other cost counts as out of date: verify_password_and_update then hands
+# back a fresh hash for the login to save (e.g. upgrading older 12-round
+# hashes to 10 rounds). Setting only the default would leave them as they are.
+_pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__default_rounds=BCRYPT_ROUNDS,
+    bcrypt__min_rounds=BCRYPT_ROUNDS,
+    bcrypt__max_rounds=BCRYPT_ROUNDS,
+)
 
 
 def hash_password(password: str) -> str:
@@ -30,6 +56,12 @@ def hash_password(password: str) -> str:
 
 def verify_password(plain_password: str, password_hash: str) -> bool:
     return _pwd_context.verify(plain_password, password_hash)
+
+
+def verify_password_and_update(plain_password: str, password_hash: str) -> tuple[bool, str | None]:
+    """Like verify_password, but also returns a replacement hash when the
+    stored one used a different BCRYPT_ROUNDS (None when it's current)."""
+    return _pwd_context.verify_and_update(plain_password, password_hash)
 
 
 def create_access_token(caregiver_id: UUID, family_id: UUID, is_provider: bool = False) -> str:

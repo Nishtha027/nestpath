@@ -5,6 +5,7 @@ test database, never a real one: each test drops and recreates all
 tables.
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -14,6 +15,10 @@ from fastapi.testclient import TestClient
 _REFERENCE_DATA_DIR = Path(__file__).resolve().parents[1] / "reference-data"
 if str(_REFERENCE_DATA_DIR) not in sys.path:
     sys.path.insert(0, str(_REFERENCE_DATA_DIR))
+
+# bcrypt's minimum cost: the suite hashes a lot of passwords, and the cost
+# itself isn't what these tests check. Set before app.security is imported.
+os.environ["BCRYPT_ROUNDS"] = "4"
 
 from app.database import Base, SessionLocal, engine, get_db
 from app.main import app

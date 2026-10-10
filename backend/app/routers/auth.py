@@ -6,7 +6,7 @@ from .. import schemas
 from ..database import get_db
 from ..invite_codes import normalize_invite_code
 from ..models import Caregiver, Family
-from ..security import create_access_token, hash_password, verify_password
+from ..security import create_access_token, hash_password, verify_password_and_update
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -43,14 +43,28 @@ def register(payload: schemas.RegisterRequest, db: Session = Depends(get_db)):
     return caregiver
 
 
+# register and login are plain `def`, not `async def`, on purpose: FastAPI
+# runs them in its thread pool, so a slow bcrypt hash can't hold up the
+# event loop (WebSockets and every other request keep going meanwhile).
+# tests/test_auth.py::test_slow_password_check_does_not_block_other_requests
+# checks this.
 @router.post("/login", response_model=schemas.TokenResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     caregiver = db.query(Caregiver).filter(Caregiver.email == form_data.username).first()
-    if caregiver is None or not verify_password(form_data.password, caregiver.password_hash):
+    verified, new_hash = (
+        verify_password_and_update(form_data.password, caregiver.password_hash)
+        if caregiver is not None
+        else (False, None)
+    )
+    if not verified:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             "Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    if new_hash is not None:
+        # Stored with an older BCRYPT_ROUNDS; swap in a hash at the current cost.
+        caregiver.password_hash = new_hash
+        db.commit()
     token = create_access_token(caregiver.id, caregiver.family_id, caregiver.is_provider)
     return schemas.TokenResponse(access_token=token)

@@ -1,3 +1,14 @@
+import inspect
+import threading
+
+import pytest
+from passlib.context import CryptContext
+
+from app.models import Caregiver
+from app.routers import auth
+from app.security import BCRYPT_ROUNDS, bcrypt_rounds_from_env
+
+
 def test_register_and_login(client):
     register_resp = client.post(
         "/auth/register",
@@ -197,3 +208,84 @@ def test_joining_does_not_expose_other_families(client, auth_headers):
     )
     headers_b = {"Authorization": f"Bearer {login.json()['access_token']}"}
     assert client.get("/children", headers=headers_b).json() == []
+
+
+def test_bcrypt_rounds_setting():
+    assert bcrypt_rounds_from_env(None) == 10
+    assert bcrypt_rounds_from_env("") == 10
+    assert bcrypt_rounds_from_env("12") == 12
+    for bad in ("3", "32", "ten"):
+        with pytest.raises(ValueError):
+            bcrypt_rounds_from_env(bad)
+
+
+def test_old_12_round_hash_still_logs_in_and_is_upgraded(client, db_session):
+    email, password = "parent@example.com", "correct horse battery staple"
+    client.post("/auth/register", json={"name": "Test Parent", "email": email, "password": password})
+    # What every account created before BCRYPT_ROUNDS existed has stored.
+    old_hash = CryptContext(schemes=["bcrypt"], bcrypt__default_rounds=12).hash(password)
+    assert old_hash.startswith("$2b$12$")
+    caregiver = db_session.query(Caregiver).filter(Caregiver.email == email).one()
+    caregiver.password_hash = old_hash
+    db_session.commit()
+
+    def stored_hash():
+        db_session.expire_all()
+        return db_session.query(Caregiver).filter(Caregiver.email == email).one().password_hash
+
+    login = lambda: client.post("/auth/login", data={"username": email, "password": password})  # noqa: E731
+    assert login().status_code == 200
+    upgraded = stored_hash()
+    assert upgraded.startswith(f"$2b${BCRYPT_ROUNDS:02d}$")
+    assert upgraded != old_hash
+
+    # The upgraded hash logs in too, and isn't rewritten again.
+    assert login().status_code == 200
+    assert stored_hash() == upgraded
+    # A wrong password against an old hash is still refused, and changes nothing.
+    caregiver = db_session.query(Caregiver).filter(Caregiver.email == email).one()
+    caregiver.password_hash = old_hash
+    db_session.commit()
+    assert client.post("/auth/login", data={"username": email, "password": "wrong"}).status_code == 401
+    assert stored_hash() == old_hash
+
+
+def test_register_and_login_run_in_the_thread_pool():
+    # FastAPI runs plain `def` endpoints in its thread pool; `async def`
+    # ones run on the event loop itself.
+    assert not inspect.iscoroutinefunction(auth.register)
+    assert not inspect.iscoroutinefunction(auth.login)
+
+
+def test_slow_password_check_does_not_block_other_requests(client, monkeypatch):
+    started, release = threading.Event(), threading.Event()
+
+    def stuck_password_check(plain_password, password_hash):
+        started.set()
+        release.wait(timeout=10)
+        return False, None
+
+    monkeypatch.setattr(auth, "verify_password_and_update", stuck_password_check)
+    client.post("/auth/register", json={"name": "P", "email": "parent@example.com", "password": "pw-long-enough"})
+
+    with client:  # one shared event loop for every request below
+        results = {}
+        login = threading.Thread(
+            target=lambda: results.setdefault(
+                "login", client.post("/auth/login", data={"username": "parent@example.com", "password": "x"})
+            )
+        )
+        login.start()
+        assert started.wait(timeout=5)
+        # If the login were blocking the event loop, this would only answer
+        # after the safety timer released it.
+        safety = threading.Timer(5, release.set)
+        safety.start()
+        try:
+            assert client.get("/health").status_code == 200
+            assert not release.is_set(), "/health waited for the stuck login"
+        finally:
+            release.set()
+            safety.cancel()
+            login.join(timeout=10)
+    assert results["login"].status_code == 401
