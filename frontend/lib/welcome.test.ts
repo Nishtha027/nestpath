@@ -52,6 +52,13 @@ test("/ renders the welcome screen, wired to those rules", () => {
   assert.match(welcome, /wakeApi\(\)/);
 });
 
+test("/login opens the tab named in the address", () => {
+  const login = read("app", "login", "page.tsx");
+  assert.match(login, /authModeFrom\(useSearchParams\(\)\.get\("mode"\)\)/);
+  assert.match(login, /<Suspense\b/);
+  assert.match(login, /wakeApi\(\)/);
+});
+
 test("the welcome illustration is decorative and has no text", () => {
   const art = read("app", "ui", "illustrations", "ParentAndBaby.tsx");
   assert.match(art, /aria-hidden="true"/);
