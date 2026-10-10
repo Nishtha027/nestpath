@@ -1,0 +1,79 @@
+"use client";
+
+import { useEffect } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { wakeApi } from "@/lib/server-wake";
+import { LOGIN_HREF, REGISTER_HREF, welcomeRedirect } from "@/lib/welcome";
+import { Icon } from "./ui/Icon";
+import { ParentAndBaby } from "./ui/illustrations/ParentAndBaby";
+
+const HEADLINE = ["Grow", "together,", "day", "by", "day"];
+const STAGGER_MS = 80;
+// The subline, buttons and illustration follow the last headline word.
+const AFTER_HEADLINE_MS = HEADLINE.length * STAGGER_MS;
+
+const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
+
+/** The first screen for visitors who aren't logged in. Someone with a
+ * session goes straight on to the dashboard. */
+export function Welcome() {
+  const { token, ready } = useAuth();
+  const router = useRouter();
+  const redirectTo = welcomeRedirect(ready, token);
+
+  useEffect(() => {
+    if (redirectTo) router.replace(redirectTo);
+  }, [redirectTo, router]);
+
+  // Warm the free-tier API while the visitor reads, so logging in is quick.
+  useEffect(() => {
+    wakeApi();
+  }, []);
+
+  if (redirectTo) return null;
+
+  return (
+    <main className="flex flex-1 items-center">
+      <div className="mx-auto grid w-full max-w-5xl items-center gap-4 px-4 pt-8 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-16">
+        <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:text-left">
+          <h1 className="font-heading text-[2.6rem] leading-[1.1] font-semibold text-ink sm:text-5xl lg:text-6xl">
+            {HEADLINE.map((word, i) => (
+              <span key={i}>
+                <span className="np-reveal inline-block" style={delay(i * STAGGER_MS)}>
+                  {word}
+                </span>{" "}
+              </span>
+            ))}
+          </h1>
+          <p className="np-reveal text-lg text-muted" style={delay(AFTER_HEADLINE_MS)}>
+            NestPath keeps your baby&apos;s care in one shared place.
+          </p>
+          <div className="mt-2 flex flex-col items-center gap-1 lg:items-start">
+            <Link
+              href={REGISTER_HREF}
+              className="np-reveal np-cta np-press inline-flex min-h-12 items-center gap-2 rounded-full bg-primary px-7 text-base font-bold text-on-primary hover:bg-primary-hover"
+              style={delay(AFTER_HEADLINE_MS + 100)}
+            >
+              Get started
+              <span className="np-nudge inline-flex">
+                <Icon name="arrowRight" className="h-5 w-5" />
+              </span>
+            </Link>
+            <Link
+              href={LOGIN_HREF}
+              className="np-reveal inline-flex min-h-11 items-center rounded-full px-1 text-sm font-semibold text-primary-ink underline decoration-blue-mid decoration-2 underline-offset-4 hover:decoration-primary-ink"
+              style={delay(AFTER_HEADLINE_MS + 160)}
+            >
+              I already have an account
+            </Link>
+          </div>
+        </div>
+        <div className="np-reveal-art mx-auto w-full max-w-sm lg:max-w-md" style={delay(AFTER_HEADLINE_MS + 200)}>
+          <ParentAndBaby animated className="h-auto w-full" />
+        </div>
+      </div>
+    </main>
+  );
+}

@@ -99,6 +99,22 @@
   --np-art-duck: #ffe285;
   --np-art-duck-deep: #f6cc5a;
   --np-art-sparkle: #f2b33d;
+  /* Welcome scene: a faceless parent and baby with leaves and flowers. The
+   * skin is a soft pastel on purpose, so it doesn't stand for any one family. */
+  --np-art-backdrop: var(--np-blue-soft);
+  --np-art-skin: #eccfc7;
+  --np-art-skin-light: #f8e6e1;
+  --np-art-hair: #8c7896;
+  --np-art-top: #f5c3d2;
+  --np-art-top-deep: #e79db6;
+  --np-art-wrap: #fffaf2;
+  --np-art-wrap-fold: #cfe1f5;
+  --np-art-leaf: #a9d4bb;
+  --np-art-leaf-deep: #86bf9f;
+  --np-art-stem: #8fc4a6;
+  --np-art-petal-pink: #f7b6c9;
+  --np-art-petal-blue: #a8c8ec;
+  --np-art-petal-center: #fbe3a0;
 }
 
 /* No default palette: only the tokens above exist as Tailwind colors, so a
@@ -258,6 +274,25 @@
   97% { transform: scaleY(0.1); }
 }
 
+@keyframes np-reveal {
+  from { opacity: 0; transform: translateY(14px); }
+}
+@keyframes np-reveal-art {
+  from { opacity: 0; transform: translateY(24px); }
+}
+@keyframes np-sway {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2.5deg); }
+}
+@keyframes np-breathe-soft {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.015); }
+}
+@keyframes np-drift {
+  0%, 100% { opacity: 0.55; transform: translate(0, 0); }
+  50% { opacity: 1; transform: translate(3px, -9px); }
+}
+
 /* Cards fade and rise in once when they mount. */
 .np-enter {
   animation: np-rise 400ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
@@ -323,6 +358,44 @@
   animation: np-blink 5s ease-in-out infinite;
 }
 
+/* Welcome screen. Text arrives one piece after another (each element sets
+ * its own inline animation-delay), then the illustration rises in. */
+.np-reveal {
+  animation: np-reveal 520ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+.np-reveal-art {
+  animation: np-reveal-art 800ms cubic-bezier(0.2, 0.7, 0.3, 1) backwards;
+}
+/* The arrow in a call-to-action nudges forward on hover or keyboard focus. */
+.np-nudge {
+  transition: transform 200ms ease;
+}
+.np-cta:hover .np-nudge,
+.np-cta:focus-visible .np-nudge {
+  transform: translateX(4px);
+}
+/* Welcome scene idle loops: slow (6-10s) and very small. */
+.np-loop-sway {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: np-sway 8s ease-in-out infinite;
+}
+.np-loop-sway-back {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: np-sway 9s ease-in-out -4s infinite reverse;
+}
+.np-loop-breathe-soft {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: np-breathe-soft 7s ease-in-out infinite;
+}
+.np-loop-drift {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: np-drift 9s ease-in-out infinite;
+}
+
 /* Calm pages (Wellbeing, Alerts): nothing moves at all. */
 .np-still .np-enter,
 .np-still .np-cheer,
@@ -351,8 +424,18 @@
   .np-loop-bob,
   .np-loop-hop,
   .np-loop-breathe,
-  .np-loop-blink {
+  .np-loop-blink,
+  .np-reveal,
+  .np-reveal-art,
+  .np-loop-sway,
+  .np-loop-sway-back,
+  .np-loop-breathe-soft,
+  .np-loop-drift {
     animation: none !important;
+  }
+  .np-cta:hover .np-nudge,
+  .np-cta:focus-visible .np-nudge {
+    transform: none !important;
   }
   .np-arrive {
     animation: np-glow 0.01ms linear 900ms both !important;

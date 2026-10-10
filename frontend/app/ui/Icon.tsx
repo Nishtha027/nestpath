@@ -25,6 +25,8 @@ const PATHS = {
     </>
   ),
   check: <path d="m5 12.5 4.5 4.5L19 7.5" />,
+  // arrow pointing right -- go forward
+  arrowRight: <path d="M5 12h14m-5.5-5.5L19 12l-5.5 5.5" />,
   // circle with "i" -- information
   info: (
     <>

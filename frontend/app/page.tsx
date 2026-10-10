@@ -1,16 +1,11 @@
-"use client";
+import type { Metadata } from "next";
+import { Welcome } from "./Welcome";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/lib/auth-context";
+export const metadata: Metadata = {
+  title: "NestPath: baby care for the whole family",
+  description: "A shared place for your family to track your baby's care, sleep, feeds, growth and vaccines.",
+};
 
 export default function Home() {
-  const { token } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace(token ? "/dashboard" : "/login");
-  }, [token, router]);
-
-  return null;
+  return <Welcome />;
 }
