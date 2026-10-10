@@ -6,16 +6,26 @@ export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:800
 // http -> ws and https -> wss, so an https page gets a secure WebSocket.
 export const WS_URL = API_URL.replace(/^http/, "ws");
 
+async function healthy(path: string): Promise<boolean> {
+  const res = await fetch(`${API_URL}${path}`, { cache: "no-store", signal: AbortSignal.timeout(60_000) });
+  return res.ok;
+}
+
 // The free-tier API sleeps when idle (see lib/wake.ts). Every request waits
 // for it to answer its health check first; once it has, that's instant.
-const waker = createWaker({
-  ping: async () => {
-    const res = await fetch(`${API_URL}/health`, { cache: "no-store", signal: AbortSignal.timeout(60_000) });
-    return res.ok;
-  },
-});
+const waker = createWaker({ ping: () => healthy("/health") });
 export const wakeServer = waker.wake;
 export const isServerAwake = waker.isAwake;
+
+// The free-tier database suspends separately (after ~5 idle minutes), and
+// /health doesn't touch it. /health/ready does, so pinging it in the
+// background gets the database waking too while someone types. Nothing
+// waits for this one: requests that need the database just get it sooner.
+const databaseWaker = createWaker({ ping: () => healthy("/health/ready") });
+export function wakeDatabase() {
+  void databaseWaker.wake();
+}
+export const isDatabaseAwake = databaseWaker.isAwake;
 
 type UnauthorizedHandler = (failedToken: string) => void;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
@@ -51,6 +61,8 @@ export async function apiFetch<T>(
     },
   });
   waker.markAwake();
+  // Nearly every endpoint queries the database, so an answer means it's up.
+  if (res.ok) databaseWaker.markAwake();
 
   if (!res.ok) {
     if (res.status === 401 && token) unauthorizedHandler?.(token);

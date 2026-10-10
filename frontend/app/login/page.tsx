@@ -3,7 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import { useWakingNote, WAKING_NOTE } from "@/lib/server-wake";
+import { useWakingNote, wakeApi, WAKING_NOTE } from "@/lib/server-wake";
 import { ApiError } from "@/lib/api";
 import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, MUTED } from "@/lib/ui";
 import { Message } from "../ui/Message";
@@ -35,6 +35,12 @@ export default function LoginPage() {
   useEffect(() => {
     if (token) router.replace("/dashboard");
   }, [token, router]);
+
+  // Arriving here from another page: wake things again if they've dozed off
+  // since (a no-op when they were seen up recently).
+  useEffect(() => {
+    wakeApi();
+  }, []);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();

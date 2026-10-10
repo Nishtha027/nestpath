@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { apiFetch, setUnauthorizedHandler } from "./api";
 import { decodeJwtPayload } from "./jwt";
-import { wakeServer } from "./server-wake";
+import { wakeApi } from "./server-wake";
 import {
   clearSession,
   getServerSession,
@@ -74,9 +74,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [session]);
   const token = caregiver ? session!.token : null;
 
-  // Start waking the free-tier API as soon as any page opens.
+  // Start waking the free-tier API and its database as soon as any page opens.
   useEffect(() => {
-    void wakeServer();
+    wakeApi();
   }, []);
 
   // Any API call that comes back 401 while holding a token means the session
