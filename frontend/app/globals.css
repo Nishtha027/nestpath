@@ -99,16 +99,7 @@
   --np-art-duck: #ffe285;
   --np-art-duck-deep: #f6cc5a;
   --np-art-sparkle: #f2b33d;
-  /* Welcome scene: a faceless parent and baby with leaves and flowers. The
-   * skin is a soft pastel on purpose, so it doesn't stand for any one family. */
-  --np-art-backdrop: var(--np-blue-soft);
-  --np-art-skin: #eccfc7;
-  --np-art-skin-light: #f8e6e1;
-  --np-art-hair: #8c7896;
-  --np-art-top: #f5c3d2;
-  --np-art-top-deep: #e79db6;
-  --np-art-wrap: #fffaf2;
-  --np-art-wrap-fold: #cfe1f5;
+  /* Foliage, sparkles and hearts around the welcome artwork and login card. */
   --np-art-leaf: #a9d4bb;
   --np-art-leaf-deep: #86bf9f;
   --np-art-stem: #8fc4a6;
@@ -284,9 +275,9 @@
   0%, 100% { transform: rotate(-2deg); }
   50% { transform: rotate(2.5deg); }
 }
-@keyframes np-breathe-soft {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.015); }
+@keyframes np-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.015); }
 }
 @keyframes np-drift {
   0%, 100% { opacity: 0.55; transform: translate(0, 0); }
@@ -385,10 +376,10 @@
   transform-origin: 50% 100%;
   animation: np-sway 9s ease-in-out -4s infinite reverse;
 }
-.np-loop-breathe-soft {
-  transform-box: fill-box;
-  transform-origin: 50% 100%;
-  animation: np-breathe-soft 7s ease-in-out infinite;
+/* The welcome artwork floats a few pixels and breathes very slightly. */
+.np-loop-float {
+  transform-origin: 50% 60%;
+  animation: np-float 8s ease-in-out infinite;
 }
 .np-loop-drift {
   transform-box: fill-box;
@@ -429,7 +420,7 @@
   .np-reveal-art,
   .np-loop-sway,
   .np-loop-sway-back,
-  .np-loop-breathe-soft,
+  .np-loop-float,
   .np-loop-drift {
     animation: none !important;
   }

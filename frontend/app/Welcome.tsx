@@ -7,7 +7,8 @@ import { useAuth } from "@/lib/auth-context";
 import { wakeApi } from "@/lib/server-wake";
 import { LOGIN_HREF, REGISTER_HREF, welcomeRedirect } from "@/lib/welcome";
 import { Icon } from "./ui/Icon";
-import { ParentAndBaby } from "./ui/illustrations/ParentAndBaby";
+import { Sprig } from "./ui/illustrations/Foliage";
+import { WelcomeHero } from "./ui/illustrations/WelcomeHero";
 
 const HEADLINE = ["Grow", "together,", "day", "by", "day"];
 const STAGGER_MS = 80;
@@ -15,6 +16,20 @@ const STAGGER_MS = 80;
 const AFTER_HEADLINE_MS = HEADLINE.length * STAGGER_MS;
 
 const delay = (ms: number) => ({ animationDelay: `${ms}ms` });
+
+/** A sprig swaying in a corner of the page, behind everything else. */
+function CornerSprig({ flip = false, className }: { flip?: boolean; className: string }) {
+  return (
+    <svg
+      viewBox="0 0 80 112"
+      aria-hidden="true"
+      focusable="false"
+      className={`pointer-events-none absolute -z-10 h-20 w-14 sm:h-32 sm:w-24 ${className}`}
+    >
+      <Sprig x={flip ? 38 : 42} y={110} flip={flip} className={flip ? "np-loop-sway-back" : "np-loop-sway"} />
+    </svg>
+  );
+}
 
 /** The first screen for visitors who aren't logged in. Someone with a
  * session goes straight on to the dashboard. */
@@ -35,7 +50,11 @@ export function Welcome() {
   if (redirectTo) return null;
 
   return (
-    <main className="flex flex-1 items-center">
+    <main className="relative isolate flex flex-1 items-center overflow-x-clip">
+      <CornerSprig className="bottom-0 left-1" />
+      <CornerSprig flip className="right-1 bottom-0" />
+      {/* Only on wider screens: on a phone it would touch the headline. */}
+      <CornerSprig flip className="top-1 left-1 hidden rotate-180 sm:block" />
       <div className="mx-auto grid w-full max-w-5xl items-center gap-4 px-4 pt-8 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-16">
         <div className="flex flex-col items-center gap-4 text-center lg:items-start lg:text-left">
           <h1 className="font-heading text-[2.6rem] leading-[1.1] font-semibold text-ink sm:text-5xl lg:text-6xl">
@@ -70,8 +89,8 @@ export function Welcome() {
             </Link>
           </div>
         </div>
-        <div className="np-reveal-art mx-auto w-full max-w-sm lg:max-w-md" style={delay(AFTER_HEADLINE_MS + 200)}>
-          <ParentAndBaby animated className="h-auto w-full" />
+        <div className="np-reveal-art py-4" style={delay(AFTER_HEADLINE_MS + 200)}>
+          <WelcomeHero animated />
         </div>
       </div>
     </main>

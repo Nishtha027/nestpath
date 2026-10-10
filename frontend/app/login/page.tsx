@@ -10,7 +10,7 @@ import { BUTTON_PRIMARY, FIELD, INPUT, LABEL, MUTED } from "@/lib/ui";
 import { authModeFrom, LOGIN_HREF, REGISTER_HREF, type AuthMode } from "@/lib/welcome";
 import { Message } from "../ui/Message";
 import { Chick } from "../ui/illustrations";
-import { Flower, Sprig } from "../ui/illustrations/ParentAndBaby";
+import { Flower, Sprig } from "../ui/illustrations/Foliage";
 
 /** One option of a two-way switch (Log in / Register, Start / Join). */
 function segmentClass(selected: boolean) {

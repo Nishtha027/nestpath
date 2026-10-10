@@ -7,7 +7,7 @@
 // the screen actually uses them; rendering itself is checked in a browser.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { authModeFrom, LOGIN_HREF, REGISTER_HREF, welcomeRedirect } from "./welcome.ts";
@@ -59,8 +59,15 @@ test("/login opens the tab named in the address", () => {
   assert.match(login, /wakeApi\(\)/);
 });
 
-test("the welcome illustration is decorative and has no text", () => {
-  const art = read("app", "ui", "illustrations", "ParentAndBaby.tsx");
-  assert.match(art, /aria-hidden="true"/);
-  assert.doesNotMatch(art, /<text\b|<image\b|href=/);
+test("the welcome artwork is the supplied image, sized up front and loaded early", () => {
+  const hero = read("app", "ui", "illustrations", "WelcomeHero.tsx");
+  assert.match(hero, /HERO_SRC = "\/illustrations\/hero-mother-child-blue-circle\.png"/);
+  assert.ok(existsSync(join(FRONTEND, "public", "illustrations", "hero-mother-child-blue-circle.png")));
+  assert.match(hero, /HERO_ALT = "A parent holding their child"/);
+  // Explicit width and height reserve the space, so nothing shifts on load.
+  assert.match(hero, /<Image\b[\s\S]*?alt=\{HERO_ALT\}[\s\S]*?width=\{HERO_SIZE\}[\s\S]*?height=\{HERO_SIZE\}[\s\S]*?preload\b/);
+  assert.match(read("app", "Welcome.tsx"), /<WelcomeHero animated \/>/);
+  // The drifting sparkles and hearts around it are decorative and silent.
+  assert.match(hero, /aria-hidden="true"/);
+  assert.doesNotMatch(hero, /<text\b/);
 });
