@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useWakingNote, WAKING_NOTE } from "@/lib/server-wake";
 import { ApiError } from "@/lib/api";
 import { BUTTON_PRIMARY, CARD, FIELD, INPUT, LABEL, MUTED } from "@/lib/ui";
 import { Message } from "../ui/Message";
@@ -29,6 +30,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const waking = useWakingNote(submitting, 3000);
 
   useEffect(() => {
     if (token) router.replace("/dashboard");
@@ -171,8 +173,11 @@ export default function LoginPage() {
           </div>
           {error && <Message tone="error">{error}</Message>}
           <button type="submit" disabled={submitting} className={BUTTON_PRIMARY}>
-            {submitting ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
+            {waking ? "Waking up..." : submitting ? "Please wait..." : mode === "login" ? "Log in" : "Create account"}
           </button>
+          <p role="status" className={`${MUTED} text-center empty:hidden`}>
+            {waking ? WAKING_NOTE : ""}
+          </p>
         </form>
       </div>
     </main>

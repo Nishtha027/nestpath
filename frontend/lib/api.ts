@@ -1,8 +1,21 @@
+import { createWaker } from "./wake";
+
 // Trailing slashes stripped: a pasted "https://host/" would otherwise make
 // every request path start with "//".
 export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/+$/, "");
 // http -> ws and https -> wss, so an https page gets a secure WebSocket.
 export const WS_URL = API_URL.replace(/^http/, "ws");
+
+// The free-tier API sleeps when idle (see lib/wake.ts). Every request waits
+// for it to answer its health check first; once it has, that's instant.
+const waker = createWaker({
+  ping: async () => {
+    const res = await fetch(`${API_URL}/health`, { cache: "no-store", signal: AbortSignal.timeout(60_000) });
+    return res.ok;
+  },
+});
+export const wakeServer = waker.wake;
+export const isServerAwake = waker.isAwake;
 
 type UnauthorizedHandler = (failedToken: string) => void;
 let unauthorizedHandler: UnauthorizedHandler | null = null;
@@ -29,6 +42,7 @@ export async function apiFetch<T>(
   options: RequestInit & { token?: string | null } = {}
 ): Promise<T> {
   const { token, headers, ...rest } = options;
+  await wakeServer();
   const res = await fetch(`${API_URL}${path}`, {
     ...rest,
     headers: {
@@ -36,6 +50,7 @@ export async function apiFetch<T>(
       ...headers,
     },
   });
+  waker.markAwake();
 
   if (!res.ok) {
     if (res.status === 401 && token) unauthorizedHandler?.(token);

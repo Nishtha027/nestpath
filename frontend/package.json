@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --test --experimental-strip-types lib/wellbeing.test.ts lib/vaccine-groups.test.ts lib/growth.test.ts lib/retry.test.ts lib/contrast.test.ts lib/motion.test.ts lib/copy.test.ts lib/fonts.test.ts",
+    "test": "node --test --experimental-strip-types lib/wellbeing.test.ts lib/vaccine-groups.test.ts lib/growth.test.ts lib/retry.test.ts lib/contrast.test.ts lib/motion.test.ts lib/copy.test.ts lib/fonts.test.ts lib/wake.test.ts",
     "contrast": "node --experimental-strip-types scripts/contrast-report.mts"
   },
   "dependencies": {
