@@ -11,10 +11,12 @@ from sqlalchemy import (
     Enum as SAEnum,
     Float,
     ForeignKey,
+    Index,
     Integer,
     JSON,
     String,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -139,8 +141,44 @@ class CareLogType(str, enum.Enum):
     MEDICATION = "medication"
 
 
+class FeedType(str, enum.Enum):
+    BREAST = "breast"
+    BOTTLE = "bottle"
+    SOLID = "solid"
+
+
+class FeedSide(str, enum.Enum):
+    LEFT = "left"
+    RIGHT = "right"
+    BOTH = "both"
+
+
+class DiaperKind(str, enum.Enum):
+    WET = "wet"
+    DIRTY = "dirty"
+    BOTH = "both"
+
+
 class CareLog(Base):
+    """One care-log entry. `timestamp` is when it happened (the API also
+    calls it occurred_at); for a sleep it is when the sleep started. A sleep
+    is either finished (ended_at set), running (in_progress, at most one per
+    child), or of unknown length (neither: entries from before these
+    columns existed, which count as a sleep but add no minutes). All the
+    structured columns are optional, so old type + notes rows still work.
+    """
+
     __tablename__ = "care_logs"
+    __table_args__ = (
+        Index("ix_care_logs_child_id_timestamp", "child_id", "timestamp"),
+        # One running sleep per child, enforced by the database.
+        Index(
+            "uq_care_logs_one_sleep_in_progress",
+            "child_id",
+            unique=True,
+            postgresql_where=text("in_progress"),
+        ),
+    )
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     child_id = Column(UUID(as_uuid=True), ForeignKey("children.id"), nullable=False)
@@ -149,8 +187,29 @@ class CareLog(Base):
     timestamp = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
     notes = Column(String, nullable=True)
 
+    # feed
+    feed_type = Column(SAEnum(FeedType, name="feed_type"), nullable=True)
+    amount_ml = Column(Integer, nullable=True)
+    duration_min = Column(Integer, nullable=True)
+    side = Column(SAEnum(FeedSide, name="feed_side"), nullable=True)
+    # sleep (started at `timestamp`)
+    ended_at = Column(DateTime(timezone=True), nullable=True)
+    in_progress = Column(Boolean, nullable=False, default=False, server_default="false")
+    # diaper
+    diaper_kind = Column(SAEnum(DiaperKind, name="diaper_kind"), nullable=True)
+
+    updated_at = Column(DateTime(timezone=True), nullable=True)
+
     child = relationship("Child", back_populates="care_logs")
     caregiver = relationship("Caregiver")
+
+    @property
+    def occurred_at(self):
+        return self.timestamp
+
+    @property
+    def caregiver_name(self):
+        return self.caregiver.name if self.caregiver is not None else None
 
 
 class Provider(Base):

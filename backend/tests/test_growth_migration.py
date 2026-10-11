@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import inspect, text
 
 from app.database import engine
@@ -90,7 +91,9 @@ def test_migration_keeps_old_weight_rows_and_downgrades(client, auth_headers):
     command.downgrade(cfg, BEFORE)
     assert NEW_COLUMNS.isdisjoint(_growth_columns())
     command.upgrade(cfg, "head")
-    assert LENGTH_REVISION == _current_revision()
+    # Back at the newest revision (later migrations build on this one).
+    assert _current_revision() == ScriptDirectory.from_config(cfg).get_current_head()
+    assert ScriptDirectory.from_config(cfg).get_revision(LENGTH_REVISION) is not None
 
 
 def _current_revision() -> str:
