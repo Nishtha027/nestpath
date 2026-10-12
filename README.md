@@ -20,8 +20,15 @@ deployment is verified (see [Deploying](#deploying))._
   date it was given, so a late dose visibly pushes the next one back.
 - **Growth** -- weight entries are scored against the WHO weight-for-age
   tables (percentile and z-score) and charted.
-- **Care log (live)** -- feeds, diapers, sleep and medication, pushed to every
-  caregiver's open screen over a WebSocket.
+- **Baby tracker (live)** -- log feeds (breast with side and minutes, bottle
+  or solids in ml or oz), sleep (a start/stop timer or a past nap) and
+  diapers (wet, dirty or both) in a few taps. Home shows the last feed, sleep
+  and diaper with a live "time since"; History groups entries by day, with
+  filters and edit/delete; Insights charts feeds, amounts and sleep per day
+  over 7 or 30 days; and a printable, copyable 7-day summary can be shared
+  with the pediatrician (linked from each booked appointment). Every change
+  reaches the other caregivers' open screens over a WebSocket, with who
+  logged it. Numbers only: it never judges an amount.
 - **Appointments** -- providers publish availability; booking is race-safe
   (two people can't take the same slot) and generates a visit checklist
   based on the baby's age.
@@ -65,7 +72,7 @@ source .venv/bin/activate        # Windows PowerShell: .venv\Scripts\Activate.ps
 pip install -r requirements.txt
 cp .env.example .env             # then set DATABASE_URL and JWT_SECRET
 python -m alembic upgrade head
-python scripts/seed_demo_data.py # demo providers, slots, and a provider login
+python scripts/seed_demo_data.py # demo providers, slots, logins and a week of tracker data
 uvicorn app.main:app --reload
 ```
 
@@ -76,6 +83,13 @@ database its password is `LOCAL_DEFAULT_PASSWORD` in the script) that can open
 the Alerts page. There is no admin UI -- providers, slots and the provider
 flag are created by this script.
 
+Against a local database only, it also creates a demo family for the baby
+tracker: a parent login (`demo-parent@example.com`; its password is
+`LOCAL_PARENT_PASSWORD` in the script), a second caregiver, a demo child and
+the last week of made-up feeds, sleeps and diapers. Re-running it adds only
+what's missing (the days since the last run). It skips this part for any
+other database host.
+
 **Frontend**
 
 ```bash
@@ -85,7 +99,9 @@ cp .env.example .env.local       # NEXT_PUBLIC_API_URL; the backend's URL
 npm run dev
 ```
 
-Open `http://localhost:3000`. The login is kept in the tab's `sessionStorage`,
+Open `http://localhost:3000`. Under 768px wide (a phone, or the browser's
+device toolbar) the app uses a bottom tab bar (Home, Log, History,
+Insights, More); wider screens get the top tabs. The login is kept in the tab's `sessionStorage`,
 so it survives a refresh (and is gone when the tab closes). Tokens last 60
 minutes; after that, or if the server ever rejects one, you're signed out and
 asked to log in again.
@@ -197,6 +213,25 @@ This is a demo, not a production system. In particular:
 - **Live updates assume one backend instance.** Connections are tracked in the
   server's memory; running several instances would need a shared pub/sub such
   as Redis.
+
+## Care log API
+
+All family-scoped with the same rules as the rest of the API (another
+family's child or entry is a 404). The interactive docs at `/docs` list
+every field.
+
+| Method and path | What it does |
+|---|---|
+| `POST /children/{id}/care-logs` | Add an entry: `type` (`feed`, `sleep`, `diaper`, `medication`), optional `occurred_at` (default now) and `notes`, plus the fields for its type: `feed_type`, `amount_ml` (1-500, bottle/solid), `duration_min` (1-180), `side` (breast); `ended_at` or `duration_min`, or `in_progress: true` for a running timer (sleep); `diaper_kind`. Fields of another type are rejected (422). A second running sleep is a 409. |
+| `GET /children/{id}/care-logs` | Newest first. `limit`, `offset`, `type`, `from`, `to`. |
+| `GET /children/{id}/care-logs/latest` | The newest feed, sleep, diaper and medication entry. |
+| `GET /children/{id}/care-logs/summary?days=7\|30&tz=Area/City` | Per-day totals computed in SQL (feeds, ml, averages, diapers by kind, sleep minutes, longest stretch) and averages over the days with entries. Days are calendar days in `tz` (the browser's timezone; default UTC). A sleep across midnight is split between the days. |
+| `PATCH /children/{id}/care-logs/{entry}` | Change any fields (null clears one); the whole entry is checked again. Stopping a timer is a PATCH with `ended_at`. |
+| `DELETE /children/{id}/care-logs/{entry}` | Remove it (204). |
+| `WS /ws/families/{family}?token=...` | Live changes: a created or updated entry as JSON with `"event": "created"` or `"updated"`; a deletion as `{"event": "deleted", "id", "deleted_from_child"}`. |
+
+Entries made before the tracker (type and notes only) still list, update and
+count as before; their structured fields are null.
 
 ## Creating new migrations
 
