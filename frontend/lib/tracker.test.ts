@@ -15,6 +15,7 @@ import {
   draftFromEntry,
   draftPayload,
   entryDetail,
+  entrySummary,
   entryTitle,
   formatDuration,
   formatTimeSince,
@@ -28,6 +29,7 @@ import {
   ozToMl,
   parseCareMessage,
   shareText,
+  averagesNote,
   stepMinutes,
   stepVolume,
   summaryChips,
@@ -160,6 +162,19 @@ test("entries are described briefly, and old entries still read fine", () => {
   assert.equal(entryTitle(old), "Feed");
   assert.equal(entryDetail(old, "ml", NOW), null);
   assert.equal(entryDetail(entry({ type: "sleep", occurred_at: at(1, 9) }), "ml", NOW), null);
+
+  // History's line: always something, even for old entries.
+  const line = (e: CareLog) => entrySummary(e, "ml", NOW);
+  assert.equal(line({ ...bottle, duration_min: 15 }), "Bottle, 120 ml, 15 min");
+  assert.equal(line(breast), "Breast feed, 15 min, left");
+  assert.equal(line(entry({ occurred_at: at(12, 9), feed_type: "solid" })), "Solids");
+  assert.equal(line(nap), "Slept 1 h 30 min");
+  assert.equal(line(sleeping), "Sleeping now, 45 min so far");
+  assert.equal(line(entry({ type: "diaper", occurred_at: at(12, 9), diaper_kind: "wet" })), "Wet diaper");
+  assert.equal(line(old), "Feed logged");
+  assert.equal(line(entry({ type: "sleep", occurred_at: at(1, 9) })), "Sleep logged");
+  assert.equal(line(entry({ type: "diaper", occurred_at: at(1, 9) })), "Diaper change logged");
+  assert.equal(line(entry({ type: "medication", occurred_at: at(1, 9) })), "Medication logged");
 
   assert.equal(loggedBy({ caregiver_name: "Sam" }), "Sam");
   assert.equal(loggedBy({ caregiver_name: null }), "Parent 1");
@@ -371,6 +386,24 @@ test("chart data: one bar per day, in the shown unit, sleep in hours", () => {
   assert.equal(data[0].sleepHours, 13.5);
   // Days without entries are still there, at zero.
   assert.deepEqual([data[1].feeds, data[1].volume, data[1].sleepHours], [0, 0, 0]);
+  // The last day is today: marked as partial, by words as well as style.
+  assert.deepEqual([data[0].partial, data[1].partial], [false, true]);
+  assert.equal(data[1].label, "Today");
+  assert.equal(data[1].date, "Today so far");
+});
+
+test("the averages leave out today when there are finished days", () => {
+  const withToday = summary([day("2026-10-11"), day("2026-10-12", { feeds: 1 })], { feeds_per_day: 4 });
+  const before = { ...withToday.averages, days_with_entries: 1, feeds_per_day: 7 };
+  const s = { ...withToday, averages_excluding_today: before };
+  assert.equal(summaryChips(s, "ml")[2].value, "7");
+  assert.equal(averagesNote(s), "Averages over the 1 day with entries, not counting today.");
+  // Only today has entries: today's numbers so far, said so.
+  const onlyToday = { ...s, averages_excluding_today: { ...before, days_with_entries: 0, feeds_per_day: null } };
+  assert.equal(summaryChips(onlyToday, "ml")[2].value, "4");
+  assert.equal(averagesNote(onlyToday), "Averages over the 2 days with entries, including today so far.");
+  // An older server without the field: the plain averages.
+  assert.equal(summaryChips(withToday, "ml")[2].value, "4");
 });
 
 test("summary chips round sensibly and say when there's no data", () => {
@@ -395,6 +428,7 @@ test("the pediatrician summary is plain, neutral text with every day", () => {
   assert.match(text, /7 feeds, 720 ml total, sleep 13 h 30 min, longest 5 h, 6 diapers \(4 wet, 1 dirty, 1 both\)/);
   assert.match(text, /- Feeds per day: 7.1/);
   assert.match(text, /- Diapers per day: 6.5/);
+  assert.match(text, /Today so far: 7 feeds, sleep 13 h 30 min/);
   assert.match(text, /Not medical advice\./);
   assert.doesNotMatch(text, /too (much|little)|enough|should|normal/i);
 });

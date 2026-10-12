@@ -9,7 +9,9 @@ export type SheetHandle = { open: () => void; close: () => void };
 /** A panel over the page: slides up from the bottom on phones, sits in the
  * middle on wider screens. A native modal <dialog>, so focus stays inside
  * it, Escape closes it and focus returns to the button that opened it.
- * Tapping the dimmed backdrop closes it too. */
+ * Tapping the dimmed backdrop closes it too. On opening, focus goes to the
+ * sheet itself (screen readers read its title), not to the Close button;
+ * Tab moves on to Close and then the sheet's contents. */
 export function Sheet({
   ref,
   title,
@@ -27,7 +29,10 @@ export function Sheet({
     ref,
     () => ({
       open: () => {
-        if (!dialog.current?.open) dialog.current?.showModal();
+        const el = dialog.current;
+        if (!el || el.open) return;
+        el.showModal();
+        el.focus();
       },
       close: () => dialog.current?.close(),
     }),
@@ -37,12 +42,13 @@ export function Sheet({
   return (
     <dialog
       ref={dialog}
+      tabIndex={-1}
       aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === e.currentTarget) e.currentTarget.close();
       }}
-      className="np-sheet np-dialog mx-auto mt-auto mb-0 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-surface p-0 text-ink sm:mb-auto sm:rounded-3xl"
+      className="np-sheet np-dialog mx-auto outline-none mt-auto mb-0 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-surface p-0 text-ink sm:mb-auto sm:rounded-3xl"
     >
       <div className="flex flex-col gap-4 px-5 pt-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <div className="flex items-center justify-between gap-3">

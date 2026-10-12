@@ -231,6 +231,8 @@ class CareLogSummary(BaseModel):
     end: date
     daily: list[CareLogDay]
     averages: CareLogAverages
+    # The same averages without today, which is still in progress.
+    averages_excluding_today: CareLogAverages
 
 
 class ProviderResponse(BaseModel):

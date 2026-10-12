@@ -373,6 +373,16 @@ def test_summary_uses_local_days_splits_sleep_and_counts_running_sleep(db_sessio
         "diapers_per_day": 1.0,
         "sleep_min_per_day": 100.0,
     }
+    # Without the 12th (today, still in progress): the 10th and the 11th.
+    assert result["averages_excluding_today"] == {
+        "days_with_entries": 2,
+        "feeds_per_day": 0.5,
+        "feed_ml_per_day": 60.0,
+        "avg_feed_ml": 120.0,
+        "avg_feed_min": None,
+        "diapers_per_day": 0.5,
+        "sleep_min_per_day": 60.0,
+    }
 
     # The same data by UTC days: the 23:30 feed moves to the 12th.
     utc = {d["day"].isoformat(): d for d in care_logs.summary(db_session, child, 7, "UTC", now)["daily"]}
@@ -386,6 +396,7 @@ def test_summary_endpoint_checks_its_parameters(client, family):
     body = ok.json()
     assert (body["days"], body["timezone"], len(body["daily"])) == (30, "Asia/Kolkata", 30)
     assert body["averages"]["days_with_entries"] == 0 and body["averages"]["feeds_per_day"] is None
+    assert body["averages_excluding_today"]["days_with_entries"] == 0
 
     assert client.get(f"{base}/summary", headers=h).json()["timezone"] == "UTC"
     bad_days = client.get(f"{base}/summary", params={"days": 14}, headers=h)

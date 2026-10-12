@@ -25,7 +25,8 @@ deployment is verified (see [Deploying](#deploying))._
   diapers (wet, dirty or both) in a few taps. Home shows the last feed, sleep
   and diaper with a live "time since"; History groups entries by day, with
   filters and edit/delete; Insights charts feeds, amounts and sleep per day
-  over 7 or 30 days; and a printable, copyable 7-day summary can be shared
+  over 7 or 30 days (today is marked "so far" and left out of the
+  averages); and a printable, copyable 7-day summary can be shared
   with the pediatrician (linked from each booked appointment). Every change
   reaches the other caregivers' open screens over a WebSocket, with who
   logged it. Numbers only: it never judges an amount.
@@ -225,7 +226,7 @@ every field.
 | `POST /children/{id}/care-logs` | Add an entry: `type` (`feed`, `sleep`, `diaper`, `medication`), optional `occurred_at` (default now) and `notes`, plus the fields for its type: `feed_type`, `amount_ml` (1-500, bottle/solid), `duration_min` (1-180), `side` (breast); `ended_at` or `duration_min`, or `in_progress: true` for a running timer (sleep); `diaper_kind`. Fields of another type are rejected (422). A second running sleep is a 409. |
 | `GET /children/{id}/care-logs` | Newest first. `limit`, `offset`, `type`, `from`, `to`. |
 | `GET /children/{id}/care-logs/latest` | The newest feed, sleep, diaper and medication entry. |
-| `GET /children/{id}/care-logs/summary?days=7\|30&tz=Area/City` | Per-day totals computed in SQL (feeds, ml, averages, diapers by kind, sleep minutes, longest stretch) and averages over the days with entries. Days are calendar days in `tz` (the browser's timezone; default UTC). A sleep across midnight is split between the days. |
+| `GET /children/{id}/care-logs/summary?days=7\|30&tz=Area/City` | Per-day totals computed in SQL (feeds, ml, averages, diapers by kind, sleep minutes, longest stretch) and averages over the days with entries, both with today (`averages`) and without it (`averages_excluding_today`, which the app shows, since today is still in progress). Days are calendar days in `tz` (the browser's timezone; default UTC). A sleep across midnight is split between the days. |
 | `PATCH /children/{id}/care-logs/{entry}` | Change any fields (null clears one); the whole entry is checked again. Stopping a timer is a PATCH with `ended_at`. |
 | `DELETE /children/{id}/care-logs/{entry}` | Remove it (204). |
 | `WS /ws/families/{family}?token=...` | Live changes: a created or updated entry as JSON with `"event": "created"` or `"updated"`; a deletion as `{"event": "deleted", "id", "deleted_from_child"}`. |

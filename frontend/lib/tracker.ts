@@ -198,6 +198,28 @@ export function entryDetail(entry: CareLog, unit: VolumeUnit, now: Date): string
   return parts.length ? parts.join(" · ") : null;
 }
 
+/** One line that says what happened, for History: "Bottle, 120 ml,
+ * 15 min", "Slept 2 h 10 min", "Sleeping now, 45 min so far", "Wet
+ * diaper". Entries from before the structured fields say they were logged. */
+export function entrySummary(entry: CareLog, unit: VolumeUnit, now: Date): string {
+  if (entry.type === "feed") {
+    const parts = [entryTitle(entry)];
+    if (entry.amount_ml !== null) parts.push(formatVolume(entry.amount_ml, unit));
+    if (entry.duration_min !== null) parts.push(formatDuration(entry.duration_min));
+    if (entry.side) parts.push(SIDE_LABELS[entry.side].toLowerCase());
+    return parts.length > 1 || entry.feed_type ? parts.join(", ") : "Feed logged";
+  }
+  if (entry.type === "sleep") {
+    const minutes = sleepMinutes(entry, now);
+    if (entry.in_progress) return minutes !== null ? `Sleeping now, ${formatDuration(minutes)} so far` : "Sleeping now";
+    return minutes !== null ? `Slept ${formatDuration(minutes)}` : "Sleep logged";
+  }
+  if (entry.type === "diaper") {
+    return entry.diaper_kind ? `${DIAPER_LABELS[entry.diaper_kind]} diaper` : "Diaper change logged";
+  }
+  return "Medication logged";
+}
+
 /** Who logged it: their name, or "Parent 1" if the account has none. */
 export function loggedBy(entry: Pick<CareLog, "caregiver_name">): string {
   return entry.caregiver_name?.trim() || "Parent 1";
@@ -451,21 +473,55 @@ export type ChartDay = {
   volume: number;
   /** Total sleep in hours (one decimal). */
   sleepHours: number;
+  /** Today: the day isn't over, so its totals are only "so far". */
+  partial: boolean;
 };
+
+export const TODAY_SO_FAR = "Today so far";
+
+/** Is this summary day today (the last day of the range)? */
+export function isPartialDay(summary: CareLogSummary, day: string): boolean {
+  return day === summary.end;
+}
+
+/** A day's name for tables and the shared text: "Today so far" for today. */
+export function summaryDayLabel(summary: CareLogSummary, day: string): string {
+  if (isPartialDay(summary, day)) return TODAY_SO_FAR;
+  return parseDayKey(day).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+}
 
 export function chartDays(summary: CareLogSummary, unit: VolumeUnit): ChartDay[] {
   const weekly = summary.days <= 7;
   return summary.daily.map((d) => {
     const date = parseDayKey(d.day);
+    const partial = isPartialDay(summary, d.day);
     return {
       day: d.day,
-      label: date.toLocaleDateString(undefined, weekly ? { weekday: "short" } : { month: "short", day: "numeric" }),
-      date: date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }),
+      label: partial ? "Today" : date.toLocaleDateString(undefined, weekly ? { weekday: "short" } : { month: "short", day: "numeric" }),
+      date: summaryDayLabel(summary, d.day),
       feeds: d.feeds,
       volume: Number(volumeNumber(d.feed_ml, unit)),
       sleepHours: Math.round((d.sleep_min / 60) * 10) / 10,
+      partial,
     };
   });
+}
+
+/** The averages to show: over the finished days, so a half-over today
+ * can't pull them down. If today is the only day with entries, today's
+ * numbers so far, marked as such. */
+export function shownAverages(summary: CareLogSummary): { averages: CareLogSummary["averages"]; excludesToday: boolean } {
+  const before = summary.averages_excluding_today;
+  if (before && before.days_with_entries > 0) return { averages: before, excludesToday: true };
+  return { averages: summary.averages, excludesToday: false };
+}
+
+/** The line under the averages: what they're over. */
+export function averagesNote(summary: CareLogSummary): string {
+  const { averages, excludesToday } = shownAverages(summary);
+  const n = averages.days_with_entries;
+  const days = `${n} day${n === 1 ? "" : "s"} with entries`;
+  return excludesToday ? `Averages over the ${days}, not counting today.` : `Averages over the ${days}, including today so far.`;
 }
 
 export type SummaryChip = { label: string; value: string };
@@ -474,7 +530,7 @@ const NONE = "No data yet";
 
 /** The four numbers above the Insights charts. */
 export function summaryChips(summary: CareLogSummary, unit: VolumeUnit): SummaryChip[] {
-  const a = summary.averages;
+  const a = shownAverages(summary).averages;
   return [
     { label: "Average amount", value: a.avg_feed_ml !== null ? formatVolume(a.avg_feed_ml, unit) : NONE },
     { label: "Average feed length", value: a.avg_feed_min !== null ? formatDuration(a.avg_feed_min) : NONE },
@@ -494,7 +550,7 @@ export function shareText(childName: string, age: string, summary: CareLogSummar
   const last = parseDayKey(summary.end).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   const lines = [`${childName}, ${age}: last ${summary.days} days (${first} to ${last})`, ""];
   for (const d of summary.daily) {
-    const date = parseDayKey(d.day).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const date = summaryDayLabel(summary, d.day);
     const parts = [`${d.feeds} feed${d.feeds === 1 ? "" : "s"}`];
     if (d.feed_ml > 0) parts.push(`${formatVolume(d.feed_ml, unit)} total`);
     parts.push(`sleep ${formatDuration(d.sleep_min)}`);
@@ -503,9 +559,9 @@ export function shareText(childName: string, age: string, summary: CareLogSummar
     parts.push(`${diapers} diaper${diapers === 1 ? "" : "s"} (${d.diapers_wet} wet, ${d.diapers_dirty} dirty, ${d.diapers_both} both)`);
     lines.push(`${date}: ${parts.join(", ")}`);
   }
-  lines.push("", "Daily averages (days with entries):");
+  lines.push("", `Daily averages (${shownAverages(summary).excludesToday ? "days with entries, not counting today" : "days with entries"}):`);
   for (const chip of summaryChips(summary, unit)) lines.push(`- ${chip.label}: ${chip.value}`);
-  const perDay = summary.averages.diapers_per_day;
+  const perDay = shownAverages(summary).averages.diapers_per_day;
   lines.push(`- Diapers per day: ${perDay !== null ? Math.round(perDay * 10) / 10 : NONE}`);
   lines.push("", "Logged in NestPath by the family. Not medical advice.");
   return lines.join("\n");

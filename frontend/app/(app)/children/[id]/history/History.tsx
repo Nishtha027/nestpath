@@ -7,7 +7,7 @@ import { useCareFeed, useCareLogList, useNow, type FeedStatus } from "@/lib/care
 import {
   draftFromEntry,
   draftPayload,
-  entryDetail,
+  entrySummary,
   entryTitle,
   formatClock,
   groupByDay,
@@ -111,7 +111,7 @@ function Timeline({ childId, token, type }: { childId: string; token: string; ty
               <ul className="flex flex-col gap-2">
                 {group.entries.map((entry) => (
                   <li key={entry.id} className={list.arrivedIds.has(entry.id) ? "np-arrive rounded-xl" : ""}>
-                    <EntryRow entry={entry} detail={entryDetail(entry, unit, now)} onOpen={() => open(entry)} />
+                    <EntryRow entry={entry} summary={entrySummary(entry, unit, now)} onOpen={() => open(entry)} />
                   </li>
                 ))}
               </ul>
@@ -144,21 +144,17 @@ function Timeline({ childId, token, type }: { childId: string; token: string; ty
   );
 }
 
-function EntryRow({ entry, detail, onOpen }: { entry: CareLog; detail: string | null; onOpen: () => void }) {
-  const title = entryTitle(entry);
+function EntryRow({ entry, summary, onOpen }: { entry: CareLog; summary: string; onOpen: () => void }) {
   return (
     <button
       type="button"
       onClick={onOpen}
-      aria-label={`${title}${detail ? `, ${detail}` : ""}, ${formatClock(entry.occurred_at)}, by ${loggedBy(entry)}. Edit`}
+      aria-label={`${summary}, ${formatClock(entry.occurred_at)}, by ${loggedBy(entry)}. Edit`}
       className="np-press flex w-full items-start gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-left hover:bg-page"
     >
       <TypeBadge type={entry.type} feedType={entry.feed_type} />
       <span className="flex min-w-0 flex-1 flex-col">
-        <span className="flex flex-wrap items-baseline gap-x-2">
-          <span className="font-bold text-ink">{title}</span>
-          {detail && <span className="text-ink tabular-nums">{detail}</span>}
-        </span>
+        <span className="font-bold text-ink tabular-nums">{summary}</span>
         {entry.notes && <span className="text-sm break-words text-ink">{entry.notes}</span>}
         <span className="text-xs text-muted">by {loggedBy(entry)}</span>
       </span>

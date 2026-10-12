@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ageLabel, useAppState, useCurrentChild } from "@/lib/app-state";
-import { parseDayKey, shareText, summaryChips } from "@/lib/tracker";
+import { averagesNote, parseDayKey, shareText, summaryChips } from "@/lib/tracker";
 import { useCareLogSummary } from "@/lib/use-summary";
 import { useVolumeUnit } from "@/lib/volume-unit";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, CARD, LINK, MUTED, PAGE_TITLE, SUBSECTION_TITLE } from "@/lib/ui";
@@ -86,9 +86,7 @@ export default function SharePage() {
                 </li>
               ))}
             </ul>
-            <p className="text-xs text-muted">
-              Over the {summary.averages.days_with_entries} of {summary.days} days with entries.
-            </p>
+            <p className="text-xs text-muted">{averagesNote(summary)}</p>
           </section>
 
           <section className={`${CARD} print:border-0 print:p-0`}>

@@ -7,7 +7,7 @@ The server's own timezone is never used. A sleep that crosses midnight is
 split between the two days; a sleep still in progress counts up to now.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from typing import Any
 from uuid import UUID
@@ -240,6 +240,8 @@ class _Totals:
     min_count: int = 0
     diapers: int = 0
     sleep_min: int = 0
+    # The days that have any entry: the averages divide by these.
+    days: set[date] = field(default_factory=set)
 
 
 def _mean(total: float, count: int) -> float | None:
@@ -254,8 +256,12 @@ def summary(db: Session, child_id: UUID, days: int, tz: str, now: datetime) -> d
     params = {"child_id": child_id, "tz": tz, "start": start, "end": end, "now": now}
 
     daily = []
-    totals = _Totals()
-    active_days: set[date] = {row.day for row in db.execute(_UNTIMED_SLEEP_DAYS_SQL, params)}
+    # Two sets of totals: the whole range, and the range without today, so a
+    # day that's only half over can be left out of the averages.
+    totals, before_today = _Totals(), _Totals()
+    untimed_days: set[date] = {row.day for row in db.execute(_UNTIMED_SLEEP_DAYS_SQL, params)}
+    totals.days |= untimed_days
+    before_today.days |= {d for d in untimed_days if d < end}
     for row in db.execute(_SUMMARY_SQL, params):
         diapers = row.wet + row.dirty + row.both + row.other
         sleep_min = round(float(row.sleep_seconds) / 60)
@@ -274,30 +280,36 @@ def summary(db: Session, child_id: UUID, days: int, tz: str, now: datetime) -> d
                 "longest_sleep_min": None if row.longest_seconds is None else round(float(row.longest_seconds) / 60),
             }
         )
-        if row.feeds or diapers or row.sleeps or sleep_min:
-            active_days.add(row.day)
-        totals.feeds += row.feeds
-        totals.feed_ml += int(row.feed_ml)
-        totals.ml_count += row.ml_count
-        totals.min_sum += int(row.min_sum)
-        totals.min_count += row.min_count
-        totals.diapers += diapers
-        totals.sleep_min += sleep_min
+        for t in (totals, before_today) if row.day < end else (totals,):
+            if row.feeds or diapers or row.sleeps or sleep_min:
+                t.days.add(row.day)
+            t.feeds += row.feeds
+            t.feed_ml += int(row.feed_ml)
+            t.ml_count += row.ml_count
+            t.min_sum += int(row.min_sum)
+            t.min_count += row.min_count
+            t.diapers += diapers
+            t.sleep_min += sleep_min
 
-    n = len(active_days)
     return {
         "days": days,
         "timezone": tz,
         "start": start,
         "end": end,
         "daily": daily,
-        "averages": {
-            "days_with_entries": n,
-            "feeds_per_day": _mean(totals.feeds, n),
-            "feed_ml_per_day": _mean(totals.feed_ml, n),
-            "avg_feed_ml": _mean(totals.feed_ml, totals.ml_count),
-            "avg_feed_min": _mean(totals.min_sum, totals.min_count),
-            "diapers_per_day": _mean(totals.diapers, n),
-            "sleep_min_per_day": _mean(totals.sleep_min, n),
-        },
+        "averages": _averages(totals),
+        "averages_excluding_today": _averages(before_today),
+    }
+
+
+def _averages(t: _Totals) -> dict:
+    n = len(t.days)
+    return {
+        "days_with_entries": n,
+        "feeds_per_day": _mean(t.feeds, n),
+        "feed_ml_per_day": _mean(t.feed_ml, n),
+        "avg_feed_ml": _mean(t.feed_ml, t.ml_count),
+        "avg_feed_min": _mean(t.min_sum, t.min_count),
+        "diapers_per_day": _mean(t.diapers, n),
+        "sleep_min_per_day": _mean(t.sleep_min, n),
     }

@@ -340,6 +340,14 @@
 .np-dialog::backdrop {
   background: color-mix(in srgb, var(--np-ink) 40%, transparent);
 }
+/* Stripes for a day that isn't over (today's chart bar and its key). */
+.np-hatch {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--np-chart-median) 0 2px,
+    var(--np-blue-soft) 2px 4.25px
+  );
+}
 /* Phones: the page scrolls clear of the fixed bottom bar (BottomNav). */
 @media (max-width: 767px) {
   body:has(.np-bottom-nav) {

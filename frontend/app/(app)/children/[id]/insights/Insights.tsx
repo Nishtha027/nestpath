@@ -2,7 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { chartDays, diaperCount, formatDuration, parseDayKey, summaryChips, volumeNumber } from "@/lib/tracker";
+import {
+  averagesNote,
+  chartDays,
+  diaperCount,
+  formatDuration,
+  isPartialDay,
+  parseDayKey,
+  summaryChips,
+  TODAY_SO_FAR,
+  volumeNumber,
+} from "@/lib/tracker";
 import type { CareLogSummary } from "@/lib/types";
 import { useCareLogSummary } from "@/lib/use-summary";
 import { useVolumeUnit } from "@/lib/volume-unit";
@@ -24,24 +34,20 @@ const RANGES = [
 /** Numbers only, in neutral words: what was logged, per day. */
 export function Insights({ childId, token }: { childId: string; token: string }) {
   const [range, setRange] = useState<"7" | "30">("7");
-  const [unit, setUnit] = useVolumeUnit();
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="w-full max-w-xs">
-          <ChoiceGroup legend="Range" hideLegend variant="segment" options={[...RANGES]} value={range} onChange={setRange} />
-        </div>
-        <UnitToggle unit={unit} onChange={setUnit} />
+      <div className="w-full max-w-xs">
+        <ChoiceGroup legend="Range" hideLegend variant="segment" options={[...RANGES]} value={range} onChange={setRange} />
       </div>
       <InsightsBody key={`${childId}-${range}`} childId={childId} token={token} days={range === "7" ? 7 : 30} />
-      <p className={MUTED}>Your logged numbers only. Every baby is different, and this is not medical advice.</p>
+      <p className={MUTED}>Your logged numbers only. Not medical advice.</p>
     </div>
   );
 }
 
 function InsightsBody({ childId, token, days }: { childId: string; token: string; days: 7 | 30 }) {
   const { summary, error, retry } = useCareLogSummary(childId, token, days);
-  const [unit] = useVolumeUnit();
+  const [unit, setUnit] = useVolumeUnit();
 
   if (error) return <LoadError message={error} onRetry={retry} />;
   if (!summary) return <Loading />;
@@ -70,14 +76,23 @@ function InsightsBody({ childId, token, days }: { childId: string; token: string
             </li>
           ))}
         </ul>
-        <p className="text-xs text-muted">
-          Averages over the {summary.averages.days_with_entries} day{summary.averages.days_with_entries === 1 ? "" : "s"} with entries.
-        </p>
+        <p className="text-xs text-muted">{averagesNote(summary)}</p>
       </section>
 
       <div className="flex flex-col gap-4">
+        <p className="flex items-center gap-2 text-xs text-muted">
+          <span aria-hidden="true" className="np-hatch inline-block h-3 w-5 rounded-sm border border-chart-median" />
+          Striped bar: today so far. The day isn&apos;t over yet.
+        </p>
         <DailyBarChart title="Feeds per day" unit="feeds" data={data} dataKey="feeds" format={String} />
-        <DailyBarChart title="Bottle and solids per day" unit={unit} data={data} dataKey="volume" format={(v) => one(v)} />
+        <DailyBarChart
+          title="Bottle and solids per day"
+          unit={unit}
+          data={data}
+          dataKey="volume"
+          format={(v) => one(v)}
+          action={<UnitToggle unit={unit} onChange={setUnit} />}
+        />
         <DailyBarChart title="Sleep per day" unit="hours" data={data} dataKey="sleepHours" format={(v) => one(v)} />
       </div>
 
@@ -93,47 +108,93 @@ function InsightsBody({ childId, token, days }: { childId: string; token: string
   );
 }
 
-/** Every day's numbers as a table: the charts' data, readable without them.
- * Narrow enough for a phone: the longest sleep sits under the total, and
- * the diaper kinds under the count. */
+/** Every day's numbers: cards on a phone, a table from 640px up and on
+ * paper. Newest first; today is labelled "Today so far". */
 export function DailyTable({ summary, unit }: { summary: CareLogSummary; unit: "ml" | "oz" }) {
   const sub = "block text-xs text-muted";
+  const days = [...summary.daily].reverse().map((d) => {
+    const date = parseDayKey(d.day);
+    const partial = isPartialDay(summary, d.day);
+    return {
+      d,
+      partial,
+      weekday: partial ? TODAY_SO_FAR : date.toLocaleDateString(undefined, { weekday: "short" }),
+      date: date.toLocaleDateString(undefined, { month: "short", day: "numeric" }),
+      amount: d.feed_ml > 0 ? `${volumeNumber(d.feed_ml, unit)} ${unit}` : "-",
+      sleep: d.sleep_min > 0 ? formatDuration(d.sleep_min) : "-",
+      longest: d.longest_sleep_min !== null ? `longest ${formatDuration(d.longest_sleep_min)}` : null,
+      diapers: `${d.diapers_wet} wet, ${d.diapers_dirty} dirty, ${d.diapers_both} both`,
+    };
+  });
   return (
-    <table className="w-full text-left text-sm tabular-nums">
-      <thead className="text-xs text-muted">
-        <tr>
-          <th className="py-1.5 pr-2 font-semibold">Day</th>
-          <th className="py-1.5 pr-2 font-semibold">Feeds</th>
-          <th className="py-1.5 pr-2 font-semibold">Amount</th>
-          <th className="py-1.5 pr-2 font-semibold">Sleep</th>
-          <th className="py-1.5 font-semibold">Diapers</th>
-        </tr>
-      </thead>
-      <tbody>
-        {[...summary.daily].reverse().map((d) => {
-          const date = parseDayKey(d.day);
-          return (
-            <tr key={d.day} className="border-t border-line align-top">
-              <td className="py-2 pr-2 whitespace-nowrap">
-                {date.toLocaleDateString(undefined, { weekday: "short" })}
-                <span className={sub}>{date.toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
+    <>
+      <ul className="flex flex-col gap-2 sm:hidden print:hidden">
+        {days.map((row) => (
+          <li
+            key={row.d.day}
+            className={`flex flex-col gap-2 rounded-xl border p-3 tabular-nums ${row.partial ? "border-dashed border-line-strong" : "border-line"}`}
+          >
+            <p className="flex items-baseline justify-between gap-2">
+              <span className="font-bold text-ink">{row.weekday}</span>
+              <span className="text-xs text-muted">{row.date}</span>
+            </p>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <div>
+                <dt className="text-xs text-muted">Feeds</dt>
+                <dd className="text-ink">
+                  {row.d.feeds}
+                  {row.amount !== "-" && <span className="text-muted"> · {row.amount}</span>}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted">Sleep</dt>
+                <dd className="text-ink">
+                  {row.sleep}
+                  {row.longest && <span className={sub}>{row.longest}</span>}
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="text-xs text-muted">Diapers</dt>
+                <dd className="text-ink">
+                  {diaperCount(row.d)}
+                  <span className="text-muted"> · {row.diapers}</span>
+                </dd>
+              </div>
+            </dl>
+          </li>
+        ))}
+      </ul>
+      <table className="hidden w-full text-left text-sm tabular-nums sm:table print:table">
+        <thead className="text-xs text-muted">
+          <tr>
+            <th className="py-1.5 pr-2 font-semibold">Day</th>
+            <th className="py-1.5 pr-2 font-semibold">Feeds</th>
+            <th className="py-1.5 pr-2 font-semibold">Amount</th>
+            <th className="py-1.5 pr-2 font-semibold">Sleep</th>
+            <th className="py-1.5 font-semibold">Diapers</th>
+          </tr>
+        </thead>
+        <tbody>
+          {days.map((row) => (
+            <tr key={row.d.day} className="border-t border-line align-top">
+              <td className={`py-2 pr-2 whitespace-nowrap ${row.partial ? "font-bold" : ""}`}>
+                {row.weekday}
+                <span className={`${sub} font-normal`}>{row.date}</span>
               </td>
-              <td className="py-2 pr-2">{d.feeds}</td>
-              <td className="py-2 pr-2 whitespace-nowrap">{d.feed_ml > 0 ? `${volumeNumber(d.feed_ml, unit)} ${unit}` : "-"}</td>
+              <td className="py-2 pr-2">{row.d.feeds}</td>
+              <td className="py-2 pr-2 whitespace-nowrap">{row.amount}</td>
               <td className="py-2 pr-2">
-                {d.sleep_min > 0 ? formatDuration(d.sleep_min) : "-"}
-                {d.longest_sleep_min !== null && <span className={sub}>longest {formatDuration(d.longest_sleep_min)}</span>}
+                {row.sleep}
+                {row.longest && <span className={sub}>{row.longest}</span>}
               </td>
               <td className="py-2">
-                {diaperCount(d)}
-                <span className={sub}>
-                  {d.diapers_wet} wet, {d.diapers_dirty} dirty, {d.diapers_both} both
-                </span>
+                {diaperCount(row.d)}
+                <span className={sub}>{row.diapers}</span>
               </td>
             </tr>
-          );
-        })}
-      </tbody>
-    </table>
+          ))}
+        </tbody>
+      </table>
+    </>
   );
 }

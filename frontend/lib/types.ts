@@ -123,6 +123,9 @@ export type CareLogSummary = {
     diapers_per_day: number | null;
     sleep_min_per_day: number | null;
   };
+  /** The same averages without today, which is still in progress. Missing
+   * from servers before this field was added. */
+  averages_excluding_today?: CareLogSummary["averages"];
 };
 
 export type Provider = {
