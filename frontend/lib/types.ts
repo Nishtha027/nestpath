@@ -60,13 +60,69 @@ export type GrowthReference = {
   length_cm: GrowthReferenceRow[];
 };
 
+export type CareLogType = "feed" | "diaper" | "sleep" | "medication";
+export type FeedType = "breast" | "bottle" | "solid";
+export type FeedSide = "left" | "right" | "both";
+export type DiaperKind = "wet" | "dirty" | "both";
+
+/** One care-log entry. Entries made before the tracker have only type,
+ * time and notes; every structured field is null on them. */
 export type CareLog = {
   id: string;
   child_id: string;
   caregiver_id: string;
-  type: "feed" | "diaper" | "sleep" | "medication";
+  caregiver_name: string | null;
+  type: CareLogType;
+  /** When it happened (a sleep: when it started). */
+  occurred_at: string;
+  /** Same as occurred_at; the older name. */
   timestamp: string;
   notes: string | null;
+  feed_type: FeedType | null;
+  amount_ml: number | null;
+  duration_min: number | null;
+  side: FeedSide | null;
+  ended_at: string | null;
+  /** A sleep whose timer is still running. */
+  in_progress: boolean;
+  diaper_kind: DiaperKind | null;
+  updated_at: string | null;
+};
+
+/** GET /children/{id}/care-logs/latest: the newest entry of each type. */
+export type CareLogLatest = Record<CareLogType, CareLog | null>;
+
+export type CareLogDay = {
+  /** YYYY-MM-DD, a calendar day in the timezone the summary was asked for. */
+  day: string;
+  feeds: number;
+  feed_ml: number;
+  avg_feed_ml: number | null;
+  avg_feed_min: number | null;
+  diapers_wet: number;
+  diapers_dirty: number;
+  diapers_both: number;
+  diapers_other: number;
+  sleep_min: number;
+  longest_sleep_min: number | null;
+};
+
+export type CareLogSummary = {
+  days: number;
+  timezone: string;
+  start: string;
+  end: string;
+  daily: CareLogDay[];
+  /** Per day, over the days that have any entry. */
+  averages: {
+    days_with_entries: number;
+    feeds_per_day: number | null;
+    feed_ml_per_day: number | null;
+    avg_feed_ml: number | null;
+    avg_feed_min: number | null;
+    diapers_per_day: number | null;
+    sleep_min_per_day: number | null;
+  };
 };
 
 export type Provider = {

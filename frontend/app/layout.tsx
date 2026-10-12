@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fredoka, Nunito } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
@@ -25,6 +25,12 @@ const fredoka = Fredoka({
 export const metadata: Metadata = {
   title: "NestPath",
   description: "A companion app for new parents",
+};
+
+// Lets the phone's bottom bar reach the screen edge and pad itself clear
+// of the home indicator (env(safe-area-inset-bottom)).
+export const viewport: Viewport = {
+  viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

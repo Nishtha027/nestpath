@@ -11,6 +11,7 @@ import { Message } from "../../ui/Message";
 import { Loading } from "../../ui/Loading";
 import { Chick } from "../../ui/illustrations";
 import { InviteCode } from "./InviteCode";
+import { TrackerTiles } from "./TrackerTiles";
 import { LoadError } from "../LoadError";
 
 function timeOfDayGreeting(hour: number) {
@@ -143,6 +144,8 @@ export default function HomePage() {
 
       {childrenLoading && <Loading />}
       {childrenError && <LoadError message={childrenError} onRetry={retryChildren} />}
+
+      {selectedChild && <TrackerTiles key={selectedChild.id} child={selectedChild} token={token} />}
 
       {childList.length > 0 && (
         <section aria-label="Children" className="flex flex-col gap-2">

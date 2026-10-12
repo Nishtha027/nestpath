@@ -71,6 +71,85 @@ const PATHS = {
       <path d="M4.5 20v-5h5" />
     </>
   ),
+  // Navigation
+  home: (
+    <>
+      <path d="M3.5 11 12 4l8.5 7" />
+      <path d="M5.5 9.5V20h13V9.5" />
+      <path d="M10 20v-5.5h4V20" />
+    </>
+  ),
+  plus: <path d="M12 5v14M5 12h14" />,
+  minus: <path d="M5 12h14" />,
+  plusCircle: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v8M8 12h8" />
+    </>
+  ),
+  list: <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.01M4.5 12h.01M4.5 17.5h.01" />,
+  barChart: <path d="M4 20h16M7 20v-6M12 20V8M17 20v-9" />,
+  more: (
+    <>
+      <circle cx="6" cy="12" r="1.25" />
+      <circle cx="12" cy="12" r="1.25" />
+      <circle cx="18" cy="12" r="1.25" />
+    </>
+  ),
+  close: <path d="M6 6l12 12M18 6 6 18" />,
+  shield: <path d="M12 3.5 5 6v5.5c0 4.3 3 7.6 7 9 4-1.4 7-4.7 7-9V6l-7-2.5Z" />,
+  trendUp: <path d="M4 17l5-5 3.5 3.5L20 8M14.5 8H20v5.5" />,
+  // Tracker entries
+  bottle: (
+    <>
+      <path d="M9.5 3h5M10 3v3.5L8 9v10.5a1.5 1.5 0 0 0 1.5 1.5h5a1.5 1.5 0 0 0 1.5-1.5V9l-2-2.5V3" />
+      <path d="M8 13h3M8 16.5h3" />
+    </>
+  ),
+  breast: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="2" />
+    </>
+  ),
+  bowl: (
+    <>
+      <path d="M3.5 11h17a8.5 8.5 0 0 1-17 0Z" />
+      <path d="M14 11 18.5 4" />
+    </>
+  ),
+  moon: <path d="M19.5 14.5A8 8 0 0 1 9.5 4.5a8 8 0 1 0 10 10Z" />,
+  diaper: (
+    <>
+      <path d="M3.5 7h17v3.5a8.5 8.5 0 0 1-17 0V7Z" />
+      <path d="M8.5 7v3a3.5 3.5 0 0 0 7 0V7" />
+    </>
+  ),
+  droplet: <path d="M12 3.5s-6 6.6-6 10.8a6 6 0 0 0 12 0C18 10.1 12 3.5 12 3.5Z" />,
+  pill: (
+    <>
+      <rect x="3" y="8.5" width="18" height="7" rx="3.5" transform="rotate(-45 12 12)" />
+      <path d="m9.5 9.5 5 5" />
+    </>
+  ),
+  // Actions
+  pencil: <path d="M15.5 4.5l4 4L8.5 19.5H4.5v-4l11-11Z" />,
+  trash: <path d="M4.5 7h15M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5" />,
+  copy: (
+    <>
+      <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2" />
+      <path d="M15.5 8.5V5.5a1.5 1.5 0 0 0-1.5-1.5H5.5A1.5 1.5 0 0 0 4 5.5V14a1.5 1.5 0 0 0 1.5 1.5h3" />
+    </>
+  ),
+  print: (
+    <>
+      <path d="M7 8.5V4h10v4.5M7 17H4.5v-7a1.5 1.5 0 0 1 1.5-1.5h12a1.5 1.5 0 0 1 1.5 1.5v7H17" />
+      <path d="M7 14h10v6H7z" />
+    </>
+  ),
+  play: <path d="M8 5.5v13l10.5-6.5L8 5.5Z" />,
+  stop: <rect x="6.5" y="6.5" width="11" height="11" rx="1.5" />,
+  share: <path d="M12 15V4M8 8l4-4 4 4M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" />,
 } as const;
 
 export type IconName = keyof typeof PATHS;

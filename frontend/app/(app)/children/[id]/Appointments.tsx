@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { apiFetch, ApiError } from "@/lib/api";
 import type { Appointment, AvailabilitySlot, Provider } from "@/lib/types";
-import { BUTTON_SECONDARY, CARD, FIELD, INPUT, LABEL, MUTED, SUBSECTION_TITLE } from "@/lib/ui";
+import { BUTTON_SECONDARY, CARD, FIELD, INPUT, LABEL, LINK, MUTED, SUBSECTION_TITLE } from "@/lib/ui";
+import { Icon } from "../../../ui/Icon";
 import { Message } from "../../../ui/Message";
 import { EmptyState } from "../../../ui/EmptyState";
 import { Chick } from "../../../ui/illustrations";
@@ -186,6 +188,12 @@ export function Appointments({ childId, token }: { childId: string; token: strin
                     <li key={i}>{item}</li>
                   ))}
                 </ul>
+              )}
+              {appt.status === "booked" && (
+                <Link href={`/children/${childId}/share`} className={`mt-2 inline-flex min-h-11 items-center gap-1.5 ${LINK}`}>
+                  <Icon name="share" className="h-4 w-4" />
+                  Share the last 7 days with your pediatrician
+                </Link>
               )}
             </li>
           ))}

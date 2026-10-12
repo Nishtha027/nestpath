@@ -5,15 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useAppState } from "@/lib/app-state";
+import { activeNavKey, navItems } from "@/lib/nav";
 import { BUTTON_SECONDARY, INPUT } from "@/lib/ui";
 import { Chick } from "../ui/illustrations";
-
-const CHILD_TABS = [
-  { segment: "vaccines", label: "Vaccines" },
-  { segment: "growth", label: "Growth" },
-  { segment: "care-log", label: "Care log" },
-  { segment: "appointments", label: "Appointments" },
-] as const;
 
 export function AppNav() {
   const { caregiver, logout } = useAuth();
@@ -25,20 +19,12 @@ export function AppNav() {
   const childRoute = pathname.match(/^\/children\/([^/]+)(?:\/([^/]+))?/);
   const routeSegment = childRoute?.[2] ?? null;
 
-  const tabs: { href: string; label: string; active: boolean }[] = [
-    { href: "/dashboard", label: "Home", active: pathname === "/dashboard" },
-    ...CHILD_TABS.map((tab) => ({
-      // With no children yet, child tabs lead Home, where a child is added.
-      href: selectedChild ? `/children/${selectedChild.id}/${tab.segment}` : "/dashboard",
-      label: tab.label,
-      active: routeSegment === tab.segment,
-    })),
-    { href: "/wellbeing", label: "Wellbeing", active: pathname.startsWith("/wellbeing") },
-    { href: "/help-board", label: "Help board", active: pathname.startsWith("/help-board") },
-    ...(caregiver?.isProvider
-      ? [{ href: "/alerts", label: "Alerts", active: pathname.startsWith("/alerts") }]
-      : []),
-  ];
+  // The same sections as the phone's bottom bar (lib/nav.ts).
+  const activeKey = activeNavKey(pathname);
+  const tabs = navItems(selectedChild?.id ?? null, Boolean(caregiver?.isProvider)).map((item) => ({
+    ...item,
+    active: item.key === activeKey,
+  }));
 
   // The active tab's pill is one element that slides between tabs. It is
   // positioned straight from the DOM (no state), and re-measured when the
@@ -82,8 +68,8 @@ export function AppNav() {
   }
 
   return (
-    <header className="border-b border-line bg-surface">
-      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 pt-3 sm:px-8">
+    <header className="border-b border-line bg-surface print:hidden">
+      <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-2 sm:px-8 md:pb-0 md:pt-3">
         <Link href="/dashboard" className="inline-flex min-h-11 items-center gap-2 rounded-lg font-heading text-xl font-semibold text-ink">
           <Chick className="h-9 w-9" />
           NestPath
@@ -118,9 +104,10 @@ export function AppNav() {
           </button>
         </div>
       </div>
-      <nav aria-label="Main" className="mx-auto w-full max-w-5xl px-2 sm:px-6">
-        {/* Wraps onto a second row on narrow screens, so every label stays
-            whole and visible; the padding keeps focus rings unclipped. */}
+      {/* Wider screens only; phones get the bottom bar (BottomNav). */}
+      <nav aria-label="Main" className="mx-auto hidden w-full max-w-5xl px-2 sm:px-6 md:block">
+        {/* Wraps onto a second row if it must, so every label stays whole
+            and visible; the padding keeps focus rings unclipped. */}
         <ul ref={listRef} className="relative flex flex-wrap gap-1 whitespace-nowrap px-2 py-2.5">
           <li aria-hidden="true" className="contents">
             <span
@@ -129,7 +116,7 @@ export function AppNav() {
             />
           </li>
           {tabs.map((tab) => (
-            <li key={tab.label} className="shrink-0">
+            <li key={tab.key} className="shrink-0">
               <Link
                 href={tab.href}
                 aria-current={tab.active ? "page" : undefined}
