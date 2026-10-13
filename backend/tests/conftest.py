@@ -2,7 +2,7 @@
 (see backend/.env) -- SQLite can't be used here since the models use
 Postgres-specific UUID/ENUM types. Point DATABASE_URL at a disposable
 test database, never a real one: each test drops and recreates all
-tables.
+tables. The suite refuses to start unless the host is local.
 """
 
 import os
@@ -22,6 +22,17 @@ os.environ["BCRYPT_ROUNDS"] = "4"
 
 from app.database import Base, SessionLocal, engine, get_db
 from app.main import app
+
+# Every test drops and recreates all tables, so refuse to run against
+# anything but a local database. Creating the engine doesn't connect, so
+# this check runs before a single query reaches the server.
+_LOCAL_TEST_HOSTS = {"127.0.0.1", "localhost", "::1"}
+if engine.url.host not in _LOCAL_TEST_HOSTS:
+    raise pytest.UsageError(
+        "Refusing to run the test suite: DATABASE_URL points at host "
+        f"{engine.url.host!r}, not 127.0.0.1 or localhost. The tests drop "
+        "every table. Point DATABASE_URL at a local, disposable database."
+    )
 
 
 @pytest.fixture(autouse=True)

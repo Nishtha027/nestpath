@@ -2,7 +2,7 @@
 can log in, a week of plausible entries that the API accepts and summarizes,
 and nothing duplicated on a re-run."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -23,8 +23,10 @@ from scripts.seed_demo_data import (
 
 PASSWORD = "a-test-only-password"
 TZ = ZoneInfo("Asia/Kolkata")
-# Mid-afternoon local time, so today has some entries and not others.
-NOW = datetime(2026, 10, 12, 15, 30, tzinfo=TZ).astimezone(timezone.utc)
+# Mid-afternoon local time, so today has some entries and not others. It
+# must be today: the summary endpoint counts its days back from the real
+# date, so a fixed date would drop the oldest seeded day a day later.
+NOW = datetime.combine(datetime.now(TZ).date(), time(15, 30), TZ).astimezone(timezone.utc)
 
 
 def _login(client) -> dict:
