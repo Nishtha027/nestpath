@@ -170,6 +170,14 @@ so booked slots stay booked.
 
 ## Deploying the frontend
 
+> **Warning: run `vercel deploy` ONLY from the `frontend` folder.** Run from
+> `backend` or the repo root, it uploads the wrong folder, replaces the live
+> site with an empty build (every page 404s) and sends that folder's files to
+> Vercel. If that happens, promote the previous deployment in the Vercel
+> dashboard, then delete the bad one. The `.vercelignore` files in the root and
+> in `backend` keep `.env*` files out of such an upload, but they don't stop
+> the deploy itself. Check your prompt ends in `\frontend>` before you run it.
+
 The live Vercel project (`nishtha15/nestpath`) isn't connected to GitHub, so
 pushing to `main` does **not** redeploy the frontend. Deploy it from the
 `frontend` folder with the Vercel CLI (the project's Root Directory is `.`, so

@@ -1,0 +1,4 @@
+# The backend is deployed on Render, never on Vercel. Deploy the frontend from
+# the frontend folder only (see "Deploying the frontend" in README.md). If a
+# Vercel deploy is ever started from here by mistake, keep secrets out of it.
+.env*

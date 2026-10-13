@@ -1,0 +1,5 @@
+# Deploy the frontend from the frontend folder only (see "Deploying the
+# frontend" in README.md). If a Vercel deploy is ever started from the repo
+# root by mistake, keep every env file out of the upload.
+.env*
+**/.env*
