@@ -8,6 +8,7 @@ import { useVolumeUnit } from "@/lib/volume-unit";
 import { SECTION_TITLE } from "@/lib/ui";
 import { LoadError } from "../LoadError";
 import { TypeBadge } from "../tracker/fields";
+import { Icon } from "../../ui/Icon";
 
 type TileType = "feed" | "sleep" | "diaper";
 
@@ -85,15 +86,22 @@ function Tile({
     <Link
       href={href}
       aria-label={`${LABELS[type]}: ${main}${since ? `, ${since}` : ""}. Log a ${type}`}
-      className={`np-lift flex min-h-28 items-start gap-3 rounded-2xl border p-4 ${
-        sleeping ? "border-primary-ink bg-blue-soft" : "border-line bg-surface hover:bg-page"
+      className={`np-lift np-card np-cta flex min-h-32 flex-col sm:min-h-40 justify-between gap-4 rounded-[1.5rem] border p-5 ${
+        sleeping ? "border-primary bg-lime" : "border-line bg-surface hover:bg-blue-soft"
       }`}
     >
-      <TypeBadge type={type} feedType={entry?.feed_type} size="lg" />
-      <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-xs font-semibold text-muted">{LABELS[type]}</span>
-        <span className="font-bold text-ink">{main}</span>
-        <span className="text-sm text-ink tabular-nums">{since}</span>
+      <span className="flex items-center justify-between gap-3">
+        <TypeBadge type={type} feedType={entry?.feed_type} size="lg" />
+        <span className="text-xs font-bold tracking-[0.14em] text-ink uppercase">{LABELS[type]}</span>
+      </span>
+      <span className="flex min-w-0 flex-col gap-1">
+        <span className="font-heading text-xl leading-tight font-semibold text-ink">{main}</span>
+        <span className="flex items-center justify-between gap-2 text-sm text-ink tabular-nums">
+          {since}
+          <span aria-hidden="true" className="np-nudge inline-flex text-primary-ink">
+            <Icon name="plus" className="h-5 w-5" />
+          </span>
+        </span>
       </span>
     </Link>
   );

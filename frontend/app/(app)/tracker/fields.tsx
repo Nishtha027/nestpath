@@ -25,6 +25,8 @@ import { Icon, type IconName } from "../../ui/Icon";
 type Option<T extends string> = { value: T; label: string; icon?: ReactNode };
 
 const FOCUS_RING = "has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-focus";
+// On the forest segment track the ring is lime, so it shows against the green.
+const FOCUS_RING_NIGHT = "has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-night-yellow";
 
 export function ChoiceGroup<T extends string>({
   legend,
@@ -43,24 +45,24 @@ export function ChoiceGroup<T extends string>({
 }) {
   const name = useId();
   const layout = {
-    segment: `grid gap-1 rounded-2xl bg-neutral-bg p-1 ${options.length === 4 ? "grid-cols-4" : "grid-cols-3"}`,
+    segment: `np-night grid gap-1 rounded-full bg-night p-1.5 ${options.length === 4 ? "grid-cols-4" : options.length === 2 ? "grid-cols-2" : "grid-cols-3"}`,
     card: `grid gap-2 ${options.length === 2 ? "grid-cols-2" : "grid-cols-3"}`,
     chip: "flex flex-wrap gap-2",
   }[variant];
 
   function itemClass(selected: boolean) {
     if (variant === "segment") {
-      return `flex min-h-11 items-center justify-center gap-1.5 rounded-xl px-2 text-sm ${
-        selected ? "bg-surface font-bold text-primary-ink ring-1 ring-line-strong" : "font-semibold text-muted hover:text-ink"
+      return `flex min-h-12 items-center justify-center gap-1.5 rounded-full px-2 text-sm transition-colors ${
+        selected ? "bg-night-yellow font-bold text-night" : "font-semibold text-night-muted hover:text-on-night"
       }`;
     }
     if (variant === "card") {
       return `relative flex min-h-24 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 p-3 text-sm ${
-        selected ? "border-primary-ink bg-blue-soft font-bold text-primary-ink" : "border-line bg-surface font-semibold text-ink hover:bg-page"
+        selected ? "border-primary bg-lime font-bold text-ink" : "border-line bg-surface font-semibold text-ink hover:border-primary hover:bg-blue-soft"
       }`;
     }
     return `inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-sm ${
-      selected ? "border-primary-ink bg-blue-soft font-bold text-primary-ink" : "border-line-strong bg-surface font-semibold text-ink hover:bg-page"
+      selected ? "border-primary bg-primary font-bold text-on-primary" : "border-line-strong bg-surface font-semibold text-ink hover:border-primary hover:bg-blue-soft"
     }`;
   }
 
@@ -71,7 +73,7 @@ export function ChoiceGroup<T extends string>({
         {options.map((option) => {
           const selected = value === option.value;
           return (
-            <label key={option.value} className={`np-press cursor-pointer ${FOCUS_RING} ${itemClass(selected)}`}>
+            <label key={option.value} className={`np-press cursor-pointer ${variant === "segment" ? FOCUS_RING_NIGHT : FOCUS_RING} ${itemClass(selected)}`}>
               <input
                 type="radio"
                 name={name}

@@ -28,7 +28,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-1 flex-col">
           <AppNav />
           <main
-            className={`mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 sm:px-8 sm:py-10 ${still ? "np-still" : ""}`}
+            className={`mx-auto flex w-full max-w-4xl flex-col gap-7 px-4 pt-4 pb-8 sm:px-8 sm:pb-12 ${still ? "np-still" : ""}`}
           >
             {children}
           </main>

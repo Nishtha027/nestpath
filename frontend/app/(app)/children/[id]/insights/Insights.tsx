@@ -68,11 +68,18 @@ function InsightsBody({ childId, token, days }: { childId: string; token: string
   return (
     <>
       <section aria-label="Daily averages" className="flex flex-col gap-2">
-        <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {summaryChips(summary, unit).map((chip) => (
-            <li key={chip.label} className="np-enter flex flex-col gap-0.5 rounded-2xl bg-pink-soft px-4 py-3">
-              <span className="text-xs font-semibold text-muted">{chip.label}</span>
-              <span className="text-lg font-bold text-ink tabular-nums">{chip.value}</span>
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {summaryChips(summary, unit).map((chip, i) => (
+            <li
+              key={chip.label}
+              className={`np-enter np-card flex min-h-28 flex-col justify-between gap-3 rounded-[1.5rem] p-5 ${
+                i === 0 ? "bg-night text-on-night" : i === 1 ? "bg-lime text-ink" : "border border-line bg-surface text-ink"
+              }`}
+            >
+              <span className={`text-xs font-bold tracking-[0.12em] uppercase ${i === 0 ? "text-night-muted" : i === 1 ? "text-ink" : "text-muted"}`}>
+                {chip.label}
+              </span>
+              <span className="font-heading text-[1.75rem] leading-none font-semibold tabular-nums">{chip.value}</span>
             </li>
           ))}
         </ul>

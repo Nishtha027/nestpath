@@ -24,18 +24,19 @@ export function BottomNav() {
   const moreActive = more.some((item) => item.key === active);
 
   const tab = (isActive: boolean) =>
-    `flex min-h-14 w-full flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-xs ${
-      isActive ? "font-bold text-primary-ink" : "font-semibold text-muted hover:text-ink"
+    `flex min-h-14 w-full flex-col items-center justify-center gap-1 rounded-2xl px-1 text-xs ${
+      isActive ? "font-bold text-night-yellow" : "font-semibold text-night-muted hover:text-on-night"
     }`;
   const iconPill = (isActive: boolean) =>
-    `flex h-7 w-12 items-center justify-center rounded-full transition-colors ${isActive ? "bg-blue-soft" : ""}`;
+    `flex h-8 w-12 items-center justify-center rounded-full transition-colors ${isActive ? "bg-night-yellow text-night" : ""}`;
 
   return (
     <nav
       aria-label="Main"
-      className="np-bottom-nav fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden print:hidden"
+      className="np-bottom-nav np-night fixed inset-x-0 bottom-0 z-30 px-3 pb-[calc(0.6rem+env(safe-area-inset-bottom))] md:hidden print:hidden"
     >
-      <ul className="mx-auto grid max-w-lg grid-cols-5 gap-1 px-2 py-1">
+      {/* A floating forest bar, like the landing page's dark bands. */}
+      <ul className="np-card mx-auto grid max-w-lg grid-cols-5 gap-1 rounded-[1.75rem] bg-night px-2 py-1.5">
         {bar.map((item) => {
           const isActive = item.key === active;
           return (

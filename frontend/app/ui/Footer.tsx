@@ -3,7 +3,7 @@ import { Disclosure } from "./Disclosure";
 /** On every page: the short disclaimer, with the full text one click away. */
 export function Footer() {
   return (
-    <footer className="mx-auto w-full max-w-3xl px-4 pt-2 pb-6 text-sm text-muted sm:px-8">
+    <footer className="mx-auto w-full max-w-4xl px-4 pt-2 pb-6 text-sm text-muted sm:px-8">
       <p>NestPath is not medical advice.</p>
       <Disclosure label="About NestPath">
         <p>
