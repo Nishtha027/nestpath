@@ -6,6 +6,7 @@ import { AppStateProvider } from "@/lib/app-state";
 import { CareFeedProvider } from "@/lib/care-feed";
 import { AppNav } from "./AppNav";
 import { BottomNav } from "./BottomNav";
+import { VoiceAssistant } from "./VoiceAssistant";
 
 // Every logged-in page renders inside this shell: one auth gate (with the
 // existing redirect-to-/login and 401 handling from auth-context), one
@@ -33,6 +34,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {children}
           </main>
           <BottomNav />
+          <VoiceAssistant />
         </div>
       </CareFeedProvider>
     </AppStateProvider>

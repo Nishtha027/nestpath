@@ -1061,6 +1061,23 @@
   -webkit-text-stroke-color: var(--np-on-night);
 }
 
+/* The voice assistant ((app)/VoiceAssistant.tsx): its panel rises in, and
+ * a lime ring keeps pulsing out of the mic while it listens. */
+@keyframes np-listen {
+  from { transform: scale(1); opacity: 0.55; }
+  to { transform: scale(1.9); opacity: 0; }
+}
+.np-voice-panel {
+  animation: np-sheet 280ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.np-loop-listen {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--np-lime);
+  animation: np-listen 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
 /* Two-way switches on the login page (Log in / Register, New / Join): a
  * lime pill slides under the chosen side. data-second moves it right. */
 .np-seg {
@@ -1184,6 +1201,8 @@
   .np-follower {
     display: none !important;
   }
+  .np-voice-panel,
+  .np-loop-listen,
   .np-intro-rise,
   .np-intro-bar,
   .np-loop-spin,
