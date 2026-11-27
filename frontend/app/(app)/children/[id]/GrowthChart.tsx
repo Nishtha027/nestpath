@@ -20,17 +20,21 @@ export function GrowthChart({
   childId,
   token,
   birthDate,
+  childSex = null,
 }: {
   childId: string;
   token: string;
   birthDate: string;
+  /** The sex chosen at setup, if any. */
+  childSex?: Sex | null;
 }) {
   const [measurements, setMeasurements] = useState<GrowthMeasurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  // WHO has separate charts for girls and boys. Defaults to the sex recorded
-  // with the latest measurement; the parent picks it before the first one.
-  const [sex, setSex] = useState<Sex | null>(null);
+  // WHO has separate charts for girls and boys. Defaults to the sex chosen
+  // at setup, else the one recorded with the latest measurement; otherwise
+  // the parent picks it before the first one.
+  const [sex, setSex] = useState<Sex | null>(childSex);
   const [reference, setReference] = useState<GrowthReference | null>(null);
   const [referenceError, setReferenceError] = useState<string | null>(null);
 

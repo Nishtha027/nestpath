@@ -12,10 +12,10 @@ import { activeNavKey, navItems, splitForBottomBar } from "./nav.ts";
 const FRONTEND = fileURLToPath(new URL("..", import.meta.url));
 const read = (...path: string[]) => readFileSync(join(FRONTEND, ...path), "utf8");
 
-test("the bottom bar has Home, Log, History and Insights; More has the rest", () => {
+test("the bottom bar has Home, Log, History and Vaccines; More has the rest", () => {
   const { bar, more } = splitForBottomBar(navItems("c1", false));
-  assert.deepEqual(bar.map((i) => i.label), ["Home", "Log", "History", "Insights"]);
-  assert.deepEqual(more.map((i) => i.label), ["Vaccines", "Growth", "Appointments", "Wellbeing", "Help board"]);
+  assert.deepEqual(bar.map((i) => i.label), ["Home", "Log", "History", "Vaccines"]);
+  assert.deepEqual(more.map((i) => i.label), ["Growth", "Appointments", "Wellbeing", "Help board"]);
   assert.deepEqual(splitForBottomBar(navItems("c1", true)).more.at(-1)?.label, "Alerts");
 });
 
@@ -31,7 +31,8 @@ test("every page marks one section as current", () => {
   assert.equal(activeNavKey("/children/c1/log"), "log");
   assert.equal(activeNavKey("/children/c1/history"), "history");
   assert.equal(activeNavKey("/children/c1/care-log"), "history");
-  assert.equal(activeNavKey("/children/c1/insights"), "insights");
+  assert.equal(activeNavKey("/children/c1/insights"), "log", "Insights are part of Log now");
+  assert.ok(!navItems("c1", false).some((i) => i.key === "insights"), "no separate Insights tab");
   assert.equal(activeNavKey("/children/c1/share"), "appointments");
   assert.equal(activeNavKey("/children/c1/vaccines"), "vaccines");
   assert.equal(activeNavKey("/wellbeing"), "wellbeing");

@@ -32,6 +32,7 @@ def create_child(
         name=payload.name,
         birth_date=payload.birth_date,
         region=payload.region,
+        sex=payload.sex,
     )
     db.add(child)
     db.flush()

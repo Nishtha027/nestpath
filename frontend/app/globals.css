@@ -25,42 +25,49 @@
   --font-heading: var(--font-fredoka), ui-rounded, system-ui, sans-serif;
   --font-body: var(--font-nunito), ui-rounded, system-ui, sans-serif;
 
+  /* Palette: "Forest & Lime". Deep forest green and an acid lime on warm
+   * paper, after Sweet Tape (Awwwards Site of the Day, Nov 2026), with a
+   * peach tint for warmth. Token names are roles from the first palette:
+   * pink-soft is the warm (peach) tint, blue-soft / blue-mid the lime tints. */
+
   /* Surfaces */
-  --np-page: #fff8fb; /* warm blush white */
-  --np-surface: #ffffff;
-  --np-pink-soft: #fce4ec;
-  --np-blue-soft: #e3f0fc;
-  --np-blue-mid: #b9d3ef;
-  --np-neutral-bg: #f1eef2;
+  --np-page: #f3f0e4; /* warm paper */
+  --np-surface: #fcfbf5;
+  --np-pink-soft: #f8e0cd; /* peach */
+  --np-blue-soft: #e6f3c0; /* pale lime */
+  --np-blue-mid: #c9e68a;
+  --np-neutral-bg: #e9e6da;
+  --np-lime: #b6fe00; /* the accent: fills, highlights, the closing band */
 
   /* Lines: hairline for decoration, strong for form-field edges (3:1) */
-  --np-line: #efe3ea;
-  --np-line-strong: #8a7c8c;
+  --np-line: #e1dccb;
+  --np-line-strong: #7a8070;
 
   /* Text */
-  --np-ink: #2b2a3a;
-  --np-muted: #5f5e72;
+  --np-ink: #0f2410;
+  --np-muted: #4d594a;
 
   /* Actions */
-  --np-primary: #3d6fb4;
-  --np-primary-hover: #2f5c9e;
-  --np-on-primary: #ffffff;
-  --np-primary-ink: #2f5c9e; /* blue text and icons on light/pastel */
+  --np-primary: #0d470c;
+  --np-primary-hover: #083507;
+  --np-on-primary: #d8ff70; /* lime text on forest buttons */
+  --np-primary-ink: #0d470c; /* green text and icons on light/tints */
   --np-secondary-bg: var(--np-pink-soft);
-  --np-secondary-hover: #f8d3e0;
-  --np-secondary-ink: #983a60;
-  --np-focus: #2f5c9e;
+  --np-secondary-hover: #f3cfb3;
+  --np-secondary-ink: #8a3412;
+  --np-focus: #0d470c;
 
   /* Status: each has a deep ink for text/icons and a pale bg */
   --np-danger-ink: #a1253a;
-  --np-danger-bg: #fdecef;
-  --np-success-ink: #2d6a45;
-  --np-success-bg: #e8f5ec;
-  --np-warning-ink: #80500a;
-  --np-warning-bg: #fff3e0;
+  --np-danger-bg: #fbe5e2;
+  --np-on-danger: #ffffff; /* text on a solid danger-ink button */
+  --np-success-ink: #1f6528;
+  --np-success-bg: #e3f1d3;
+  --np-warning-ink: #7a4a05;
+  --np-warning-bg: #fbecc8;
   --np-info-ink: var(--np-primary-ink);
   --np-info-bg: var(--np-blue-soft);
-  --np-neutral-ink: #55546a;
+  --np-neutral-ink: #4f5548;
 
   /* Crisis support: its own treatment, never reused for anything else */
   --np-crisis-bg: #f6cbd3;
@@ -69,11 +76,11 @@
   --np-on-crisis: #ffffff;
 
   /* Growth charts */
-  --np-chart-band-outer: #dceaf8;
+  --np-chart-band-outer: #e7f1cf;
   --np-chart-band-inner: var(--np-blue-mid);
-  --np-chart-median: #2f5c9e;
-  --np-chart-child: #b0386a;
-  --np-chart-grid: #e6dce3;
+  --np-chart-median: #0d470c;
+  --np-chart-child: #b3390a; /* terracotta: the baby's own line */
+  --np-chart-grid: #dcd7c6;
   --np-chart-axis: var(--np-muted);
 
   /* Illustrations (app/ui/illustrations). Decorative only -- never used for
@@ -103,9 +110,22 @@
   --np-art-leaf: #a9d4bb;
   --np-art-leaf-deep: #86bf9f;
   --np-art-stem: #8fc4a6;
-  --np-art-petal-pink: #f7b6c9;
-  --np-art-petal-blue: #a8c8ec;
+  --np-art-petal-pink: #f6b896;
+  --np-art-petal-blue: #c4e48a;
   --np-art-petal-center: #fbe3a0;
+
+  /* The forest bands: the landing hero, "Under the hood", the login brand
+   * panel and the page-transition curtain. Text on them uses on-night,
+   * night-muted and the three accents (all in the contrast table);
+   * night-yellow is the lime. */
+  --np-night: #0b360b;
+  --np-night-raised: #114312;
+  --np-night-line: #2b5e28;
+  --np-on-night: #f3f0e4;
+  --np-night-muted: #b8c9ab;
+  --np-night-pink: #ffc3a0;
+  --np-night-blue: #d6f58c;
+  --np-night-yellow: #b6fe00;
 }
 
 /* No default palette: only the tokens above exist as Tailwind colors, so a
@@ -122,6 +142,7 @@
   --color-blue-soft: var(--np-blue-soft);
   --color-blue-mid: var(--np-blue-mid);
   --color-neutral-bg: var(--np-neutral-bg);
+  --color-lime: var(--np-lime);
   --color-line: var(--np-line);
   --color-line-strong: var(--np-line-strong);
   --color-ink: var(--np-ink);
@@ -136,6 +157,7 @@
   --color-focus: var(--np-focus);
   --color-danger-ink: var(--np-danger-ink);
   --color-danger-bg: var(--np-danger-bg);
+  --color-on-danger: var(--np-on-danger);
   --color-success-ink: var(--np-success-ink);
   --color-success-bg: var(--np-success-bg);
   --color-warning-ink: var(--np-warning-ink);
@@ -151,6 +173,14 @@
   --color-chart-band-inner: var(--np-chart-band-inner);
   --color-chart-median: var(--np-chart-median);
   --color-chart-child: var(--np-chart-child);
+  --color-night: var(--np-night);
+  --color-night-raised: var(--np-night-raised);
+  --color-night-line: var(--np-night-line);
+  --color-on-night: var(--np-on-night);
+  --color-night-muted: var(--np-night-muted);
+  --color-night-pink: var(--np-night-pink);
+  --color-night-blue: var(--np-night-blue);
+  --color-night-yellow: var(--np-night-yellow);
 
   --font-sans: var(--font-body);
 }
@@ -206,7 +236,7 @@
   }
 
   ::selection {
-    background: var(--np-blue-mid);
+    background: var(--np-lime);
     color: var(--np-ink);
   }
 }
@@ -323,6 +353,12 @@
     opacity: 1;
   }
 }
+/* Cards in the app: a hairline lip and a long, soft shadow. */
+.np-card {
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--np-ink) 4%, transparent),
+    0 28px 50px -36px color-mix(in srgb, var(--np-ink) 38%, transparent);
+}
 /* The tab bar's active pill slides to the new tab (positioned by AppNav). */
 .np-tab-indicator {
   transition: transform 300ms cubic-bezier(0.2, 0.7, 0.3, 1), width 300ms cubic-bezier(0.2, 0.7, 0.3, 1),
@@ -351,7 +387,7 @@
 /* Phones: the page scrolls clear of the fixed bottom bar (BottomNav). */
 @media (max-width: 767px) {
   body:has(.np-bottom-nav) {
-    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom));
   }
 }
 /* A checkmark that draws itself (on a path with pathLength="1"). */
@@ -463,6 +499,607 @@
   opacity: 0;
 }
 
+/* ------------------------------------------------------------------------
+ * Landing page (app/Welcome.tsx and app/landing). Scroll reveals, the chick
+ * that walks the path, the marquee, the pointer parallax and the little
+ * demos. Every class here is listed again in the reduced-motion block below.
+ * Loops are np-loop-*, so MotionGuard pauses them in a hidden tab and drops
+ * them on a slow device.
+ *
+ * Scroll reveals: app/landing/motion.ts sets data-in on each [data-reveal]
+ * as it enters the viewport. Content is only hidden while it waits when
+ * scripts run (the np-js class on <html>, set in app/layout.tsx), so the page
+ * still reads fine without JavaScript.
+ * ---------------------------------------------------------------------- */
+@keyframes np-word-up {
+  from { transform: translate3d(0, 110%, 0); }
+}
+@keyframes np-marquee {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes np-blob {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(7%, -5%, 0) scale(1.08); }
+  66% { transform: translate3d(-6%, 6%, 0) scale(0.94); }
+}
+@keyframes np-ping {
+  0% { transform: scale(1); opacity: 0.55; }
+  80%, 100% { transform: scale(2.8); opacity: 0; }
+}
+@keyframes np-pop-in {
+  from { opacity: 0; transform: scale(0.4); }
+}
+@keyframes np-tap {
+  from { opacity: 0.5; transform: scale(0.2); }
+  to { opacity: 0; transform: scale(1.7); }
+}
+@keyframes np-packet {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0); }
+}
+@keyframes np-packet-arc {
+  0% { transform: translate3d(0, 0, 0); animation-timing-function: cubic-bezier(0.3, 0.6, 0.6, 1); }
+  50% { transform: translate3d(0, calc(var(--arc, 60px) * -1), 0); animation-timing-function: cubic-bezier(0.4, 0, 0.7, 0.4); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+@keyframes np-stamp {
+  from { opacity: 0; transform: scale(1.9) rotate(-16deg); }
+  60% { opacity: 1; transform: scale(0.94) rotate(-6deg); }
+  to { opacity: 1; transform: scale(1) rotate(-6deg); }
+}
+@keyframes np-waddle {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-6deg); }
+  50% { transform: translate3d(0, -5px, 0) rotate(6deg); }
+}
+@keyframes np-run {
+  from { transform: translate3d(0, 0, 0); opacity: 0; }
+  15%, 85% { opacity: 1; }
+  to { transform: translate3d(var(--run, 200px), 0, 0); opacity: 0; }
+}
+@keyframes np-slide-in {
+  from { opacity: 0; transform: translate3d(0, 70%, 0); }
+}
+
+/* Headline words rise out of a mask, one after another. */
+.np-word-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding: 0 0.04em 0.16em;
+  margin: 0 -0.04em -0.16em;
+}
+.np-word {
+  display: inline-block;
+}
+.np-words-load .np-word {
+  animation: np-word-up 1100ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(var(--intro, 0ms) + var(--i, 0) * 80ms + var(--d, 120ms));
+}
+/* While the intro plays, the hero's entrances wait for it to lift. */
+.np-hero {
+  --intro: 1750ms;
+}
+.np-intro-seen .np-hero {
+  --intro: 0ms;
+}
+.np-js [data-reveal] .np-word {
+  transform: translate3d(0, 110%, 0);
+  transition: transform 1000ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 60ms + var(--d, 0ms));
+}
+.np-js [data-reveal][data-in] .np-word {
+  transform: none;
+}
+/* The words that matter most: forest ink over a lime highlighter stroke. */
+.np-ink-gradient {
+  color: var(--np-primary-ink);
+  background: linear-gradient(
+    transparent 58%,
+    var(--np-lime) 58%,
+    var(--np-lime) 88%,
+    transparent 88%
+  );
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* Blocks fade and rise in as they scroll into view. */
+.np-js .np-in-view {
+  opacity: 0;
+  transform: translate3d(0, 36px, 0);
+  transition: opacity 800ms ease, transform 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--d, 0ms);
+}
+.np-js .np-in-view-scale {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0) scale(0.94);
+  transition: opacity 800ms ease, transform 1200ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: var(--d, 0ms);
+}
+/* A block reveals with its own [data-reveal], or with the section it sits in. */
+.np-js .np-in-view[data-in],
+.np-js .np-in-view-scale[data-in],
+.np-js [data-in] .np-in-view,
+.np-js [data-in] .np-in-view-scale {
+  opacity: 1;
+  transform: none;
+}
+/* One-off animations inside a block wait until it is on screen. */
+.np-js [data-reveal]:not([data-in]) * {
+  animation-play-state: paused;
+}
+
+/* Soft colour fields behind the hero, the dotted grid and the film grain. */
+.np-blob {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+}
+.np-blob-pink {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--np-night-pink) 75%, transparent), transparent);
+}
+.np-blob-blue {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--np-blue-mid) 80%, transparent), transparent);
+}
+/* The lime glow behind the forest hero. */
+.np-blob-lime {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--np-lime) 70%, transparent), transparent);
+}
+.np-blob-yellow {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--np-art-chick) 85%, transparent), transparent);
+}
+.np-loop-blob {
+  animation: np-blob 20s ease-in-out infinite;
+}
+.np-dots-night {
+  background-image: radial-gradient(color-mix(in srgb, var(--np-night-muted) 30%, transparent) 1.1px, transparent 1.6px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 78%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 78%);
+}
+.np-dots {
+  background-image: radial-gradient(color-mix(in srgb, var(--np-line-strong) 40%, transparent) 1.1px, transparent 1.6px);
+  background-size: 26px 26px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 78%);
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent 78%);
+}
+.np-grain {
+  position: relative;
+}
+.np-grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* The hero follows the pointer: app/landing/motion.ts writes --px and --py
+ * (-1 to 1) on the hero, and each layer moves by its own --depth. */
+.np-parallax {
+  transform: translate3d(calc(var(--px, 0) * var(--depth, 12px)), calc(var(--py, 0) * var(--depth, 12px)), 0);
+  transition: transform 1000ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.np-tilt {
+  transform: perspective(1400px) rotateY(calc(var(--px, 0) * 10deg)) rotateX(calc(var(--py, 0) * -8deg));
+  transition: transform 1000ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+/* Buttons that lean towards the pointer (--mx, --my from useMagnetic). */
+.np-magnetic {
+  transform: translate3d(var(--mx, 0px), var(--my, 0px), 0);
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), background-color 200ms ease, color 200ms ease;
+}
+.np-magnetic:active {
+  transform: translate3d(var(--mx, 0px), var(--my, 0px), 0) scale(0.97);
+}
+.np-phone-shadow {
+  box-shadow:
+    0 50px 90px -40px color-mix(in srgb, var(--np-ink) 55%, transparent),
+    0 20px 40px -24px color-mix(in srgb, var(--np-primary) 35%, transparent);
+}
+.np-soft-shadow {
+  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--np-ink) 35%, transparent);
+}
+/* Glass for the landing header and the floating chips. */
+.np-glass {
+  background: color-mix(in srgb, var(--np-surface) 86%, transparent);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+}
+
+/* A "live" dot with a ring that keeps pinging outwards. */
+.np-loop-ping {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: currentColor;
+  animation: np-ping 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* The ribbons of real entries under the hero. Hovering holds them still. */
+.np-loop-marquee {
+  display: flex;
+  width: max-content;
+  animation: np-marquee 42s linear infinite;
+}
+.np-loop-marquee-back {
+  display: flex;
+  width: max-content;
+  animation: np-marquee 48s linear infinite reverse;
+}
+.np-marquee:hover .np-loop-marquee,
+.np-marquee:hover .np-loop-marquee-back {
+  animation-play-state: paused;
+}
+
+/* The landing header hides while you read down and comes back on the way up. */
+.np-header {
+  transition: transform 500ms cubic-bezier(0.16, 1, 0.3, 1), background-color 300ms ease, border-color 300ms ease;
+}
+.np-header[data-hidden] {
+  transform: translate3d(0, -115%, 0);
+}
+.np-header-bar {
+  transition: box-shadow 300ms ease;
+}
+.np-header[data-scrolled] .np-header-bar {
+  box-shadow: 0 18px 40px -22px color-mix(in srgb, var(--np-ink) 35%, transparent);
+}
+
+/* The path through the features, and the chick walking it (FeaturePath). */
+.np-node {
+  transition: background-color 400ms ease, color 400ms ease, border-color 400ms ease,
+    transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.np-node[data-passed] {
+  background: var(--np-primary);
+  border-color: var(--np-primary);
+  color: var(--np-on-primary);
+  transform: scale(1.1);
+}
+.np-walker {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  will-change: transform;
+  transition: opacity 400ms ease;
+}
+.np-walker[data-home] {
+  opacity: 0;
+}
+.np-walker-flip {
+  transition: transform 300ms ease;
+}
+.np-walker[data-left] .np-walker-flip {
+  transform: scaleX(-1);
+}
+.np-loop-waddle {
+  animation: none;
+}
+.np-walker[data-walking] .np-loop-waddle {
+  animation: np-waddle 360ms ease-in-out infinite;
+}
+.np-home-chick {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0) scale(0.8);
+  transition: opacity 500ms ease, transform 700ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+[data-home] > .np-home-chick {
+  opacity: 1;
+  transform: none;
+}
+
+/* The demos: a tap ripple, the entry flying between phones, a stamp, a new
+ * value sliding in, chart points popping, and the booking cursors. */
+.np-tap {
+  animation: np-tap 650ms ease-out both;
+}
+.np-packet {
+  animation: np-packet 1100ms cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+.np-packet-arc {
+  animation: np-packet-arc 1100ms both;
+}
+.np-stamp {
+  transform: rotate(-6deg);
+  animation: np-stamp 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.np-slide-in {
+  animation: np-slide-in 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.np-pop-in {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: np-pop-in 600ms cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+.np-draw-slow {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: np-draw 1900ms cubic-bezier(0.65, 0, 0.35, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+.np-js .np-bar {
+  transform-origin: 50% 100%;
+  transform: scaleY(0.04);
+  transition: transform 1000ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: calc(var(--i, 0) * 80ms + 250ms);
+}
+.np-js [data-in] .np-bar {
+  transform: none;
+}
+.np-cursor {
+  transition: left 1000ms cubic-bezier(0.65, 0, 0.35, 1), top 1000ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.np-loop-run {
+  animation: np-run 2.6s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+/* Dark cards light up under the pointer (--sx, --sy from useSpotlight). */
+.np-spotlight {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.np-spotlight::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 300ms ease;
+  background: radial-gradient(
+    460px circle at var(--sx, 50%) var(--sy, 50%),
+    color-mix(in srgb, var(--np-night-blue) 16%, transparent),
+    transparent 65%
+  );
+}
+.np-spotlight:hover::before {
+  opacity: 1;
+}
+/* The dark band keeps a visible focus ring. */
+.np-night :focus-visible {
+  outline-color: var(--np-night-yellow);
+}
+
+/* ------------------------------------------------------------------------
+ * The Awwwards pass (Nov 2026): an intro, page curtains, a cursor
+ * follower, rolling link text, a spinning sticker, scroll-linked depth, the
+ * pinned "day" scroll and the lime finale. Everything here is listed again
+ * in the reduced-motion block below.
+ * ---------------------------------------------------------------------- */
+@property --np-n {
+  syntax: "<integer>";
+  inherits: false;
+  initial-value: 0;
+}
+@keyframes np-count {
+  to { --np-n: 100; }
+}
+@keyframes np-intro-out {
+  to { clip-path: inset(0 0 100% 0); visibility: hidden; }
+}
+@keyframes np-intro-rise {
+  from { transform: translate3d(0, 110%, 0); }
+}
+@keyframes np-intro-bar {
+  from { transform: scaleX(0); }
+}
+@keyframes np-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes np-sink {
+  to { transform: translate3d(0, 14%, 0) scale(0.86) rotate(-5deg); opacity: 0.35; }
+}
+@keyframes np-drift-up {
+  from { transform: translate3d(0, 22%, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+/* Intro: a forest panel counts to 100, then wipes up off the page. Pure
+ * CSS, so it plays (and leaves) even before scripts run. A second visit in
+ * the same tab session skips it (np-intro-seen, set in app/layout.tsx). */
+.np-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+  background: var(--np-night);
+  color: var(--np-on-night);
+  clip-path: inset(0 0 0 0);
+  animation: np-intro-out 900ms cubic-bezier(0.76, 0, 0.24, 1) 1650ms forwards;
+}
+.np-intro-seen .np-intro {
+  display: none;
+}
+.np-intro-count::after {
+  counter-reset: np-n var(--np-n);
+  content: counter(np-n);
+  animation: np-count 1500ms cubic-bezier(0.65, 0, 0.35, 1) 100ms forwards;
+}
+.np-intro-rise {
+  display: inline-block;
+  animation: np-intro-rise 900ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: var(--d, 0ms);
+}
+.np-intro-bar {
+  transform-origin: 0 50%;
+  animation: np-intro-bar 1500ms cubic-bezier(0.65, 0, 0.35, 1) 100ms backwards;
+}
+
+/* Page curtains (app/PageCurtain.tsx): a lime panel, then a forest one,
+ * rise over the page as a TransitionLink leaves, and lift off the next page.
+ * The states are data-curtain on <html>; without one the curtain is parked
+ * below the screen, hidden, with no transition (so it never sweeps back). */
+.np-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  pointer-events: none;
+  visibility: hidden;
+  overflow: hidden;
+}
+.np-curtain-panel {
+  position: absolute;
+  inset: -2px 0;
+  transform: translate3d(0, 102%, 0);
+}
+[data-curtain] .np-curtain {
+  visibility: visible;
+}
+[data-curtain="cover"] .np-curtain-panel {
+  transform: none;
+  transition: transform 650ms cubic-bezier(0.76, 0, 0.24, 1) var(--d, 0ms);
+}
+[data-curtain="reveal"] .np-curtain-panel {
+  transform: translate3d(0, -102%, 0);
+  transition: transform 750ms cubic-bezier(0.76, 0, 0.24, 1) var(--r, 0ms);
+}
+
+/* The cursor follower (landing/Follower.tsx): a dot that trails the
+ * pointer and opens into a ring over anything clickable. */
+.np-follower {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  pointer-events: none;
+  will-change: transform;
+}
+.np-follower-dot {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 9999px;
+  background: var(--np-lime);
+  border: 1.5px solid var(--np-primary);
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1), opacity 250ms ease, background-color 250ms ease;
+}
+.np-follower[data-hover] .np-follower-dot {
+  transform: scale(3.6);
+  background: color-mix(in srgb, var(--np-lime) 35%, transparent);
+}
+.np-follower[data-hidden] .np-follower-dot {
+  opacity: 0;
+}
+
+/* Rolling text: a second copy waits under the first and rolls up on hover. */
+.np-roll {
+  display: inline-flex;
+  overflow: hidden;
+  vertical-align: top;
+}
+.np-roll-inner {
+  position: relative;
+  display: block;
+  transition: transform 500ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+.np-roll-inner::after {
+  content: attr(data-text);
+  content: attr(data-text) / "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  white-space: nowrap;
+}
+.np-roll-host:hover .np-roll-inner,
+.np-roll-host:focus-visible .np-roll-inner {
+  transform: translate3d(0, -100%, 0);
+}
+
+/* The sticker beside the hero phone turns slowly. */
+.np-loop-spin {
+  animation: np-spin 18s linear infinite;
+}
+
+/* Scroll-linked depth, where the browser supports scroll timelines: the
+ * hero phone sinks and tips away as you scroll past it, and big type drifts. */
+@supports (animation-timeline: view()) {
+  .np-scroll-sink {
+    animation: np-sink linear both;
+    animation-timeline: view();
+    animation-range: exit 0% exit 100%;
+  }
+  .np-scroll-drift {
+    animation: np-drift-up linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 100%;
+  }
+}
+
+/* The pinned day (landing/DayScroll.tsx): the track slides sideways by
+ * --p (0 to 1) times --dist as you scroll down; the sun rides the arc. */
+.np-day-track {
+  transform: translate3d(calc(var(--p, 0) * var(--dist, 0px) * -1), 0, 0);
+}
+.np-day-sun {
+  left: calc(var(--p, 0) * 100%);
+  top: calc((1 - var(--arc, 0)) * 100%);
+}
+.np-day-sun > span {
+  transition: opacity 500ms ease;
+}
+[data-night] .np-day-sun > .np-day-day,
+.np-day-sun > .np-day-moon {
+  opacity: 0;
+}
+[data-night] .np-day-sun > .np-day-moon {
+  opacity: 1;
+}
+.np-outline {
+  color: transparent;
+  -webkit-text-stroke: 1.5px currentColor;
+}
+.np-outline-ink {
+  -webkit-text-stroke-color: var(--np-ink);
+}
+.np-outline-night {
+  -webkit-text-stroke-color: var(--np-on-night);
+}
+
+/* The voice assistant ((app)/VoiceAssistant.tsx): its panel rises in, and
+ * a lime ring keeps pulsing out of the mic while it listens. */
+@keyframes np-listen {
+  from { transform: scale(1); opacity: 0.55; }
+  to { transform: scale(1.9); opacity: 0; }
+}
+.np-voice-panel {
+  animation: np-sheet 280ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+.np-loop-listen {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: var(--np-lime);
+  animation: np-listen 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Two-way switches on the login page (Log in / Register, New / Join): a
+ * lime pill slides under the chosen side. data-second moves it right. */
+.np-seg {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.np-seg-pill {
+  position: absolute;
+  z-index: -1;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 9999px;
+  transition: transform 450ms cubic-bezier(0.76, 0, 0.24, 1);
+}
+.np-seg[data-second] .np-seg-pill {
+  transform: translate3d(100%, 0, 0);
+}
+
 /* Reduced motion: no movement and no loops. Entrances and the new-entry
  * tint become instant; finished states (the drawn check) show at once. */
 @media (prefers-reduced-motion: reduce) {
@@ -512,6 +1149,73 @@
     transform: none !important;
   }
   .np-tab-indicator {
+    transition: none !important;
+  }
+  /* Landing page: everything is simply there, in its final state. */
+  .np-word,
+  .np-in-view,
+  .np-in-view-scale,
+  .np-bar,
+  .np-parallax,
+  .np-tilt,
+  .np-magnetic,
+  .np-header,
+  .np-node,
+  .np-walker-flip,
+  .np-home-chick {
+    animation: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+  .np-loop-blob,
+  .np-loop-ping,
+  .np-loop-marquee,
+  .np-loop-marquee-back,
+  .np-loop-waddle,
+  .np-loop-run,
+  .np-tap,
+  .np-packet,
+  .np-packet-arc,
+  .np-slide-in,
+  .np-pop-in {
+    animation: none !important;
+  }
+  .np-stamp {
+    animation: none !important;
+    transform: rotate(-6deg);
+  }
+  .np-draw-slow {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+  .np-cursor {
+    transition: none !important;
+  }
+  .np-walker {
+    display: none;
+  }
+  /* The Awwwards pass: no intro, no curtains, no follower, nothing turns. */
+  .np-intro,
+  .np-curtain,
+  .np-follower {
+    display: none !important;
+  }
+  .np-voice-panel,
+  .np-loop-listen,
+  .np-intro-rise,
+  .np-intro-bar,
+  .np-loop-spin,
+  .np-scroll-sink,
+  .np-scroll-drift {
+    animation: none !important;
+  }
+  .np-seg-pill,
+  .np-curtain-panel,
+  .np-roll-inner,
+  .np-follower-dot,
+  .np-day-track {
+    transform: none !important;
     transition: none !important;
   }
 }

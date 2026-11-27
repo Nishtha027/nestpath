@@ -1,7 +1,7 @@
 """Pydantic request/response models for the API."""
 
 from datetime import date, datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
@@ -52,6 +52,7 @@ class ChildCreate(BaseModel):
     name: Optional[str] = None
     birth_date: date
     region: Optional[str] = None
+    sex: Optional[Literal["male", "female"]] = None
 
 
 class ChildResponse(BaseModel):
@@ -62,6 +63,7 @@ class ChildResponse(BaseModel):
     name: Optional[str] = None
     birth_date: date
     region: Optional[str] = None
+    sex: Optional[str] = None
 
 
 class ScheduleItemResponse(BaseModel):

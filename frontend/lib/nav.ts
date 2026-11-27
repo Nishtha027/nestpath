@@ -1,7 +1,7 @@
 // The app's sections, in one list for both navigations: the top tabs on
-// wider screens show them all; on phones the bottom bar shows the first
-// four (Home, Log, History, Insights) and "More" opens a sheet with the
-// rest. Tested in lib/nav.test.ts.
+// wider screens show them all; on phones the bottom bar shows four (Home,
+// Log, History, Vaccines) and "More" opens a sheet with the rest. Insights
+// are part of the Log page (under the form). Tested in lib/nav.test.ts.
 
 import type { IconName } from "../app/ui/Icon";
 
@@ -11,13 +11,12 @@ export type NavItem = { key: string; label: string; href: string; icon: IconName
 const CHILD_SECTIONS: { key: string; label: string; icon: IconName }[] = [
   { key: "log", label: "Log", icon: "plusCircle" },
   { key: "history", label: "History", icon: "list" },
-  { key: "insights", label: "Insights", icon: "barChart" },
   { key: "vaccines", label: "Vaccines", icon: "shield" },
   { key: "growth", label: "Growth", icon: "trendUp" },
   { key: "appointments", label: "Appointments", icon: "calendar" },
 ];
 
-export const BOTTOM_BAR_KEYS = ["home", "log", "history", "insights"] as const;
+export const BOTTOM_BAR_KEYS = ["home", "log", "history", "vaccines"] as const;
 
 /** Every section, in order. With no child yet, the child sections lead
  * Home, where a child is added. */
@@ -34,13 +33,15 @@ export function navItems(childId: string | null, isProvider: boolean): NavItem[]
   ];
 }
 
-/** Which section a path is in. The old care-log address is now History;
- * the pediatrician summary is opened from Appointments. */
+/** Which section a path is in. The old care-log address is now History,
+ * the old Insights address is part of Log, and the pediatrician summary is
+ * opened from Appointments. */
 export function activeNavKey(pathname: string): string | null {
   if (pathname === "/dashboard") return "home";
   const child = /^\/children\/[^/]+\/([^/]+)/.exec(pathname);
   if (child) {
     if (child[1] === "care-log") return "history";
+    if (child[1] === "insights") return "log";
     if (child[1] === "share") return "appointments";
     return CHILD_SECTIONS.some((s) => s.key === child[1]) ? child[1] : null;
   }

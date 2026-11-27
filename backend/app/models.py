@@ -55,6 +55,9 @@ class Child(Base):
     name = Column(String, nullable=True)
     birth_date = Column(Date, nullable=False)
     region = Column(String, nullable=True)
+    # "male" or "female" (which WHO growth chart applies). Nullable: children
+    # added before setup asked for it have none.
+    sex = Column(String, nullable=True)
 
     family = relationship("Family", back_populates="children")
     schedule_items = relationship("ScheduleItem", back_populates="child", cascade="all, delete-orphan")

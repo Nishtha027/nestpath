@@ -12,6 +12,7 @@ from uuid import uuid4
 
 from alembic import command
 from alembic.config import Config
+from alembic.script import ScriptDirectory
 from sqlalchemy import inspect, text
 
 from app.database import engine
@@ -38,6 +39,10 @@ def _enum_types() -> set[str]:
         return set(conn.execute(text("SELECT typname FROM pg_type WHERE typtype = 'e'")).scalars())
 
 
+def _head() -> str:
+    return ScriptDirectory.from_config(_alembic_config()).get_current_head()
+
+
 def _revision() -> str:
     with engine.connect() as conn:
         return conn.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
@@ -55,9 +60,17 @@ def test_migration_keeps_old_care_logs_and_downgrades(client, auth_headers):
     command.upgrade(cfg, BEFORE)
     assert NEW_COLUMNS.isdisjoint(_columns())
     headers, register = auth_headers()
-    child_id = client.post("/children", json={"birth_date": "2026-08-01"}, headers=headers).json()["id"]
+    # Written with SQL: today's Child model has columns this old schema lacks.
+    child_id = uuid4()
     old_id = uuid4()
     with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO children (id, family_id, birth_date)"
+                " SELECT :id, family_id, '2026-08-01' FROM caregivers WHERE id = :caregiver_id"
+            ),
+            {"id": child_id, "caregiver_id": register["id"]},
+        )
         conn.execute(
             text(
                 "INSERT INTO care_logs (id, child_id, caregiver_id, type, timestamp, notes) VALUES"
@@ -67,7 +80,7 @@ def test_migration_keeps_old_care_logs_and_downgrades(client, auth_headers):
         )
 
     command.upgrade(cfg, "head")
-    assert _revision() == TRACKER_REVISION
+    assert _revision() == _head()
     assert NEW_COLUMNS <= _columns()
     assert NEW_TYPES <= _enum_types()
 
@@ -87,6 +100,7 @@ def test_migration_keeps_old_care_logs_and_downgrades(client, auth_headers):
     )
     assert resp.status_code == 201
     command.downgrade(cfg, BEFORE)
+    # (Later migrations come off too; this checks what the tracker one leaves.)
     assert NEW_COLUMNS.isdisjoint(_columns())
     assert NEW_TYPES.isdisjoint(_enum_types())
     with engine.connect() as conn:
@@ -95,4 +109,4 @@ def test_migration_keeps_old_care_logs_and_downgrades(client, auth_headers):
 
     # And up again cleanly.
     command.upgrade(cfg, "head")
-    assert _revision() == TRACKER_REVISION
+    assert _revision() == _head()

@@ -238,7 +238,7 @@ function EditEntry({
               type="button"
               onClick={remove}
               disabled={busy}
-              className="np-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-danger-ink px-4 text-sm font-semibold text-on-primary disabled:opacity-60"
+              className="np-press inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-danger-ink px-4 text-sm font-semibold text-on-danger disabled:opacity-60"
             >
               <Icon name="trash" className="h-4 w-4" />
               {busy ? "Deleting..." : "Delete"}

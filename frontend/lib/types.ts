@@ -3,6 +3,8 @@ export type Child = {
   name: string | null;
   birth_date: string;
   region: string | null;
+  /** Which WHO growth chart applies; null for children added before setup asked. */
+  sex: "male" | "female" | null;
 };
 
 export type Family = {

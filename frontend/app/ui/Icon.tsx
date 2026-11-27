@@ -147,6 +147,13 @@ const PATHS = {
       <path d="M7 14h10v6H7z" />
     </>
   ),
+  // microphone -- the voice assistant
+  mic: (
+    <>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+    </>
+  ),
   play: <path d="M8 5.5v13l10.5-6.5L8 5.5Z" />,
   stop: <rect x="6.5" y="6.5" width="11" height="11" rx="1.5" />,
   share: <path d="M12 15V4M8 8l4-4 4 4M5 12v6.5A1.5 1.5 0 0 0 6.5 20h11a1.5 1.5 0 0 0 1.5-1.5V12" />,

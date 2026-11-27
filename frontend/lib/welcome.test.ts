@@ -59,19 +59,29 @@ test("/login opens the tab named in the address", () => {
   assert.match(login, /wakeApi\(\)/);
 });
 
-test("the welcome artwork is the supplied image, sized up front and loaded early", () => {
-  const hero = read("app", "ui", "illustrations", "WelcomeHero.tsx");
-  assert.match(hero, /HERO_SRC = "\/illustrations\/hero-mother-child-blue-circle\.png"/);
+test("the landing page shows the product and keeps the supplied artwork", () => {
+  const welcome = read("app", "Welcome.tsx");
+  // The hero is a live replica of Home, then the sections follow.
+  assert.match(welcome, /<HeroPhone \/>/);
+  for (const section of ["Marquee", "LiveSync", "FeaturePath", "UnderTheHood"]) {
+    assert.match(welcome, new RegExp(`<${section} \/>`), `${section} missing from the landing page`);
+  }
+  // Scroll reveals and pointer parallax are wired to the page.
+  assert.match(welcome, /useScrollReveal\(page\)/);
+  assert.match(welcome, /usePointerParallax\(hero\)/);
+
+  // The supplied artwork now sits with Wellbeing, shown as it is: sized up
+  // front so nothing shifts, and still, like the Wellbeing screens.
+  const visuals = read("app", "landing", "StationVisuals.tsx");
+  assert.match(visuals, /CARER_SRC = "\/illustrations\/hero-mother-child-blue-circle\.png"/);
   assert.ok(existsSync(join(FRONTEND, "public", "illustrations", "hero-mother-child-blue-circle.png")));
-  assert.match(hero, /HERO_ALT = "A parent holding their child"/);
-  // Explicit width and height reserve the space, so nothing shifts on load.
-  assert.match(hero, /<Image\b[\s\S]*?alt=\{HERO_ALT\}[\s\S]*?width=\{HERO_SIZE\}[\s\S]*?height=\{HERO_SIZE\}[\s\S]*?preload\b/);
-  assert.match(read("app", "Welcome.tsx"), /<WelcomeHero animated revealDelayMs=\{AFTER_HEADLINE_MS \+ 200\} \/>/);
-  // It rises in only once decoded (paused until then, with a time limit).
-  assert.match(hero, /data-waiting=\{decoded \? undefined : ""\}/);
-  assert.match(hero, /img\.current\?\.decode\(\)\.then\(reveal, reveal\)/);
-  assert.match(hero, /setTimeout\(reveal, DECODE_WAIT_MS\)/);
-  // The drifting sparkles and hearts around it are decorative and silent.
-  assert.match(hero, /aria-hidden="true"/);
-  assert.doesNotMatch(hero, /<text\b/);
+  assert.match(visuals, /CARER_ALT = "A parent holding their child"/);
+  assert.match(visuals, /<Image\b[\s\S]*?alt=\{CARER_ALT\}[\s\S]*?width=\{CARER_SIZE\}[\s\S]*?height=\{CARER_SIZE\}/);
+  const wellbeing = visuals.slice(visuals.indexOf("export function WellbeingVisual"));
+  assert.match(wellbeing, /np-still/);
+  assert.doesNotMatch(wellbeing, /np-(loop|pop|draw|slide|stamp|tap|in-view)/);
+
+  // The demos are pictures of the app: decorative and silent.
+  assert.match(visuals, /aria-hidden="true"/);
+  assert.match(read("app", "landing", "Phone.tsx"), /role="img" aria-label=\{label\}/);
 });
