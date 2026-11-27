@@ -10,7 +10,7 @@ import { Icon } from "../ui/Icon";
 import { Sheet, type SheetHandle } from "../ui/Sheet";
 
 /** Phones only: a bar fixed to the bottom with Home, Log, History and
- * Insights, and More, which opens a sheet with every other section. Each
+ * Vaccines, and More, which opens a sheet with every other section. Each
  * button is taller than a 44px tap target, and the bar sits above the
  * home indicator on phones that have one. */
 export function BottomNav() {

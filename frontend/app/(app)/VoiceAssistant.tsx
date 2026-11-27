@@ -122,6 +122,8 @@ export function VoiceAssistant() {
   }, [open]);
 
   function hrefFor(section: VoiceSection): string {
+    // Insights are on the Log page, under the form.
+    if (section === "insights") return selectedChild ? `/children/${selectedChild.id}/log#insights` : "/dashboard";
     return navItems(selectedChild?.id ?? null, Boolean(caregiver?.isProvider)).find((item) => item.key === section)?.href ?? "/dashboard";
   }
 

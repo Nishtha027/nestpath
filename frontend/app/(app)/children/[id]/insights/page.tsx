@@ -1,16 +1,8 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { useAppState, useCurrentChild } from "@/lib/app-state";
-import { Insights } from "./Insights";
-import { PageHeader } from "@/app/ui/PageHeader";
-
-export default function InsightsPage() {
-  const { token } = useAppState();
-  const child = useCurrentChild();
-  return (
-    <section className="flex flex-col gap-5">
-      <PageHeader title="Insights">How feeds, sleep and diapers add up over the last 7 or 30 days.</PageHeader>
-      <Insights key={child.id} childId={child.id} token={token} />
-    </section>
-  );
+// Insights now live on the Log page, under the form. Old links, bookmarks
+// and "show insights" by voice land there.
+export default async function InsightsPage({ params }: PageProps<"/children/[id]/insights">) {
+  const { id } = await params;
+  redirect(`/children/${id}/log#insights`);
 }
