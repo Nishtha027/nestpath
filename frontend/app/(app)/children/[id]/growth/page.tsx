@@ -10,7 +10,7 @@ export default function GrowthPage() {
   return (
     <section className="flex flex-col gap-5">
       <PageHeader title="Growth">Weight, length and head size on the WHO growth curves.</PageHeader>
-      <GrowthChart key={child.id} childId={child.id} token={token} birthDate={child.birth_date} />
+      <GrowthChart key={child.id} childId={child.id} token={token} birthDate={child.birth_date} childSex={child.sex} />
     </section>
   );
 }

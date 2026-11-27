@@ -289,3 +289,19 @@ def test_slow_password_check_does_not_block_other_requests(client, monkeypatch):
             safety.cancel()
             login.join(timeout=10)
     assert results["login"].status_code == 401
+
+
+def test_child_sex_is_stored_and_optional(client, auth_headers):
+    headers, _ = auth_headers()
+    with_sex = client.post(
+        "/children", json={"name": "Mia", "birth_date": "2026-09-01", "sex": "female"}, headers=headers
+    )
+    assert with_sex.status_code == 201
+    assert with_sex.json()["sex"] == "female"
+
+    without = client.post("/children", json={"birth_date": "2026-09-01"}, headers=headers)
+    assert without.status_code == 201
+    assert without.json()["sex"] is None
+
+    bad = client.post("/children", json={"birth_date": "2026-09-01", "sex": "other"}, headers=headers)
+    assert bad.status_code == 422

@@ -258,7 +258,10 @@ function AuthForm({ mode }: { mode: AuthMode }) {
       } else {
         await register(name, email, password, joinFamily ? inviteCode : undefined);
       }
-      coverThen(() => router.replace("/dashboard"));
+      // A brand-new family has no baby yet: set one up first. Everyone else
+      // goes Home (which also sends a family with no child to /setup).
+      const next = mode === "register" && !joinFamily ? "/setup" : "/dashboard";
+      coverThen(() => router.replace(next));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : unreachable());
     } finally {

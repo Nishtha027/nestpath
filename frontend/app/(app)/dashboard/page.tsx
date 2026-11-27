@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiFetch, ApiError } from "@/lib/api";
@@ -169,6 +169,13 @@ export default function HomePage() {
   }
 
   const ready = !childrenLoading && !childrenError;
+
+  // A family with no child yet fills in the baby's basics first (/setup),
+  // then lands back here.
+  const needsSetup = ready && childList.length === 0;
+  useEffect(() => {
+    if (needsSetup) router.replace("/setup");
+  }, [needsSetup, router]);
   const form = (
     <AddChildForm
       onSubmit={handleCreate}
